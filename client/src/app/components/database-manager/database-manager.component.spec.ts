@@ -19,8 +19,6 @@ describe('DatabaseManagerComponent', () => {
     { name: 'db2', driverCount: 5, trackCount: 1, raceCount: 0, assetCount: 5, sizeBytes: 512000 }
   ];
 
-  const mockCurrentDatabase = { name: 'db1' };
-
   beforeEach(async () => {
     mockDataService = jasmine.createSpyObj('DataService', [
       'getDatabases',
@@ -34,8 +32,8 @@ describe('DatabaseManagerComponent', () => {
       'importDatabase'
     ]);
 
-    mockDataService.getDatabases.and.returnValue(of(mockDatabases));
-    mockDataService.getCurrentDatabase.and.returnValue(of(mockCurrentDatabase));
+    mockDataService.getDatabases.and.callFake(() => of(JSON.parse(JSON.stringify(mockDatabases))));
+    mockDataService.getCurrentDatabase.and.returnValue(of({ name: 'db1' }));
     mockDataService.switchDatabase.and.returnValue(of({ name: 'db2' }));
     mockDataService.createDatabase.and.returnValue(of({ name: 'newDB', driverCount: 0, trackCount: 0, raceCount: 0, assetCount: 0, sizeBytes: 0 }));
     mockDataService.copyDatabase.and.returnValue(of({ name: 'copyDB', driverCount: 10, trackCount: 2, raceCount: 5, assetCount: 20, sizeBytes: 1024000 }));

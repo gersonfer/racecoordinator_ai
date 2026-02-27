@@ -95,7 +95,7 @@ describe('DefaultRacedayComponent', () => {
     mockRaceService = jasmine.createSpyObj('RaceService', [
       'setRace', 'setParticipants', 'setHeats', 'setCurrentHeat', 'getRace', 'getHeats'
     ]);
-    mockRaceService.getRace.and.returnValue({ fuel_options: { enabled: false } });
+    mockRaceService.getRace.and.returnValue({ name: 'Some Race Name', track: { name: 'Bright Plume Raceway', lanes: [] }, fuel_options: { enabled: false } });
     mockRaceService.getHeats.and.returnValue([]);
 
     mockSettings = Object.assign(new Settings(), {
@@ -471,5 +471,49 @@ describe('DefaultRacedayComponent', () => {
     (component as any).loadRaceData();
 
     expect(spy).toHaveBeenCalled();
+  });
+
+  it('should render the dynamic track name in the header', () => {
+    const trackName = 'Test Raceway';
+    const mockRace = {
+      name: 'Any Race',
+      track: {
+        name: trackName,
+        lanes: []
+      }
+    };
+    mockRaceService.getRace.and.returnValue(mockRace);
+    component['race'] = mockRace as any;
+    component['track'] = mockRace['track'] as any;
+    component['heat'] = {} as any; // Header is inside *ngIf="heat"
+
+    fixture.detectChanges();
+
+    const compiled = fixture.nativeElement as HTMLElement;
+    const trackText = Array.from(compiled.querySelectorAll('text')).find(el => el.textContent === trackName);
+    expect(trackText).toBeTruthy();
+    expect(trackText?.textContent).toBe(trackName);
+  });
+
+  it('should render the dynamic race name in the header', () => {
+    const raceName = 'Test Championship';
+    const mockRace = {
+      name: raceName,
+      track: {
+        name: 'Any Track',
+        lanes: []
+      }
+    };
+    mockRaceService.getRace.and.returnValue(mockRace);
+    component['race'] = mockRace as any;
+    component['track'] = mockRace['track'] as any;
+    component['heat'] = {} as any;
+
+    fixture.detectChanges();
+
+    const compiled = fixture.nativeElement as HTMLElement;
+    const raceText = Array.from(compiled.querySelectorAll('text')).find(el => el.textContent === raceName);
+    expect(raceText).toBeTruthy();
+    expect(raceText?.textContent).toBe(raceName);
   });
 });

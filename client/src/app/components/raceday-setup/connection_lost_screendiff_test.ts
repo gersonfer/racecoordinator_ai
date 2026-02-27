@@ -31,8 +31,16 @@ test.describe('Connection Loss Visuals', () => {
           status: 200,
           contentType: 'application/json',
           body: JSON.stringify([
-            { entity_id: 'r1', name: 'Grand Prix' },
-            { entity_id: 'r2', name: 'Time Trial' },
+            {
+              entity_id: 'r1',
+              name: 'Grand Prix',
+              track: { name: 'Mock Track', entity_id: 't1' }
+            },
+            {
+              entity_id: 'r2',
+              name: 'Time Trial',
+              track: { name: 'Mock Track', entity_id: 't1' }
+            },
           ]),
         });
       } else {

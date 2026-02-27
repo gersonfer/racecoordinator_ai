@@ -23,6 +23,14 @@ export class TestSetupHelper {
         entity_id: id,
         name: name,
         track_entity_id: 't1',
+        track: {
+          entity_id: 't1',
+          name: 'Classic Circuit',
+          lanes: [
+            { entity_id: 'l1', length: 12.5, backgroundColor: '#ff0000', foregroundColor: '#ffffff' },
+            { entity_id: 'l2', length: 12.5, backgroundColor: '#0000ff', foregroundColor: '#ffffff' }
+          ]
+        },
         heat_rotation_type: 'RoundRobin',
         heat_scoring: {
           finish_method: 'Lap',

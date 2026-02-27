@@ -1,18 +1,23 @@
 
 import { test, expect } from '@playwright/test';
+import { TestSetupHelper } from '../../testing/test-setup_helper';
 
 test.describe('Splash Screen Visuals', () => {
   test('should display splash screen and server config modal correctly', async ({ page }) => {
     // 1. Install fake clock to control timing and prevent animation flakiness
     await page.clock.install();
 
-    // Mock Math.random to ensure deterministic quote selection
+    // 2. Setup standard mocks
+    await TestSetupHelper.setupStandardMocks(page);
+
+    // 3. Mock Math.random to ensure deterministic quote selection
     await page.addInitScript(() => {
-      // @ts-ignore
-      window.localStorage.setItem('racecoordinator_settings', JSON.stringify({
-        racedaySetupWalkthroughSeen: true
-      }));
       Math.random = () => 0.1;
+    });
+
+    // 4. Setup LocalStorage via Helper
+    await TestSetupHelper.setupLocalStorage(page, {
+      racedaySetupWalkthroughSeen: true
     });
 
     // Navigate to the app

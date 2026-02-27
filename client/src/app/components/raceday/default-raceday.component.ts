@@ -4,6 +4,7 @@ import { Router } from '@angular/router';
 import { Heat } from '../../race/heat';
 import { DriverHeatData } from '../../race/driver_heat_data';
 import { Track } from 'src/app/models/track';
+import { Race } from 'src/app/models/race';
 import { TranslationService } from 'src/app/services/translation.service';
 import { DataService } from 'src/app/data.service';
 import { RaceService } from 'src/app/services/race.service';
@@ -38,6 +39,7 @@ export class DefaultRacedayComponent implements OnInit, OnDestroy {
   private subscriptions: Subscription[] = [];
   protected heat?: Heat;
   protected track!: Track;
+  protected race!: Race;
   protected columns: ColumnDefinition[];
   protected errorMessage?: string;
   protected startResumeShortcut: string = 'Ctrl+S';
@@ -451,6 +453,7 @@ export class DefaultRacedayComponent implements OnInit, OnDestroy {
     if (race) {
       console.log('RacedayComponent: using selected race:', race);
       console.log('RacedayComponent: Race tracks/lanes:', race.track, race.track?.lanes);
+      this.race = race;
       this.track = race.track;
       this.loadColumns();
       this.initializeHeat();
