@@ -241,7 +241,7 @@ export class TestSetupHelper {
             digitalIds: [1001, 1002, -1, -1],
             analogIds: [-1, -1, -1, -1],
             globalInvertLanes: 0,
-            normallyClosedRelays: false,
+            normallyClosedRelays: true,
             globalInvertLights: 0,
             useLapsForPits: 0,
             useLapsForPitEnd: 0,
@@ -269,7 +269,7 @@ export class TestSetupHelper {
             digitalIds: [1001, 1002, 1003, 1004],
             analogIds: [-1, -1, -1, -1],
             globalInvertLanes: 0,
-            normallyClosedRelays: false,
+            normallyClosedRelays: true,
             globalInvertLights: 0,
             useLapsForPits: 0,
             useLapsForPitEnd: 0,
@@ -602,6 +602,7 @@ export class TestSetupHelper {
           animation: none !important;
           transition-duration: 0s !important;
           animation-duration: 0s !important;
+          scroll-behavior: auto !important;
           caret-color: transparent !important;
         }
       `

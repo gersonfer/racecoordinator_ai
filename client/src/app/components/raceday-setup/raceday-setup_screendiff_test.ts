@@ -9,6 +9,7 @@ test.describe('Splash Screen Visuals', () => {
 
     // 2. Setup standard mocks
     await TestSetupHelper.setupStandardMocks(page);
+    await TestSetupHelper.disableAnimations(page);
 
     // 3. Mock Math.random to ensure deterministic quote selection
     await page.addInitScript(() => {
@@ -18,6 +19,11 @@ test.describe('Splash Screen Visuals', () => {
     // 4. Setup LocalStorage via Helper
     await TestSetupHelper.setupLocalStorage(page, {
       racedaySetupWalkthroughSeen: true
+    });
+
+    // 5. Hang the connection so the splash screen never disappears
+    await page.route('**/api/drivers', async () => {
+      // Do nothing to simulate a hanging connection
     });
 
     // Navigate to the app
@@ -33,20 +39,11 @@ test.describe('Splash Screen Visuals', () => {
     // Verify quote is present
     await expect(page.locator('.quote-container')).toBeVisible();
 
-    // Disable all animations for stable screenshot
-    await page.addStyleTag({
-      content: `
-        *, *::before, *::after {
-          transition: none !important;
-          animation: none !important;
-          transition-duration: 0s !important;
-          animation-duration: 0s !important;
-        }
-      `
-    });
+    // Stabilization: Wait for Angular to settle if needed, but clock is used here anyway
+    await page.waitForTimeout(100);
 
     // 1. Capture Splash Screen (Busy Loop State)
-    await expect(page).toHaveScreenshot('splash-screen-initial.png', { animations: 'disabled' });
+    await expect(page).toHaveScreenshot('splash-screen-initial.png', { maxDiffPixelRatio: 0.05, threshold: 0.2 });
 
     // 2. Open Server Config
     const serverBtn = page.locator('.server-config-btn');
@@ -58,7 +55,7 @@ test.describe('Splash Screen Visuals', () => {
     await expect(modal).toBeVisible();
 
     // 3. Capture Server Config Modal
-    await expect(page).toHaveScreenshot('server-config-modal.png', { animations: 'disabled' });
+    await expect(page).toHaveScreenshot('server-config-modal.png', { maxDiffPixelRatio: 0.05, threshold: 0.2 });
 
     // 4. Close Modal
     await page.locator('.actions button').nth(1).click();

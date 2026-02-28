@@ -168,8 +168,29 @@ describe('DefaultRacedayComponent', () => {
     expect((component as any).isInterfaceConnected).toBeFalse();
   });
 
-  it('should show modal immediately on NO_DATA', () => {
+  it('should wait 5s before showing modal on NO_DATA during startup', fakeAsync(() => {
     fixture.detectChanges();
+    interfaceEventsSubject.next({
+      status: { status: com.antigravity.InterfaceStatus.NO_DATA }
+    });
+
+    // Should not show immediately
+    expect(component.showAckModal).toBeFalse();
+
+    // Advance 5s
+    tick(5000);
+
+    expect(component.showAckModal).toBeTrue();
+    expect(component.ackModalTitle).toBe('ACK_MODAL_TITLE_NO_DATA');
+
+    flush();
+  }));
+
+  it('should show NO_DATA immediately if already initially connected', () => {
+    fixture.detectChanges();
+    // Simulate initial connection success
+    (component as any).hasInitiallyConnected = true;
+
     interfaceEventsSubject.next({
       status: { status: com.antigravity.InterfaceStatus.NO_DATA }
     });
@@ -230,7 +251,8 @@ describe('DefaultRacedayComponent', () => {
   it('should show CONNECTED modal if recovered after error shown', () => {
     fixture.detectChanges();
     // Force error state
-    (component as any).wasInterfaceErrorShown = true;
+    component.showAckModal = true;
+    component.ackModalTitle = 'ACK_MODAL_TITLE_DISCONNECTED';
 
     interfaceEventsSubject.next({
       status: { status: com.antigravity.InterfaceStatus.CONNECTED }
@@ -240,16 +262,29 @@ describe('DefaultRacedayComponent', () => {
     expect(component.ackModalTitle).toBe('ACK_MODAL_TITLE_CONNECTED');
   });
 
-  it('should trigger watchdog on NO_STATUS after timeout', fakeAsync(() => {
+  it('should trigger DISCONNECTED on NO_STATUS watchdog if not initially connected', fakeAsync(() => {
     fixture.detectChanges(); // Starts the watchdog in the fakeAsync zone
-    // Reset watchdog happens on init.
     // Advance time by 5s
+    tick(5000);
+
+    expect(component.showAckModal).toBeTrue();
+    expect(component.ackModalTitle).toBe('ACK_MODAL_TITLE_DISCONNECTED');
+
+    // Clear pending timers
+    flush();
+  }));
+
+  it('should trigger NO_STATUS on watchdog if successfully connected first', fakeAsync(() => {
+    fixture.detectChanges();
+    // Simulate initial connection success
+    (component as any).hasInitiallyConnected = true;
+    (component as any).resetWatchdog(); // Reset to clear the first watchdog timer
+
     tick(5000);
 
     expect(component.showAckModal).toBeTrue();
     expect(component.ackModalTitle).toBe('ACK_MODAL_TITLE_NO_STATUS');
 
-    // Clear pending timers
     flush();
   }));
 

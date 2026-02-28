@@ -8,6 +8,8 @@ import { TranslatePipe } from '../../pipes/translate.pipe';
 import { FormsModule } from '@angular/forms';
 import { Component, Input, NO_ERRORS_SCHEMA } from '@angular/core';
 
+// TODO(aufderheide): Move MockDataService to a shared test file and 
+// allow users of it to customize it beyond the simple defaults.
 // Mock DataService
 class MockDataService {
   getTracks() {
@@ -42,6 +44,9 @@ class MockDataService {
     return of({ success: true });
   }
   updateInterfaceConfig(config: any) {
+    return of({ success: true });
+  }
+  closeInterface() {
     return of({ success: true });
   }
   getRaceState() {

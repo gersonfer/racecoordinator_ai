@@ -240,6 +240,10 @@ export class DataService {
     );
   }
 
+  closeInterface(): Observable<any> {
+    return this.http.post(`${this.baseUrl}/api/close-interface`, {});
+  }
+
   startRace(): Observable<boolean> {
     const request = com.antigravity.StartRaceRequest.create({});
     const buffer = com.antigravity.StartRaceRequest.encode(request).finish();

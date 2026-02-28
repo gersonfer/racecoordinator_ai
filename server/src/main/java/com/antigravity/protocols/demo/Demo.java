@@ -86,6 +86,7 @@ public class Demo extends DefaultProtocol {
 
   @Override
   public boolean open() {
+    System.out.println("DEBUG: Opening Demo Protocol for " + getNumLanes() + " lanes");
     startStatusScheduler();
     return true;
   }
@@ -109,8 +110,12 @@ public class Demo extends DefaultProtocol {
       statusScheduler = createScheduler();
     }
     statusFuture = statusScheduler.scheduleAtFixedRate(() -> {
-      if (listener != null) {
-        listener.onInterfaceStatus(com.antigravity.proto.InterfaceStatus.CONNECTED);
+      try {
+        if (listener != null) {
+          listener.onInterfaceStatus(com.antigravity.proto.InterfaceStatus.CONNECTED);
+        }
+      } catch (Exception e) {
+        System.err.println("Demo: Error reporting status: " + e.getMessage());
       }
     }, 0, 1, java.util.concurrent.TimeUnit.SECONDS);
   }

@@ -13,7 +13,7 @@
   "AE_BOARD_TYPE": "Bordtype",
   "AE_BOARD_UNO": "Arduino Uno",
   "AE_COM_PORT": "COM Poort",
-  "AE_DEBOUNCE_TIME": "Dendertijd (µs)",
+  "AE_DEBOUNCE_TIME": "Dendertijd",
   "AE_DIGITAL_PINS": "Digitale Pinnen",
   "AE_HEADER": "Arduino Configuratie",
   "AE_NORMALLY_CLOSED_RELAYS": "Normaal Gesloten Relais",

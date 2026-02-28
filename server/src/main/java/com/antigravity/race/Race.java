@@ -71,6 +71,12 @@ public class Race implements ProtocolListener {
     initializeFuelLevels();
   }
 
+  public void init() {
+    if (this.protocols != null) {
+      this.protocols.open();
+    }
+  }
+
   private void initializeFuelLevels() {
     com.antigravity.models.AnalogFuelOptions fuelOptions = model.getFuelOptions();
     if (fuelOptions != null && fuelOptions.isEnabled()) {
@@ -100,7 +106,6 @@ public class Race implements ProtocolListener {
     }
     this.protocols = new ProtocolDelegate(protocols);
     this.protocols.setListener(this);
-    this.protocols.open();
   }
 
   public com.antigravity.models.Race getRaceModel() {
@@ -191,6 +196,9 @@ public class Race implements ProtocolListener {
   }
 
   public void stop() {
+    if (protocols != null) {
+      protocols.close();
+    }
     if (state != null) {
       state.exit(this);
     }
@@ -355,6 +363,8 @@ public class Race implements ProtocolListener {
     state.nextHeat(this);
   }
 
+  // TODO(aufderheide): We should ask the state for it's enum value rather than
+  // doing all these instanceof checks.
   private com.antigravity.proto.RaceState getProtoState(IRaceState state) {
     if (state instanceof NotStarted) {
       return com.antigravity.proto.RaceState.NOT_STARTED;

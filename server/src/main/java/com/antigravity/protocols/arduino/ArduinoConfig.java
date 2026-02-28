@@ -93,7 +93,7 @@ public class ArduinoConfig {
     this.debounceUs = 200;
     this.hardwareType = 1;
     this.globalInvertLanes = 0;
-    this.normallyClosedRelays = false;
+    this.normallyClosedRelays = true;
     this.globalInvertLights = 0;
     this.usePitsAsLaps = 0;
     this.useLapsForSegments = 0;

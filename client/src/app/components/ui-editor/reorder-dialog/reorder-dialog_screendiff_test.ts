@@ -21,7 +21,7 @@ test.describe('Reorder Dialog Visuals', () => {
     await expect(modal).toBeVisible();
 
     // Take a screenshot of the modal
-    await expect(modal).toHaveScreenshot('reorder-dialog-default.png', { maxDiffPixelRatio: 0.05 });
+    await expect(modal).toHaveScreenshot('reorder-dialog-default.png', { maxDiffPixelRatio: 0.05, threshold: 0.2 });
   });
 
   test('should show preview correctly in reorder dialog', async ({ page }) => {
@@ -37,7 +37,7 @@ test.describe('Reorder Dialog Visuals', () => {
     await expect(preview).toBeVisible();
 
     // Capture the entire modal with preview
-    await expect(modal).toHaveScreenshot('reorder-dialog-preview.png', { maxDiffPixelRatio: 0.05 });
+    await expect(modal).toHaveScreenshot('reorder-dialog-preview.png', { maxDiffPixelRatio: 0.05, threshold: 0.2 });
   });
 
   test('should show visibility selectors correctly in reorder dialog', async ({ page }) => {
@@ -67,7 +67,7 @@ test.describe('Reorder Dialog Visuals', () => {
     await expect(selectors).toHaveCount(2);
 
     // Take a screenshot showing the visibility selectors
-    await expect(modal).toHaveScreenshot('reorder-dialog-visibility.png', { maxDiffPixelRatio: 0.05 });
+    await expect(modal).toHaveScreenshot('reorder-dialog-visibility.png', { maxDiffPixelRatio: 0.05, threshold: 0.2 });
   });
 
   test('should reset to defaults when reset button is clicked', async ({ page }) => {
@@ -92,6 +92,6 @@ test.describe('Reorder Dialog Visuals', () => {
     await expect(removeButtons).toHaveCount(5);
 
     // 4. Final verification screenshot
-    await expect(modal).toHaveScreenshot('reorder-dialog-reset.png', { maxDiffPixelRatio: 0.05 });
+    await expect(modal).toHaveScreenshot('reorder-dialog-reset.png', { maxDiffPixelRatio: 0.05, threshold: 0.2 });
   });
 });

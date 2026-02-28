@@ -70,6 +70,9 @@ public class ArduinoProtocolTest {
     com.antigravity.protocols.CarLocation lastLocation = com.antigravity.protocols.CarLocation.Main;
     public CarData lastCarData;
 
+    int callButtonCount = 0;
+    int segmentCount = 0;
+
     @Override
     public void onLap(int lane, double lapTime, int interfaceId) {
       lapCount++;
@@ -78,11 +81,12 @@ public class ArduinoProtocolTest {
 
     @Override
     public void onSegment(int lane, double segmentTime, int interfaceId) {
-      // No-op
+      segmentCount++;
     }
 
     @Override
     public void onCallbutton(int lane) {
+      callButtonCount++;
     }
 
     @Override
@@ -482,5 +486,93 @@ public class ArduinoProtocolTest {
 
     assertEquals("Exit report should have delta 0", 0.0, listener.lastCarData.getTime(), 0.001);
     assertEquals("Cannot refuel on pit exit", false, listener.lastCarData.getCanRefuel());
+  }
+
+  @Test
+  public void testCallButtonTransitions() {
+    // Configure D2 as Call Button (Base + 0)
+    config.digitalIds = new ArrayList<>(
+        Collections.nCopies(10, com.antigravity.proto.PinBehavior.BEHAVIOR_UNUSED.getNumber()));
+    config.digitalIds.set(2, com.antigravity.proto.PinBehavior.BEHAVIOR_CALL_BUTTON_BASE.getNumber() + 0);
+
+    protocol = new TestableArduinoProtocol(config, 2, scheduler, serialConnection);
+    protocol.setListener(listener);
+    protocol.open();
+
+    // Inject Version to verify
+    byte[] versionMsg = { 0x56, 1, 0, 0, 0, 0x3B };
+    serialConnection.injectData(versionMsg);
+
+    byte[] callLow = { 0x49, 0x44, 0x02, 0x00, 0x3B };
+    byte[] callHigh = { 0x49, 0x44, 0x02, 0x01, 0x3B };
+
+    // Trigger D2 LOW (state 0) -> Call Button should NOT trigger yet (first event)
+    serialConnection.injectData(callLow);
+    assertEquals(0, listener.callButtonCount);
+
+    // Trigger D2 HIGH (state 1) -> Call Button should NOT trigger
+    serialConnection.injectData(callHigh);
+    assertEquals(0, listener.callButtonCount);
+
+    // Trigger D2 LOW (state 0) -> Call Button should trigger (1 -> 0 transition)
+    serialConnection.injectData(callLow);
+    assertEquals(1, listener.callButtonCount);
+
+    // Trigger D2 LOW (state 0) again -> Call Button should NOT trigger again
+    serialConnection.injectData(callLow);
+    assertEquals(1, listener.callButtonCount);
+
+    // Enable inversion - Call button should STILL trigger on 0 (high-to-low
+    // transition)
+    config.globalInvertLanes = 1;
+    protocol.updateConfig(config);
+
+    listener.callButtonCount = 0;
+    // Current state is 0. Resetting state with 1 first.
+    serialConnection.injectData(callHigh);
+    serialConnection.injectData(callLow);
+    assertEquals(1, listener.callButtonCount);
+
+    // Trigger D2 HIGH (state 1) -> Call Button should NOT trigger
+    serialConnection.injectData(callHigh);
+    assertEquals(1, listener.callButtonCount);
+  }
+
+  @Test
+  public void testSegmentCounterTransitions() {
+    // Configure D3 as Segment Counter (Base + 0)
+    config.digitalIds = new ArrayList<>(
+        Collections.nCopies(10, com.antigravity.proto.PinBehavior.BEHAVIOR_UNUSED.getNumber()));
+    config.digitalIds.set(3, com.antigravity.proto.PinBehavior.BEHAVIOR_SEGMENT_BASE.getNumber() + 0);
+
+    protocol = new TestableArduinoProtocol(config, 2, scheduler, serialConnection);
+    protocol.setListener(listener);
+    protocol.open();
+
+    // Inject Version to verify
+    byte[] versionMsg = { 0x56, 1, 0, 0, 0, 0x3B };
+    serialConnection.injectData(versionMsg);
+
+    // Normal: Trigger D3 HIGH (state 1) -> Segment should trigger
+    byte[] segmentHigh = { 0x49, 0x44, 0x03, 0x01, 0x3B };
+    serialConnection.injectData(segmentHigh);
+    assertEquals(1, listener.segmentCount);
+
+    // Normal: Trigger D3 LOW (state 0) -> Segment should NOT trigger again
+    byte[] segmentLow = { 0x49, 0x44, 0x03, 0x00, 0x3B };
+    serialConnection.injectData(segmentLow);
+    assertEquals(1, listener.segmentCount);
+
+    // Inverted: Trigger D3 LOW (state 0) -> Segment should trigger
+    config.globalInvertLanes = 1;
+    protocol.updateConfig(config);
+
+    listener.segmentCount = 0;
+    serialConnection.injectData(segmentLow);
+    assertEquals(1, listener.segmentCount);
+
+    // Inverted: Trigger D3 HIGH (state 1) -> Segment should NOT trigger
+    serialConnection.injectData(segmentHigh);
+    assertEquals(1, listener.segmentCount);
   }
 }

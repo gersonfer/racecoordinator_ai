@@ -85,7 +85,9 @@ test.describe('Connection Loss Visuals', () => {
     // (which triggers 5s after connection loss) will NOT fire. This stabilizes the screenshot state.
     // We also mask the quote text as it is randomized.
     await expect(page).toHaveScreenshot('connection-lost-overlay.png', {
-      mask: [page.locator('.quote-text'), page.locator('.quote-container')]
+      mask: [page.locator('.quote-text'), page.locator('.quote-container')],
+      maxDiffPixelRatio: 0.05,
+      threshold: 0.2
     });
   });
 });

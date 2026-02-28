@@ -60,10 +60,10 @@ export class DefaultRacedayComponent implements OnInit, OnDestroy {
   ackModalMessage = '';
   ackModalButtonText = 'ACK_MODAL_BTN_OK';
 
-  private wasInterfaceErrorShown = false;
   private disconnectedTimeout: any;
   private noStatusWatchdog: any;
   private lastInterfaceStatus: InterfaceStatus | number = -1;
+  private hasInitiallyConnected = false;
   private readonly WATCHDOG_TIMEOUT = 5000;
 
 
@@ -284,14 +284,19 @@ export class DefaultRacedayComponent implements OnInit, OnDestroy {
         this.isInterfaceConnected = status === InterfaceStatus.CONNECTED;
 
         if (status === InterfaceStatus.NO_DATA) {
-          this.showInterfaceError('ACK_MODAL_TITLE_NO_DATA', 'ACK_MODAL_MSG_NO_DATA');
+          if (!this.hasInitiallyConnected) {
+            this.scheduleDisconnectedError('ACK_MODAL_TITLE_NO_DATA', 'ACK_MODAL_MSG_NO_DATA');
+          } else {
+            this.showInterfaceError('ACK_MODAL_TITLE_NO_DATA', 'ACK_MODAL_MSG_NO_DATA');
+          }
         } else if (status === InterfaceStatus.DISCONNECTED) {
-          this.scheduleDisconnectedError();
+          this.scheduleDisconnectedError('ACK_MODAL_TITLE_DISCONNECTED', 'ACK_MODAL_MSG_DISCONNECTED');
         } else if (status === InterfaceStatus.CONNECTED) {
           this.clearDisconnectedError();
-          if (this.wasInterfaceErrorShown) {
+          if (this.showAckModal) {
             this.showInterfaceError('ACK_MODAL_TITLE_CONNECTED', 'ACK_MODAL_MSG_CONNECTED');
           }
+          this.hasInitiallyConnected = true;
         }
         if (!this.isDestroyed) {
           this.cdr.detectChanges();
@@ -383,7 +388,11 @@ export class DefaultRacedayComponent implements OnInit, OnDestroy {
     if (this.noStatusWatchdog) clearTimeout(this.noStatusWatchdog);
     this.noStatusWatchdog = setTimeout(() => {
       this.lastInterfaceStatus = -1;
-      this.showInterfaceError('ACK_MODAL_TITLE_NO_STATUS', 'ACK_MODAL_MSG_NO_STATUS');
+      if (!this.hasInitiallyConnected) {
+        this.showInterfaceError('ACK_MODAL_TITLE_DISCONNECTED', 'ACK_MODAL_MSG_DISCONNECTED');
+      } else {
+        this.showInterfaceError('ACK_MODAL_TITLE_NO_STATUS', 'ACK_MODAL_MSG_NO_STATUS');
+      }
     }, this.WATCHDOG_TIMEOUT);
   }
 
@@ -392,14 +401,19 @@ export class DefaultRacedayComponent implements OnInit, OnDestroy {
     this.ackModalTitle = titleKey;
     this.ackModalMessage = messageKey;
     this.showAckModal = true;
-    this.wasInterfaceErrorShown = true;
     this.cdr.detectChanges();
   }
 
-  private scheduleDisconnectedError() {
+  private scheduleDisconnectedError(title: string = 'ACK_MODAL_TITLE_DISCONNECTED', message: string = 'ACK_MODAL_MSG_DISCONNECTED') {
     if (this.disconnectedTimeout) return; // Already scheduled
+
+    if (this.noStatusWatchdog) {
+      clearTimeout(this.noStatusWatchdog);
+      this.noStatusWatchdog = null;
+    }
+
     this.disconnectedTimeout = setTimeout(() => {
-      this.showInterfaceError('ACK_MODAL_TITLE_DISCONNECTED', 'ACK_MODAL_MSG_DISCONNECTED');
+      this.showInterfaceError(title, message);
     }, 5000);
   }
 
@@ -412,9 +426,6 @@ export class DefaultRacedayComponent implements OnInit, OnDestroy {
 
   onAcknowledgeModal() {
     this.showAckModal = false;
-    if (this.ackModalTitle === 'ACK_MODAL_TITLE_CONNECTED') {
-      this.wasInterfaceErrorShown = false;
-    }
   }
 
   private sortHeatDrivers() {
