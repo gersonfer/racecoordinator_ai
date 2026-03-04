@@ -25,6 +25,6 @@
 
   <app-item-selector [visible]="showItemSelector" [title]="'AS_TITLE_SELECT_SOUND' | translate" [items]="assets"
     [itemType]="'sound'" [backButtonRoute]="backButtonRoute" [backButtonQueryParams]="backButtonQueryParams"
-    (select)="onAssetSelected($event)" (close)="closeItemSelector()">
+    (select)="onAssetSelected($event)" (play)="onPlayPreview($event)" (close)="closeItemSelector()">
   </app-item-selector>
 </div>

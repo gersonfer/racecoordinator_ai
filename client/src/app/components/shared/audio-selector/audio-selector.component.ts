@@ -76,6 +76,11 @@ export class AudioSelectorComponent {
     this.closeItemSelector();
   }
 
+  onPlayPreview(item: any) {
+    const playContext = this.context || mockTTSContext();
+    playSound('preset', item.url, '', this.dataService.serverUrl, playContext);
+  }
+
   play() {
     const playContext = this.context || mockTTSContext();
     playSound(this.type, this.url, this.text, this.dataService.serverUrl, playContext);

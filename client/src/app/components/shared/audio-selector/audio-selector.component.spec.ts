@@ -114,4 +114,15 @@ describe('AudioSelectorComponent', () => {
 
   // Note: Testing TTS relies on window.speechSynthesis which might need more complex mocking
   // for a robust test environment, but this covers the basic logic paths.
+
+  it('should call playSound when onPlayPreview is called', () => {
+    const mockAudio = jasmine.createSpyObj('Audio', ['play']);
+    mockAudio.play.and.returnValue(Promise.resolve());
+    spyOn(window, 'Audio').and.returnValue(mockAudio);
+
+    const item = { name: 'Test Sound', url: 'test.mp3' };
+    component.onPlayPreview(item);
+    expect(window.Audio).toHaveBeenCalled();
+    expect(mockAudio.play).toHaveBeenCalled();
+  });
 });

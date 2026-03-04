@@ -19,6 +19,7 @@
             </ng-container>
             <ng-container *ngIf="itemType === 'sound'">
               <img src="assets/images/default_audio_icon.png" class="preview-icon" alt="sound">
+              <button class="play-preview" (click)="onPlay($event, item)" [title]="'IS_BTN_PLAY' | translate">▶</button>
             </ng-container>
             <div class="no-preview" *ngIf="!item.url && itemType === 'image'">?</div>
           </div>

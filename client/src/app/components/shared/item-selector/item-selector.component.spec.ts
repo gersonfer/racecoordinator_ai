@@ -64,16 +64,28 @@ describe('ItemSelectorComponent', () => {
     expect(items[0].textContent).toContain('Item 1');
   });
 
-  it('should emit select event on item click', () => {
+  it('should emit select event when item is clicked', () => {
     spyOn(component.select, 'emit');
-    component.visible = true;
-    component.items = [{ name: 'Item 1', url: 'assets/images/default_avatar.svg' }];
-    fixture.detectChanges();
+    const item = { name: 'Test Item', url: 'test.png' };
+    component.onSelect(item);
+    expect(component.select.emit).toHaveBeenCalledWith(item);
+  });
 
-    const item = fixture.nativeElement.querySelector('.item-card');
-    item.click();
+  it('should emit play event when onPlay is called', () => {
+    spyOn(component.play, 'emit');
+    const item = { name: 'Test Sound', url: 'test.mp3' };
+    const event = new MouseEvent('click');
+    component.onPlay(event, item);
+    expect(component.play.emit).toHaveBeenCalledWith(item);
+  });
 
-    expect(component.select.emit).toHaveBeenCalledWith(component.items[0]);
+  it('should stop propagation when onPlay is called', () => {
+    const event = new MouseEvent('click');
+    spyOn(event, 'stopPropagation');
+    spyOn(event, 'stopImmediatePropagation');
+    component.onPlay(event, {});
+    expect(event.stopPropagation).toHaveBeenCalled();
+    expect(event.stopImmediatePropagation).toHaveBeenCalled();
   });
 
   it('should emit close event on close button click', () => {

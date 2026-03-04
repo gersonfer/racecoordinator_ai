@@ -28,6 +28,7 @@ export class ItemSelectorComponent {
   }
 
   @Output() select = new EventEmitter<any>();
+  @Output() play = new EventEmitter<any>();
   @Output() close = new EventEmitter<void>();
 
   constructor(private router: Router) { }
@@ -41,6 +42,12 @@ export class ItemSelectorComponent {
 
   onSelect(item: any) {
     this.select.emit(item);
+  }
+
+  onPlay(event: MouseEvent, item: any) {
+    event.stopPropagation();
+    event.stopImmediatePropagation();
+    this.play.emit(item);
   }
 
   onClose() {
