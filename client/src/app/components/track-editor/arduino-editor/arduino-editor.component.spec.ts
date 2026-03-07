@@ -1,4 +1,4 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed, fakeAsync, tick, flush } from '@angular/core/testing';
 import { NO_ERRORS_SCHEMA } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ArduinoEditorComponent } from './arduino-editor.component';
@@ -103,6 +103,28 @@ describe('ArduinoEditorComponent', () => {
   it('should fetch serial ports on init', () => {
     expect(component.availablePorts).toEqual(['COM1', 'COM2']);
   });
+
+  it('should periodically poll for serial ports', fakeAsync(() => {
+    // Re-create component to capture ngOnInit with spy
+    fixture = TestBed.createComponent(ArduinoEditorComponent);
+    component = fixture.componentInstance;
+    component.config = makeConfig();
+    component.lanes = [new Lane('l1', '#fff', '#000', 10)];
+
+    spyOn(component, 'fetchPorts').and.callThrough();
+    fixture.detectChanges(); // triggers ngOnInit
+
+    expect(component.fetchPorts).toHaveBeenCalledTimes(1);
+
+    tick(5000);
+    expect(component.fetchPorts).toHaveBeenCalledTimes(2);
+
+    tick(5000);
+    expect(component.fetchPorts).toHaveBeenCalledTimes(3);
+
+    component.ngOnDestroy();
+    flush();
+  }));
 
   it('should update config when inputs change', () => {
     spyOn(component.configChange, 'emit');

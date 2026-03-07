@@ -4,7 +4,7 @@ import { Lane } from '../../../models/lane';
 import { DataService } from '../../../data.service';
 import { TranslationService } from '../../../services/translation.service';
 import { com } from '../../../proto/message';
-import { Subscription, Subject } from 'rxjs';
+import { Subscription, Subject, timer } from 'rxjs';
 import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 
 interface PinAction {
@@ -49,6 +49,7 @@ export class ArduinoEditorComponent implements OnInit, OnDestroy {
   isVoltageLinked: boolean = false;
 
   private interfaceEventsSubscription?: Subscription;
+  private portPollingSubscription?: Subscription;
   private pinActivityTimers: { [key: string]: any } = {};
 
   resetMaxSeenAll() {
@@ -64,6 +65,9 @@ export class ArduinoEditorComponent implements OnInit, OnDestroy {
 
   ngOnInit() {
     this.fetchPorts();
+    this.portPollingSubscription = timer(5000, 5000).subscribe(() => {
+      this.fetchPorts();
+    });
     this.updatePinActions();
 
     // Subscribe to Interface Events for status and pin activity
@@ -145,6 +149,7 @@ export class ArduinoEditorComponent implements OnInit, OnDestroy {
 
   ngOnDestroy() {
     this.interfaceEventsSubscription?.unsubscribe();
+    this.portPollingSubscription?.unsubscribe();
     this.dataService.closeInterface().subscribe({
       next: () => console.log('Interface closed successfully'),
       error: (err) => console.error('Error closing interface', err)
