@@ -13,11 +13,13 @@
       <div class="menu-dropdown" *ngIf="item.label === 'RDS_MENU_CONFIG' && isConfigDropdownOpen">
         <div class="menu-dropdown-item" (click)="openDriverManager()">{{ 'RDS_MENU_DRIVER_MANAGER' | translate }}</div>
         <div class="menu-dropdown-item" (click)="openTeamManager()">{{ 'RDS_MENU_TEAM_MANAGER' | translate }}</div>
-        <div class="menu-dropdown-divider"></div>
+        <hr class="menu-dropdown-divider">
         <div class="menu-dropdown-item" (click)="openTrackManager()">{{ 'RDS_MENU_TRACK' | translate }}</div>
-        <div class="menu-dropdown-divider"></div>
+        <hr class="menu-dropdown-divider">
         <div class="menu-dropdown-item" (click)="openRaceManager()">{{ 'RDS_MENU_RACE' | translate }}</div>
-        <div class="menu-dropdown-item" (click)="closeConfigDropdown()">{{ 'RDS_MENU_SEASON' | translate }}</div>
+        <div class="menu-dropdown-item disabled">{{ 'RDS_MENU_EVENT' | translate }}</div>
+        <div class="menu-dropdown-item disabled" (click)="closeConfigDropdown()">{{ 'RDS_MENU_SEASON' | translate }}
+        </div>
       </div>
 
       <!-- File Dropdown -->
