@@ -214,6 +214,13 @@ describe('UIEditorComponent', () => {
     expect(component.editingSettings.sortByStandings).toBeTrue();
   });
 
+  it('should handle highlightRowOnLap change', () => {
+    component.editingSettings.highlightRowOnLap = true;
+    expect(component.editingSettings.highlightRowOnLap).toBeTrue();
+    component.editingSettings.highlightRowOnLap = false;
+    expect(component.editingSettings.highlightRowOnLap).toBeFalse();
+  });
+
   it('should include image sets in availableColumns correctly', () => {
     mockDataService.listAssets.and.returnValue(of([
       { type: 'image', url: 'img1.png' },

@@ -25,6 +25,7 @@ describe('SettingsService', () => {
     const settings = service.getSettings();
     expect(settings.language).toBe('');
     expect(settings.serverIp).toBe('localhost');
+    expect(settings.highlightRowOnLap).toBeTrue();
   });
 
   it('should save and retrieve language setting', () => {
@@ -33,13 +34,15 @@ describe('SettingsService', () => {
       selectedDriverIds: ['d1'],
       serverIp: '1.2.3.4',
       serverPort: 8080,
-      language: 'es'
+      language: 'es',
+      highlightRowOnLap: false
     });
     service.saveSettings(settings);
 
     const retrieved = service.getSettings();
     expect(retrieved.language).toBe('es');
     expect(retrieved.serverIp).toBe('1.2.3.4');
+    expect(retrieved.highlightRowOnLap).toBeFalse();
   });
 
   it('should handle corrupt JSON in localStorage', () => {

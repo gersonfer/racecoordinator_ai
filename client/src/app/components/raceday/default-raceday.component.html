@@ -151,42 +151,41 @@
             [attr.text-anchor]="getColumnTextAnchor(colIndex)">{{ getColumnLabel(column) }}</text>
         </g>
 
-
         <!-- Rows -->
         <g *ngFor="let hd of sortedHeatDrivers; let i = index; trackBy: trackByDriverId" class="driver-row"
           [attr.transform]="'translate(0, ' + (310 + i * (560 / track.lanes.length)) + ')'">
-          <rect x="0" y="0" width="1600" [attr.height]="560 / track.lanes.length"
-            [attr.fill]="track.lanes[hd.laneIndex].background_color" rx="4" />
+          <g class="row-scaler" [class.highlighted]="highlightedDrivers.has(hd.objectId)">
+            <rect x="0" y="0" width="1600" [attr.height]="560 / track.lanes.length"
+              [attr.fill]="track.lanes[hd.laneIndex].background_color" rx="4" />
 
-          <!-- Columns -->
-          <ng-container *ngFor="let column of columns; let colIndex = index">
-            <!-- Iterate over all assigned anchors in the layout -->
-            <ng-container *ngFor="let entry of column.layout | keyvalue">
-              <image
-                *ngIf="entry.value?.toString()?.includes('avatarUrl') || entry.value?.toString()?.startsWith('imageset_')"
-                [attr.x]="getColumnCenterX(colIndex) - ((560 / track.lanes.length) * 0.4)"
-                [attr.y]="(560 / track.lanes.length) * 0.1" [attr.width]="(560 / track.lanes.length) * 0.8"
-                [attr.height]="(560 / track.lanes.length) * 0.8"
-                [attr.href]="formatColumnValue(hd, column, entry.value?.toString() || '')"
-                preserveAspectRatio="xMidYMid slice" />
+            <!-- Columns -->
+            <ng-container *ngFor="let column of columns; let colIndex = index">
+              <!-- Iterate over all assigned anchors in the layout -->
+              <ng-container *ngFor="let entry of column.layout | keyvalue">
+                <image
+                  *ngIf="entry.value?.toString()?.includes('avatarUrl') || entry.value?.toString()?.startsWith('imageset_')"
+                  [attr.x]="getColumnCenterX(colIndex) - ((560 / track.lanes.length) * 0.4)"
+                  [attr.y]="(560 / track.lanes.length) * 0.1" [attr.width]="(560 / track.lanes.length) * 0.8"
+                  [attr.height]="(560 / track.lanes.length) * 0.8"
+                  [attr.href]="formatColumnValue(hd, column, entry.value?.toString() || '')"
+                  preserveAspectRatio="xMidYMid slice" />
 
-              <text
-                *ngIf="!entry.value?.toString()?.includes('avatarUrl') && !entry.value?.toString()?.startsWith('imageset_')"
-                [attr.x]="getColumnTextX(colIndex, entry.key)" [attr.y]="getColumnTextY(colIndex, false, entry.key)"
-                [attr.font-size]="getAnchorFontSize(entry.key)" font-weight="800"
-                [attr.fill]="track.lanes[hd.laneIndex].foreground_color"
-                [attr.text-anchor]="getColumnTextAnchor(colIndex, entry.key)" font-family="monospace" appSvgTextScaler
-                [maxWidth]="getColumnMaxWidth(colIndex)" [scaleToFit]="column.scaleToFit">{{ formatColumnValue(hd,
-                column, entry.value?.toString() || '') }}</text>
+                <text
+                  *ngIf="!entry.value?.toString()?.includes('avatarUrl') && !entry.value?.toString()?.startsWith('imageset_')"
+                  [attr.x]="getColumnTextX(colIndex, entry.key)" [attr.y]="getColumnTextY(colIndex, false, entry.key)"
+                  [attr.font-size]="getAnchorFontSize(entry.key)" font-weight="800"
+                  [attr.fill]="track.lanes[hd.laneIndex].foreground_color"
+                  [attr.text-anchor]="getColumnTextAnchor(colIndex, entry.key)" font-family="monospace" appSvgTextScaler
+                  [maxWidth]="getColumnMaxWidth(colIndex)" [scaleToFit]="column.scaleToFit">{{ formatColumnValue(hd,
+                  column, entry.value?.toString() || '') }}</text>
+              </ng-container>
             </ng-container>
-          </ng-container>
 
-
-          <!-- Vertical Lines between columns -->
-          <line *ngFor="let column of columns; let colIndex = index" [attr.x1]="getColumnX(colIndex) + column.width"
-            y1="0" [attr.x2]="getColumnX(colIndex) + column.width" [attr.y2]="560 / track.lanes.length" stroke="black"
-            stroke-width="2" stroke-opacity="0.15" />
-
+            <!-- Vertical Lines between columns -->
+            <line *ngFor="let column of columns; let colIndex = index" [attr.x1]="getColumnX(colIndex) + column.width"
+              y1="0" [attr.x2]="getColumnX(colIndex) + column.width" [attr.y2]="560 / track.lanes.length" stroke="black"
+              stroke-width="2" stroke-opacity="0.15" />
+          </g>
         </g>
       </ng-container>
     </svg>

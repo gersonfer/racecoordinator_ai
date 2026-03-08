@@ -679,4 +679,42 @@ describe('DefaultRacedayComponent', () => {
       expect(result).toBe('50%');
     });
   });
+
+  describe('Lap Highlighting', () => {
+    let lapsSubject: Subject<com.antigravity.ILap>;
+
+    beforeEach(() => {
+      lapsSubject = new Subject<com.antigravity.ILap>();
+      mockDataService.getLaps.and.returnValue(lapsSubject.asObservable());
+
+      const mockHd = { objectId: 'driver1', laneIndex: 0, driver: { lapAudio: {}, bestLapAudio: {} }, addLapTime: () => { } };
+      const mockHeat = { heatDrivers: [mockHd], heatNumber: 1 };
+      component['heat'] = mockHeat as any;
+      component['track'] = { name: 'Test Track', lanes: [{ background_color: 'red' }] } as any;
+      component['race'] = { name: 'Test Race' } as any;
+
+      fixture.detectChanges();
+    });
+
+    it('should highlight driver when lap is received and enabled', fakeAsync(() => {
+      mockSettings.highlightRowOnLap = true;
+
+      lapsSubject.next({ objectId: 'driver1', lapTime: 1.234, bestLapTime: 1.000 });
+      fixture.detectChanges();
+
+      expect(component['highlightedDrivers'].has('driver1')).toBeTrue();
+
+      tick(400);
+      expect(component['highlightedDrivers'].has('driver1')).toBeFalse();
+    }));
+
+    it('should not highlight driver when lap is received but disabled', fakeAsync(() => {
+      mockSettings.highlightRowOnLap = false;
+
+      lapsSubject.next({ objectId: 'driver1', lapTime: 1.234, bestLapTime: 1.000 });
+      fixture.detectChanges();
+
+      expect(component['highlightedDrivers'].has('driver1')).toBeFalse();
+    }));
+  });
 });

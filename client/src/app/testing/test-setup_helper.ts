@@ -93,6 +93,15 @@ export class TestSetupHelper {
     // Mock Assets API
     await this.setupAssetMocks(page);
 
+    // Mock Server Version API
+    await page.route('**/api/version', async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'text/plain',
+        body: '0.0.0.1'
+      });
+    });
+
     // Mock Database Stats API
     await page.route('**/api/databases/current*', async (route) => {
       await route.fulfill({

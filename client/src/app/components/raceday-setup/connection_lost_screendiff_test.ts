@@ -48,6 +48,21 @@ test.describe('Connection Loss Visuals', () => {
       }
     });
 
+    // Mock teams to avoid hanging forkJoin in DefaultRacedaySetupComponent
+    await page.route('**/api/teams', async route => {
+      if (connectionSucceeds) {
+        await route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify([
+            { entity_id: 't1', name: 'Team Alpha', avatarUrl: '' }
+          ]),
+        });
+      } else {
+        await route.abort('failed');
+      }
+    });
+
     // 3. Setup standard mocks for localization and assets
     await TestSetupHelper.setupLocalizationMocks(page);
     await TestSetupHelper.setupAssetMocks(page);
@@ -59,6 +74,9 @@ test.describe('Connection Loss Visuals', () => {
 
     // 5. Load the app
     await page.goto('/');
+
+    // Disable animations for stability - Must be called after goto() as navigation clears styles
+    await TestSetupHelper.disableAnimations(page);
 
     // 6. Advance past splash screen (5s min time)
     // The splash screen waits for connection (mocked success) AND 5 seconds.
@@ -87,9 +105,16 @@ test.describe('Connection Loss Visuals', () => {
     // 8. Verify transparency
     // Since we used fake clock and stopped advancing, the app's internal "reset to splash" timer 
     // (which triggers 5s after connection loss) will NOT fire. This stabilizes the screenshot state.
-    // We also mask the quote text as it is randomized.
+    // We also mask the quote text, version, and spinner (animated)
+    await page.waitForTimeout(1000); // Longer settlement wait
+
     await expect(page).toHaveScreenshot('connection-lost-overlay.png', {
-      mask: [page.locator('.quote-text'), page.locator('.quote-container')],
+      mask: [
+        page.locator('.quote-text'),
+        page.locator('.quote-container'),
+        page.locator('.version-container'),
+        page.locator('.spinner')
+      ],
       maxDiffPixelRatio: 0.05,
       threshold: 0.2
     });

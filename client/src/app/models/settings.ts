@@ -25,6 +25,7 @@ export class Settings {
   flagBlack?: string;
   flagCheckered?: string;
   sortByStandings: boolean = true;
+  highlightRowOnLap: boolean = true;
   racedayColumns: string[] = Settings.DEFAULT_COLUMNS;
   columnAnchors: { [key: string]: AnchorPoint } = {};
   columnLayouts: { [columnKey: string]: { [A in AnchorPoint]?: string } } = {

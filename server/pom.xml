@@ -13,6 +13,7 @@
     <maven.compiler.target>1.8</maven.compiler.target>
     <build.dist.dir>target_test</build.dist.dir>
     <generated.sources.dir>${project.build.directory}/generated-sources/protobuf/java</generated.sources.dir>
+    <protobuf.java.version>3.25.1</protobuf.java.version>
   </properties>
   <dependencies>
     <dependency>
@@ -98,7 +99,7 @@
         <artifactId>protobuf-maven-plugin</artifactId>
         <version>0.6.1</version>
         <configuration>
-          <protocExecutable>/tmp/racecoordinator-client/bin/protoc</protocExecutable>
+          <protocArtifact>com.google.protobuf:protoc:${protobuf.java.version}:exe:${os.detected.classifier}</protocArtifact>
           <protoSourceRoot>${project.basedir}/../proto</protoSourceRoot>
           <skip>${skipProtobuf}</skip>
         </configuration>

@@ -29,6 +29,14 @@
             </label>
           </div>
 
+          <div class="sorting-selector">
+            <label class="checkbox-container">
+              <input type="checkbox" [(ngModel)]="editingSettings.highlightRowOnLap" (change)="captureState()">
+              <span class="checkmark"></span>
+              {{ 'UE_LABEL_HIGHLIGHT_LAP' | translate }}
+            </label>
+          </div>
+
           <div class="column-actions">
             <button class="btn btn-secondary" (click)="openReorderDialog()">
               <span class="material-icons"></span>

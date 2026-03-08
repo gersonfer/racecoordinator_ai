@@ -27,7 +27,7 @@ test.describe('About Dialog', () => {
     // We use evaluate to click because CSS translate/scale transforms confuse Playwright's mouse click geometry.
     const helpMenu = page.locator('.help-menu-container .menu-item');
     await expect(helpMenu).toBeVisible();
-    await helpMenu.click({ force: true });
+    await helpMenu.dispatchEvent('click');
 
     // 2. Click About - Wait for dropdown to ensure it's open
     const dropdown = page.locator('.help-menu-container .menu-dropdown');
@@ -36,7 +36,7 @@ test.describe('About Dialog', () => {
     // The About menu item is the last item in the dropdown
     const aboutItem = dropdown.locator('.menu-dropdown-item').last();
     await expect(aboutItem).toBeVisible();
-    await aboutItem.click({ force: true });
+    await aboutItem.dispatchEvent('click');
 
     // 3. Verify dialog is visible (specifically the internal backdrop, not just the empty host element)
     const dialog = page.locator('app-about-dialog');
@@ -48,8 +48,13 @@ test.describe('About Dialog', () => {
     // Wait a brief moment for rendering
     await page.waitForTimeout(500);
 
-    // 5. Take a screenshot
+    // 5. Take a screenshot - Mask noisy elements in the background
     await expect(page).toHaveScreenshot('about-dialog.png', {
+      mask: [
+        page.locator('.quote-container'),
+        page.locator('.version-container'),
+        page.locator('.spinner')
+      ],
       maxDiffPixelRatio: 0.1,
       threshold: 0.2,
       animations: 'disabled'

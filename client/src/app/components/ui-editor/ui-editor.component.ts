@@ -259,6 +259,8 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
     const visibility = s.columnVisibility || {};
     clone.columnVisibility = JSON.parse(JSON.stringify(visibility));
 
+    clone.highlightRowOnLap = s.highlightRowOnLap ?? true;
+
     return clone;
   }
 
@@ -275,6 +277,7 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
       a.flagBlack === b.flagBlack &&
       a.flagCheckered === b.flagCheckered &&
       a.sortByStandings === b.sortByStandings &&
+      a.highlightRowOnLap === b.highlightRowOnLap &&
       JSON.stringify(a.racedayColumns) === JSON.stringify(b.racedayColumns) &&
       JSON.stringify(a.columnLayouts) === JSON.stringify(b.columnLayouts) &&
       JSON.stringify(a.columnVisibility) === JSON.stringify(b.columnVisibility);

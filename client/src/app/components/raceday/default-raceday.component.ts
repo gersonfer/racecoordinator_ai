@@ -88,6 +88,7 @@ export class DefaultRacedayComponent implements OnInit, OnDestroy {
   protected raceState: com.antigravity.RaceState = com.antigravity.RaceState.UNKNOWN_STATE;
   protected assets: any[] = [];
   protected hasRacedInCurrentHeat: boolean = false;
+  protected highlightedDrivers: Set<string> = new Set();
 
   private driversLoaded = false;
   private pendingUpdate: com.antigravity.IRace | null = null;
@@ -213,6 +214,21 @@ export class DefaultRacedayComponent implements OnInit, OnDestroy {
             playSound(driver.lapAudio.type, driver.lapAudio.url, driver.lapAudio.text, this.dataService.serverUrl, ttsContext);
           } else {
             console.log('No audio configured for this driver/scenario');
+          }
+
+          // Highlighting
+          const settings = this.settingsService.getSettings();
+          if (settings.highlightRowOnLap) {
+            this.highlightedDrivers.add(lap.objectId!);
+            if (!this.isDestroyed) {
+              this.cdr.detectChanges();
+            }
+            setTimeout(() => {
+              this.highlightedDrivers.delete(lap.objectId!);
+              if (!this.isDestroyed) {
+                this.cdr.detectChanges();
+              }
+            }, 400);
           }
         } else {
           console.warn(`Lap objectId ${lap.objectId} not found among heat drivers. Heat Drivers:`, this.heat.heatDrivers.map(d => d.objectId));
