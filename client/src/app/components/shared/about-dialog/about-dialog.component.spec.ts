@@ -35,14 +35,14 @@ describe('AboutDialogComponent', () => {
 
   it('should display versions when visible', () => {
     component.visible = true;
-    component.clientVersion = '0.0.1';
+    component.clientVersion = '0.0.0.1';
     component.serverVersion = '1.2.3';
     fixture.detectChanges();
 
     const compiled = fixture.nativeElement as HTMLElement;
     expect(compiled.querySelector('.modal-backdrop')).toBeTruthy();
     const versionInfo = compiled.querySelector('.version-info')?.textContent;
-    expect(versionInfo).toContain('0.0.1');
+    expect(versionInfo).toContain('0.0.0.1');
     expect(versionInfo).toContain('1.2.3');
   });
 

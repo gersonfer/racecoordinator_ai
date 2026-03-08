@@ -3882,11 +3882,11 @@ export const com = $root.com = (() => {
              * @property {string|null} [commPort] ArduinoConfig commPort
              * @property {number|null} [baudRate] ArduinoConfig baudRate
              * @property {number|null} [debounceUs] ArduinoConfig debounceUs
-             * @property {number|null} [globalInvertLanes] ArduinoConfig globalInvertLanes
+             * @property {boolean|null} [globalInvertLanes] ArduinoConfig globalInvertLanes
              * @property {boolean|null} [normallyClosedRelays] ArduinoConfig normallyClosedRelays
              * @property {number|null} [globalInvertLights] ArduinoConfig globalInvertLights
-             * @property {number|null} [usePitsAsLaps] ArduinoConfig usePitsAsLaps
-             * @property {number|null} [useLapsForSegments] ArduinoConfig useLapsForSegments
+             * @property {boolean|null} [usePitsAsLaps] ArduinoConfig usePitsAsLaps
+             * @property {boolean|null} [useLapsForSegments] ArduinoConfig useLapsForSegments
              * @property {number|null} [hardwareType] ArduinoConfig hardwareType
              * @property {Array.<number>|null} [digitalIds] ArduinoConfig digitalIds
              * @property {Array.<number>|null} [analogIds] ArduinoConfig analogIds
@@ -3948,11 +3948,11 @@ export const com = $root.com = (() => {
 
             /**
              * ArduinoConfig globalInvertLanes.
-             * @member {number} globalInvertLanes
+             * @member {boolean} globalInvertLanes
              * @memberof com.antigravity.ArduinoConfig
              * @instance
              */
-            ArduinoConfig.prototype.globalInvertLanes = 0;
+            ArduinoConfig.prototype.globalInvertLanes = false;
 
             /**
              * ArduinoConfig normallyClosedRelays.
@@ -3972,19 +3972,19 @@ export const com = $root.com = (() => {
 
             /**
              * ArduinoConfig usePitsAsLaps.
-             * @member {number} usePitsAsLaps
+             * @member {boolean} usePitsAsLaps
              * @memberof com.antigravity.ArduinoConfig
              * @instance
              */
-            ArduinoConfig.prototype.usePitsAsLaps = 0;
+            ArduinoConfig.prototype.usePitsAsLaps = false;
 
             /**
              * ArduinoConfig useLapsForSegments.
-             * @member {number} useLapsForSegments
+             * @member {boolean} useLapsForSegments
              * @memberof com.antigravity.ArduinoConfig
              * @instance
              */
-            ArduinoConfig.prototype.useLapsForSegments = 0;
+            ArduinoConfig.prototype.useLapsForSegments = false;
 
             /**
              * ArduinoConfig hardwareType.
@@ -4067,15 +4067,15 @@ export const com = $root.com = (() => {
                 if (message.debounceUs != null && Object.hasOwnProperty.call(message, "debounceUs"))
                     writer.uint32(/* id 4, wireType 0 =*/32).int32(message.debounceUs);
                 if (message.globalInvertLanes != null && Object.hasOwnProperty.call(message, "globalInvertLanes"))
-                    writer.uint32(/* id 5, wireType 0 =*/40).int32(message.globalInvertLanes);
+                    writer.uint32(/* id 5, wireType 0 =*/40).bool(message.globalInvertLanes);
                 if (message.normallyClosedRelays != null && Object.hasOwnProperty.call(message, "normallyClosedRelays"))
                     writer.uint32(/* id 6, wireType 0 =*/48).bool(message.normallyClosedRelays);
                 if (message.globalInvertLights != null && Object.hasOwnProperty.call(message, "globalInvertLights"))
                     writer.uint32(/* id 7, wireType 0 =*/56).int32(message.globalInvertLights);
                 if (message.usePitsAsLaps != null && Object.hasOwnProperty.call(message, "usePitsAsLaps"))
-                    writer.uint32(/* id 10, wireType 0 =*/80).int32(message.usePitsAsLaps);
+                    writer.uint32(/* id 10, wireType 0 =*/80).bool(message.usePitsAsLaps);
                 if (message.useLapsForSegments != null && Object.hasOwnProperty.call(message, "useLapsForSegments"))
-                    writer.uint32(/* id 11, wireType 0 =*/88).int32(message.useLapsForSegments);
+                    writer.uint32(/* id 11, wireType 0 =*/88).bool(message.useLapsForSegments);
                 if (message.hardwareType != null && Object.hasOwnProperty.call(message, "hardwareType"))
                     writer.uint32(/* id 12, wireType 0 =*/96).int32(message.hardwareType);
                 if (message.digitalIds != null && message.digitalIds.length) {
@@ -4151,7 +4151,7 @@ export const com = $root.com = (() => {
                             break;
                         }
                     case 5: {
-                            message.globalInvertLanes = reader.int32();
+                            message.globalInvertLanes = reader.bool();
                             break;
                         }
                     case 6: {
@@ -4163,11 +4163,11 @@ export const com = $root.com = (() => {
                             break;
                         }
                     case 10: {
-                            message.usePitsAsLaps = reader.int32();
+                            message.usePitsAsLaps = reader.bool();
                             break;
                         }
                     case 11: {
-                            message.useLapsForSegments = reader.int32();
+                            message.useLapsForSegments = reader.bool();
                             break;
                         }
                     case 12: {
@@ -4260,8 +4260,8 @@ export const com = $root.com = (() => {
                     if (!$util.isInteger(message.debounceUs))
                         return "debounceUs: integer expected";
                 if (message.globalInvertLanes != null && message.hasOwnProperty("globalInvertLanes"))
-                    if (!$util.isInteger(message.globalInvertLanes))
-                        return "globalInvertLanes: integer expected";
+                    if (typeof message.globalInvertLanes !== "boolean")
+                        return "globalInvertLanes: boolean expected";
                 if (message.normallyClosedRelays != null && message.hasOwnProperty("normallyClosedRelays"))
                     if (typeof message.normallyClosedRelays !== "boolean")
                         return "normallyClosedRelays: boolean expected";
@@ -4269,11 +4269,11 @@ export const com = $root.com = (() => {
                     if (!$util.isInteger(message.globalInvertLights))
                         return "globalInvertLights: integer expected";
                 if (message.usePitsAsLaps != null && message.hasOwnProperty("usePitsAsLaps"))
-                    if (!$util.isInteger(message.usePitsAsLaps))
-                        return "usePitsAsLaps: integer expected";
+                    if (typeof message.usePitsAsLaps !== "boolean")
+                        return "usePitsAsLaps: boolean expected";
                 if (message.useLapsForSegments != null && message.hasOwnProperty("useLapsForSegments"))
-                    if (!$util.isInteger(message.useLapsForSegments))
-                        return "useLapsForSegments: integer expected";
+                    if (typeof message.useLapsForSegments !== "boolean")
+                        return "useLapsForSegments: boolean expected";
                 if (message.hardwareType != null && message.hasOwnProperty("hardwareType"))
                     if (!$util.isInteger(message.hardwareType))
                         return "hardwareType: integer expected";
@@ -4340,15 +4340,15 @@ export const com = $root.com = (() => {
                 if (object.debounceUs != null)
                     message.debounceUs = object.debounceUs | 0;
                 if (object.globalInvertLanes != null)
-                    message.globalInvertLanes = object.globalInvertLanes | 0;
+                    message.globalInvertLanes = Boolean(object.globalInvertLanes);
                 if (object.normallyClosedRelays != null)
                     message.normallyClosedRelays = Boolean(object.normallyClosedRelays);
                 if (object.globalInvertLights != null)
                     message.globalInvertLights = object.globalInvertLights | 0;
                 if (object.usePitsAsLaps != null)
-                    message.usePitsAsLaps = object.usePitsAsLaps | 0;
+                    message.usePitsAsLaps = Boolean(object.usePitsAsLaps);
                 if (object.useLapsForSegments != null)
-                    message.useLapsForSegments = object.useLapsForSegments | 0;
+                    message.useLapsForSegments = Boolean(object.useLapsForSegments);
                 if (object.hardwareType != null)
                     message.hardwareType = object.hardwareType | 0;
                 if (object.digitalIds) {
@@ -4429,11 +4429,11 @@ export const com = $root.com = (() => {
                     object.commPort = "";
                     object.baudRate = 0;
                     object.debounceUs = 0;
-                    object.globalInvertLanes = 0;
+                    object.globalInvertLanes = false;
                     object.normallyClosedRelays = false;
                     object.globalInvertLights = 0;
-                    object.usePitsAsLaps = 0;
-                    object.useLapsForSegments = 0;
+                    object.usePitsAsLaps = false;
+                    object.useLapsForSegments = false;
                     object.hardwareType = 0;
                     object.lapPinPitBehavior = options.enums === String ? "LAP_PIN_PIT_NONE" : 0;
                 }
@@ -14654,6 +14654,7 @@ export const com = $root.com = (() => {
              * @property {com.antigravity.IOverallStandingsUpdate|null} [overallStandingsUpdate] RaceData overallStandingsUpdate
              * @property {com.antigravity.RaceState|null} [raceState] RaceData raceState
              * @property {com.antigravity.ICarData|null} [carData] RaceData carData
+             * @property {com.antigravity.ISegment|null} [segment] RaceData segment
              */
 
             /**
@@ -14735,17 +14736,25 @@ export const com = $root.com = (() => {
              */
             RaceData.prototype.carData = null;
 
+            /**
+             * RaceData segment.
+             * @member {com.antigravity.ISegment|null|undefined} segment
+             * @memberof com.antigravity.RaceData
+             * @instance
+             */
+            RaceData.prototype.segment = null;
+
             // OneOf field names bound to virtual getters and setters
             let $oneOfFields;
 
             /**
              * RaceData data.
-             * @member {"raceTime"|"lap"|"race"|"reactionTime"|"standingsUpdate"|"overallStandingsUpdate"|"raceState"|"carData"|undefined} data
+             * @member {"raceTime"|"lap"|"race"|"reactionTime"|"standingsUpdate"|"overallStandingsUpdate"|"raceState"|"carData"|"segment"|undefined} data
              * @memberof com.antigravity.RaceData
              * @instance
              */
             Object.defineProperty(RaceData.prototype, "data", {
-                get: $util.oneOfGetter($oneOfFields = ["raceTime", "lap", "race", "reactionTime", "standingsUpdate", "overallStandingsUpdate", "raceState", "carData"]),
+                get: $util.oneOfGetter($oneOfFields = ["raceTime", "lap", "race", "reactionTime", "standingsUpdate", "overallStandingsUpdate", "raceState", "carData", "segment"]),
                 set: $util.oneOfSetter($oneOfFields)
             });
 
@@ -14789,6 +14798,8 @@ export const com = $root.com = (() => {
                     writer.uint32(/* id 7, wireType 0 =*/56).int32(message.raceState);
                 if (message.carData != null && Object.hasOwnProperty.call(message, "carData"))
                     $root.com.antigravity.CarData.encode(message.carData, writer.uint32(/* id 8, wireType 2 =*/66).fork()).ldelim();
+                if (message.segment != null && Object.hasOwnProperty.call(message, "segment"))
+                    $root.com.antigravity.Segment.encode(message.segment, writer.uint32(/* id 9, wireType 2 =*/74).fork()).ldelim();
                 return writer;
             };
 
@@ -14855,6 +14866,10 @@ export const com = $root.com = (() => {
                         }
                     case 8: {
                             message.carData = $root.com.antigravity.CarData.decode(reader, reader.uint32());
+                            break;
+                        }
+                    case 9: {
+                            message.segment = $root.com.antigravity.Segment.decode(reader, reader.uint32());
                             break;
                         }
                     default:
@@ -14978,6 +14993,16 @@ export const com = $root.com = (() => {
                             return "carData." + error;
                     }
                 }
+                if (message.segment != null && message.hasOwnProperty("segment")) {
+                    if (properties.data === 1)
+                        return "data: multiple values";
+                    properties.data = 1;
+                    {
+                        let error = $root.com.antigravity.Segment.verify(message.segment);
+                        if (error)
+                            return "segment." + error;
+                    }
+                }
                 return null;
             };
 
@@ -15064,6 +15089,11 @@ export const com = $root.com = (() => {
                         throw TypeError(".com.antigravity.RaceData.carData: object expected");
                     message.carData = $root.com.antigravity.CarData.fromObject(object.carData);
                 }
+                if (object.segment != null) {
+                    if (typeof object.segment !== "object")
+                        throw TypeError(".com.antigravity.RaceData.segment: object expected");
+                    message.segment = $root.com.antigravity.Segment.fromObject(object.segment);
+                }
                 return message;
             };
 
@@ -15119,6 +15149,11 @@ export const com = $root.com = (() => {
                     object.carData = $root.com.antigravity.CarData.toObject(message.carData, options);
                     if (options.oneofs)
                         object.data = "carData";
+                }
+                if (message.segment != null && message.hasOwnProperty("segment")) {
+                    object.segment = $root.com.antigravity.Segment.toObject(message.segment, options);
+                    if (options.oneofs)
+                        object.data = "segment";
                 }
                 return object;
             };
@@ -15874,6 +15909,7 @@ export const com = $root.com = (() => {
              * @property {com.antigravity.IDriverModel|null} [actualDriver] DriverHeatData actualDriver
              * @property {number|null} [gapLeader] DriverHeatData gapLeader
              * @property {number|null} [gapPosition] DriverHeatData gapPosition
+             * @property {Array.<number>|null} [segments] DriverHeatData segments
              */
 
             /**
@@ -15885,6 +15921,7 @@ export const com = $root.com = (() => {
              * @param {com.antigravity.IDriverHeatData=} [properties] Properties to set
              */
             function DriverHeatData(properties) {
+                this.segments = [];
                 if (properties)
                     for (let keys = Object.keys(properties), i = 0; i < keys.length; ++i)
                         if (properties[keys[i]] != null)
@@ -15940,6 +15977,14 @@ export const com = $root.com = (() => {
             DriverHeatData.prototype.gapPosition = 0;
 
             /**
+             * DriverHeatData segments.
+             * @member {Array.<number>} segments
+             * @memberof com.antigravity.DriverHeatData
+             * @instance
+             */
+            DriverHeatData.prototype.segments = $util.emptyArray;
+
+            /**
              * Creates a new DriverHeatData instance using the specified properties.
              * @function create
              * @memberof com.antigravity.DriverHeatData
@@ -15975,6 +16020,12 @@ export const com = $root.com = (() => {
                     writer.uint32(/* id 5, wireType 1 =*/41).double(message.gapLeader);
                 if (message.gapPosition != null && Object.hasOwnProperty.call(message, "gapPosition"))
                     writer.uint32(/* id 6, wireType 1 =*/49).double(message.gapPosition);
+                if (message.segments != null && message.segments.length) {
+                    writer.uint32(/* id 7, wireType 2 =*/58).fork();
+                    for (let i = 0; i < message.segments.length; ++i)
+                        writer.double(message.segments[i]);
+                    writer.ldelim();
+                }
                 return writer;
             };
 
@@ -16035,6 +16086,17 @@ export const com = $root.com = (() => {
                             message.gapPosition = reader.double();
                             break;
                         }
+                    case 7: {
+                            if (!(message.segments && message.segments.length))
+                                message.segments = [];
+                            if ((tag & 7) === 2) {
+                                let end2 = reader.uint32() + reader.pos;
+                                while (reader.pos < end2)
+                                    message.segments.push(reader.double());
+                            } else
+                                message.segments.push(reader.double());
+                            break;
+                        }
                     default:
                         reader.skipType(tag & 7);
                         break;
@@ -16092,6 +16154,13 @@ export const com = $root.com = (() => {
                 if (message.gapPosition != null && message.hasOwnProperty("gapPosition"))
                     if (typeof message.gapPosition !== "number")
                         return "gapPosition: number expected";
+                if (message.segments != null && message.hasOwnProperty("segments")) {
+                    if (!Array.isArray(message.segments))
+                        return "segments: array expected";
+                    for (let i = 0; i < message.segments.length; ++i)
+                        if (typeof message.segments[i] !== "number")
+                            return "segments: number[] expected";
+                }
                 return null;
             };
 
@@ -16125,6 +16194,13 @@ export const com = $root.com = (() => {
                     message.gapLeader = Number(object.gapLeader);
                 if (object.gapPosition != null)
                     message.gapPosition = Number(object.gapPosition);
+                if (object.segments) {
+                    if (!Array.isArray(object.segments))
+                        throw TypeError(".com.antigravity.DriverHeatData.segments: array expected");
+                    message.segments = [];
+                    for (let i = 0; i < object.segments.length; ++i)
+                        message.segments[i] = Number(object.segments[i]);
+                }
                 return message;
             };
 
@@ -16141,6 +16217,8 @@ export const com = $root.com = (() => {
                 if (!options)
                     options = {};
                 let object = {};
+                if (options.arrays || options.defaults)
+                    object.segments = [];
                 if (options.defaults) {
                     object.driver = null;
                     object.objectId = "";
@@ -16161,6 +16239,11 @@ export const com = $root.com = (() => {
                     object.gapLeader = options.json && !isFinite(message.gapLeader) ? String(message.gapLeader) : message.gapLeader;
                 if (message.gapPosition != null && message.hasOwnProperty("gapPosition"))
                     object.gapPosition = options.json && !isFinite(message.gapPosition) ? String(message.gapPosition) : message.gapPosition;
+                if (message.segments && message.segments.length) {
+                    object.segments = [];
+                    for (let j = 0; j < message.segments.length; ++j)
+                        object.segments[j] = options.json && !isFinite(message.segments[j]) ? String(message.segments[j]) : message.segments[j];
+                }
                 return object;
             };
 
@@ -17997,6 +18080,281 @@ export const com = $root.com = (() => {
             };
 
             return CarData;
+        })();
+
+        antigravity.Segment = (function() {
+
+            /**
+             * Properties of a Segment.
+             * @memberof com.antigravity
+             * @interface ISegment
+             * @property {string|null} [objectId] Segment objectId
+             * @property {number|null} [segmentTime] Segment segmentTime
+             * @property {number|null} [segmentNumber] Segment segmentNumber
+             * @property {number|null} [interfaceId] Segment interfaceId
+             */
+
+            /**
+             * Constructs a new Segment.
+             * @memberof com.antigravity
+             * @classdesc Represents a Segment.
+             * @implements ISegment
+             * @constructor
+             * @param {com.antigravity.ISegment=} [properties] Properties to set
+             */
+            function Segment(properties) {
+                if (properties)
+                    for (let keys = Object.keys(properties), i = 0; i < keys.length; ++i)
+                        if (properties[keys[i]] != null)
+                            this[keys[i]] = properties[keys[i]];
+            }
+
+            /**
+             * Segment objectId.
+             * @member {string} objectId
+             * @memberof com.antigravity.Segment
+             * @instance
+             */
+            Segment.prototype.objectId = "";
+
+            /**
+             * Segment segmentTime.
+             * @member {number} segmentTime
+             * @memberof com.antigravity.Segment
+             * @instance
+             */
+            Segment.prototype.segmentTime = 0;
+
+            /**
+             * Segment segmentNumber.
+             * @member {number} segmentNumber
+             * @memberof com.antigravity.Segment
+             * @instance
+             */
+            Segment.prototype.segmentNumber = 0;
+
+            /**
+             * Segment interfaceId.
+             * @member {number} interfaceId
+             * @memberof com.antigravity.Segment
+             * @instance
+             */
+            Segment.prototype.interfaceId = 0;
+
+            /**
+             * Creates a new Segment instance using the specified properties.
+             * @function create
+             * @memberof com.antigravity.Segment
+             * @static
+             * @param {com.antigravity.ISegment=} [properties] Properties to set
+             * @returns {com.antigravity.Segment} Segment instance
+             */
+            Segment.create = function create(properties) {
+                return new Segment(properties);
+            };
+
+            /**
+             * Encodes the specified Segment message. Does not implicitly {@link com.antigravity.Segment.verify|verify} messages.
+             * @function encode
+             * @memberof com.antigravity.Segment
+             * @static
+             * @param {com.antigravity.ISegment} message Segment message or plain object to encode
+             * @param {$protobuf.Writer} [writer] Writer to encode to
+             * @returns {$protobuf.Writer} Writer
+             */
+            Segment.encode = function encode(message, writer) {
+                if (!writer)
+                    writer = $Writer.create();
+                if (message.objectId != null && Object.hasOwnProperty.call(message, "objectId"))
+                    writer.uint32(/* id 1, wireType 2 =*/10).string(message.objectId);
+                if (message.segmentTime != null && Object.hasOwnProperty.call(message, "segmentTime"))
+                    writer.uint32(/* id 2, wireType 1 =*/17).double(message.segmentTime);
+                if (message.segmentNumber != null && Object.hasOwnProperty.call(message, "segmentNumber"))
+                    writer.uint32(/* id 3, wireType 0 =*/24).int32(message.segmentNumber);
+                if (message.interfaceId != null && Object.hasOwnProperty.call(message, "interfaceId"))
+                    writer.uint32(/* id 4, wireType 0 =*/32).int32(message.interfaceId);
+                return writer;
+            };
+
+            /**
+             * Encodes the specified Segment message, length delimited. Does not implicitly {@link com.antigravity.Segment.verify|verify} messages.
+             * @function encodeDelimited
+             * @memberof com.antigravity.Segment
+             * @static
+             * @param {com.antigravity.ISegment} message Segment message or plain object to encode
+             * @param {$protobuf.Writer} [writer] Writer to encode to
+             * @returns {$protobuf.Writer} Writer
+             */
+            Segment.encodeDelimited = function encodeDelimited(message, writer) {
+                return this.encode(message, writer).ldelim();
+            };
+
+            /**
+             * Decodes a Segment message from the specified reader or buffer.
+             * @function decode
+             * @memberof com.antigravity.Segment
+             * @static
+             * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+             * @param {number} [length] Message length if known beforehand
+             * @returns {com.antigravity.Segment} Segment
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            Segment.decode = function decode(reader, length, error) {
+                if (!(reader instanceof $Reader))
+                    reader = $Reader.create(reader);
+                let end = length === undefined ? reader.len : reader.pos + length, message = new $root.com.antigravity.Segment();
+                while (reader.pos < end) {
+                    let tag = reader.uint32();
+                    if (tag === error)
+                        break;
+                    switch (tag >>> 3) {
+                    case 1: {
+                            message.objectId = reader.string();
+                            break;
+                        }
+                    case 2: {
+                            message.segmentTime = reader.double();
+                            break;
+                        }
+                    case 3: {
+                            message.segmentNumber = reader.int32();
+                            break;
+                        }
+                    case 4: {
+                            message.interfaceId = reader.int32();
+                            break;
+                        }
+                    default:
+                        reader.skipType(tag & 7);
+                        break;
+                    }
+                }
+                return message;
+            };
+
+            /**
+             * Decodes a Segment message from the specified reader or buffer, length delimited.
+             * @function decodeDelimited
+             * @memberof com.antigravity.Segment
+             * @static
+             * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+             * @returns {com.antigravity.Segment} Segment
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            Segment.decodeDelimited = function decodeDelimited(reader) {
+                if (!(reader instanceof $Reader))
+                    reader = new $Reader(reader);
+                return this.decode(reader, reader.uint32());
+            };
+
+            /**
+             * Verifies a Segment message.
+             * @function verify
+             * @memberof com.antigravity.Segment
+             * @static
+             * @param {Object.<string,*>} message Plain object to verify
+             * @returns {string|null} `null` if valid, otherwise the reason why it is not
+             */
+            Segment.verify = function verify(message) {
+                if (typeof message !== "object" || message === null)
+                    return "object expected";
+                if (message.objectId != null && message.hasOwnProperty("objectId"))
+                    if (!$util.isString(message.objectId))
+                        return "objectId: string expected";
+                if (message.segmentTime != null && message.hasOwnProperty("segmentTime"))
+                    if (typeof message.segmentTime !== "number")
+                        return "segmentTime: number expected";
+                if (message.segmentNumber != null && message.hasOwnProperty("segmentNumber"))
+                    if (!$util.isInteger(message.segmentNumber))
+                        return "segmentNumber: integer expected";
+                if (message.interfaceId != null && message.hasOwnProperty("interfaceId"))
+                    if (!$util.isInteger(message.interfaceId))
+                        return "interfaceId: integer expected";
+                return null;
+            };
+
+            /**
+             * Creates a Segment message from a plain object. Also converts values to their respective internal types.
+             * @function fromObject
+             * @memberof com.antigravity.Segment
+             * @static
+             * @param {Object.<string,*>} object Plain object
+             * @returns {com.antigravity.Segment} Segment
+             */
+            Segment.fromObject = function fromObject(object) {
+                if (object instanceof $root.com.antigravity.Segment)
+                    return object;
+                let message = new $root.com.antigravity.Segment();
+                if (object.objectId != null)
+                    message.objectId = String(object.objectId);
+                if (object.segmentTime != null)
+                    message.segmentTime = Number(object.segmentTime);
+                if (object.segmentNumber != null)
+                    message.segmentNumber = object.segmentNumber | 0;
+                if (object.interfaceId != null)
+                    message.interfaceId = object.interfaceId | 0;
+                return message;
+            };
+
+            /**
+             * Creates a plain object from a Segment message. Also converts values to other types if specified.
+             * @function toObject
+             * @memberof com.antigravity.Segment
+             * @static
+             * @param {com.antigravity.Segment} message Segment
+             * @param {$protobuf.IConversionOptions} [options] Conversion options
+             * @returns {Object.<string,*>} Plain object
+             */
+            Segment.toObject = function toObject(message, options) {
+                if (!options)
+                    options = {};
+                let object = {};
+                if (options.defaults) {
+                    object.objectId = "";
+                    object.segmentTime = 0;
+                    object.segmentNumber = 0;
+                    object.interfaceId = 0;
+                }
+                if (message.objectId != null && message.hasOwnProperty("objectId"))
+                    object.objectId = message.objectId;
+                if (message.segmentTime != null && message.hasOwnProperty("segmentTime"))
+                    object.segmentTime = options.json && !isFinite(message.segmentTime) ? String(message.segmentTime) : message.segmentTime;
+                if (message.segmentNumber != null && message.hasOwnProperty("segmentNumber"))
+                    object.segmentNumber = message.segmentNumber;
+                if (message.interfaceId != null && message.hasOwnProperty("interfaceId"))
+                    object.interfaceId = message.interfaceId;
+                return object;
+            };
+
+            /**
+             * Converts this Segment to JSON.
+             * @function toJSON
+             * @memberof com.antigravity.Segment
+             * @instance
+             * @returns {Object.<string,*>} JSON object
+             */
+            Segment.prototype.toJSON = function toJSON() {
+                return this.constructor.toObject(this, $protobuf.util.toJSONOptions);
+            };
+
+            /**
+             * Gets the default type url for Segment
+             * @function getTypeUrl
+             * @memberof com.antigravity.Segment
+             * @static
+             * @param {string} [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns {string} The default type url
+             */
+            Segment.getTypeUrl = function getTypeUrl(typeUrlPrefix) {
+                if (typeUrlPrefix === undefined) {
+                    typeUrlPrefix = "type.googleapis.com";
+                }
+                return typeUrlPrefix + "/com.antigravity.Segment";
+            };
+
+            return Segment;
         })();
 
         return antigravity;

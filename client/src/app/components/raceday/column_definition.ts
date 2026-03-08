@@ -21,7 +21,7 @@ export class ColumnDefinition {
   readonly scaleToFit: boolean;
   readonly textAnchor: 'start' | 'middle' | 'end';
   readonly padding: number;
-  readonly formatter: (value: any, hd: any) => string;
+  readonly formatter: (value: any, hd: any, column: ColumnDefinition) => string;
   readonly anchor: AnchorPoint;
   readonly layout: { [A in AnchorPoint]?: string };
 
@@ -33,7 +33,7 @@ export class ColumnDefinition {
     textAnchor: 'start' | 'middle' | 'end' = 'middle',
     padding: number = 0,
     anchor: AnchorPoint = AnchorPoint.CenterCenter,
-    formatter: (value: any, hd: any) => string = (v) => v?.toString() ?? '',
+    formatter: (value: any, hd: any, column: ColumnDefinition) => string = (v) => v?.toString() ?? '',
     layout: { [A in AnchorPoint]?: string } = {}
   ) {
     this.labelKey = labelKey;

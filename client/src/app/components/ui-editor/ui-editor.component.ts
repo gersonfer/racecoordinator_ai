@@ -171,6 +171,7 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
           { key: 'participant.fuelLevel', label: 'RD_COL_FUEL_LEVEL' },
           { key: 'fuelCapacity', label: 'RD_COL_FUEL_CAPACITY' },
           { key: 'fuelPercentage', label: 'RD_COL_FUEL_PERCENTAGE' },
+          { key: 'segmentTime', label: 'RD_COL_SEGMENT_TIME' },
           ...imageSetColumns
         ];
 

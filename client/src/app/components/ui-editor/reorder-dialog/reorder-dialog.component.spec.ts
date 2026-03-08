@@ -227,4 +227,52 @@ describe('ReorderDialogComponent', () => {
     expect(component.columnVisibility['imageset_fuel-gauge-builtin']).toBe(ColumnVisibility.FuelRaceOnly);
     expect(component.columnVisibility['custom_slot']).toBeUndefined();
   });
+
+  describe('reindexAllSegments', () => {
+    it('should reset segment indices per column', () => {
+      component.data = {
+        ...mockData,
+        columnSlots: [
+          { key: 'col1', label: 'C1' },
+          { key: 'col2', label: 'C2' }
+        ],
+        columnLayouts: {
+          'col1': {
+            [AnchorPoint.TopLeft]: 'segmentTime_3',
+            [AnchorPoint.TopRight]: 'segmentTime_9'
+          },
+          'col2': {
+            [AnchorPoint.BottomLeft]: 'segmentTime_5'
+          }
+        }
+      };
+
+      (component as any).reindexAllSegments();
+
+      // col1 should have segmentTime and segmentTime_1
+      expect(component.columnLayouts['col1']![AnchorPoint.TopLeft]).toBe('segmentTime');
+      expect(component.columnLayouts['col1']![AnchorPoint.TopRight]).toBe('segmentTime_1');
+
+      // col2 should have segmentTime
+      expect(component.columnLayouts['col2']![AnchorPoint.BottomLeft]).toBe('segmentTime');
+    });
+
+    it('should preserve non-segment properties during re-indexing', () => {
+      component.data = {
+        ...mockData,
+        columnSlots: [{ key: 'col1', label: 'C1' }],
+        columnLayouts: {
+          'col1': {
+            [AnchorPoint.CenterCenter]: 'lapCount',
+            [AnchorPoint.TopLeft]: 'segmentTime_2'
+          }
+        }
+      };
+
+      (component as any).reindexAllSegments();
+
+      expect(component.columnLayouts['col1']![AnchorPoint.CenterCenter]).toBe('lapCount');
+      expect(component.columnLayouts['col1']![AnchorPoint.TopLeft]).toBe('segmentTime');
+    });
+  });
 });

@@ -43,7 +43,7 @@ test.describe('About Dialog', () => {
     await expect(dialog.locator('.modal-backdrop')).toBeVisible();
 
     // 4. Verify versions
-    await expect(dialog).toContainText('0.0.1');
+    await expect(dialog).toContainText('0.0.0.1');
 
     // Wait a brief moment for rendering
     await page.waitForTimeout(500);

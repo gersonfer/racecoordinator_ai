@@ -48,7 +48,7 @@ public class App {
   private static MongoClient mongoClient;
   private static final Logger logger = LoggerFactory.getLogger(App.class);
 
-  public static final String SERVER_VERSION = "0.0.7";
+  public static final String SERVER_VERSION = "0.0.0.8";
 
   public static void main(String[] args) {
     System.out.println("Race Coordinator AI Server " + SERVER_VERSION);
@@ -137,7 +137,11 @@ public class App {
     }));
 
     // MongoDB Setup
-    CodecRegistry pojoCodecRegistry = fromRegistries(MongoClientSettings.getDefaultCodecRegistry(),
+    org.bson.codecs.configuration.CodecRegistry robustBooleanRegistry = org.bson.codecs.configuration.CodecRegistries
+        .fromCodecs(new com.antigravity.util.RobustBooleanCodec());
+
+    CodecRegistry pojoCodecRegistry = fromRegistries(robustBooleanRegistry,
+        MongoClientSettings.getDefaultCodecRegistry(),
         fromProviders(PojoCodecProvider.builder().automatic(true).build()));
 
     MongoClientSettings settings = MongoClientSettings.builder()

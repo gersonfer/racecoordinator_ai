@@ -7,9 +7,20 @@ echo ""
 echo "--- 🔹 Running Client Unit Tests 🔹 ---"
 cd "$CLIENT_DIR" || exit
 
-# Ensure dependencies are installed (using isolated cache)
-if [ ! -d "node_modules" ]; then
-    npm install --no-package-lock --cache "/tmp/racecoordinator-client/npm-cache" || echo "Warning: npm install failed, trying to proceed anyway..."
+# Ensure isolated directory exists and is prepared
+ISOLATED_DIR="/tmp/racecoordinator-client"
+mkdir -p "$ISOLATED_DIR"
+
+# Sync current source and configuration to isolated directory
+echo "Syncing source to $ISOLATED_DIR..."
+cp -R src karma.conf.js package.json angular.json tsconfig.json tsconfig.app.json tsconfig.spec.json package-lock.json "$ISOLATED_DIR/"
+
+cd "$ISOLATED_DIR" || exit
+
+# Ensure dependencies are installed in isolated directory
+if [ ! -d "node_modules" ] || [ package.json -nt node_modules ]; then
+    echo "Installing/Updating dependencies in $ISOLATED_DIR..."
+    npm install --no-package-lock --cache "$ISOLATED_DIR/npm-cache" || echo "Warning: npm install failed, trying to proceed anyway..."
 fi
 
 # Find the Chrome binary from Playwright browsers
@@ -34,4 +45,7 @@ echo "Using Chrome binary at: $CHROME_BIN"
 
 # Execute tests with overridden environment
 # We use ChromeHeadlessWithCustomConfig which is defined in karma.conf.js
-TMPDIR="$TMPDIR" HOME="$HOME" CHROME_BIN="$CHROME_BIN" npx ng test --watch=false --browsers=ChromeHeadlessWithCustomConfig "$@"
+# Explicitly use the local ng binary to avoid npx resolution issues
+# Re-route Angular cache to avoid EPERM issues in the default .angular/cache directory
+# Override npm cache to avoid EPERM issues in ~/.npm
+TMPDIR="$TMPDIR" HOME="$HOME" CHROME_BIN="$CHROME_BIN" NG_PERSISTENT_BUILD_CACHE=0 ./node_modules/.bin/ng test --watch=false --browsers=ChromeHeadlessWithCustomConfig "$@"

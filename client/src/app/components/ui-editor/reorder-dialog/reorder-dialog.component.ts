@@ -66,6 +66,7 @@ export class ReorderDialogComponent {
       this.columnLayouts = newLayouts;
       this.columnVisibility = newVisibility;
 
+      this.reindexAllSegments();
       this.updateDropListIds();
       this.cdr.markForCheck();
       this.cdr.detectChanges();
@@ -110,6 +111,7 @@ export class ReorderDialogComponent {
     moveItemInArray(newSlots, event.previousIndex, event.currentIndex);
     this.columnSlots = newSlots;
     this.updateDropListIds();
+    this.reindexAllSegments();
     this.cdr.markForCheck();
   }
 
@@ -117,6 +119,10 @@ export class ReorderDialogComponent {
     const newLayouts = { ...this.columnLayouts };
     newLayouts[slotKey] = { ...(newLayouts[slotKey] || {}), [anchor]: propertyName };
     this.columnLayouts = newLayouts;
+
+    if (propertyName.startsWith('segmentTime')) {
+      this.reindexAllSegments();
+    }
     this.cdr.markForCheck();
   }
 
@@ -124,14 +130,20 @@ export class ReorderDialogComponent {
     if (this.columnLayouts[slotKey]) {
       const newLayouts = { ...this.columnLayouts };
       const newSlotLayout = { ...newLayouts[slotKey] };
+      const clearedProp = newSlotLayout[anchor];
       delete newSlotLayout[anchor];
       newLayouts[slotKey] = newSlotLayout;
       this.columnLayouts = newLayouts;
+
+      if (clearedProp?.startsWith('segmentTime')) {
+        this.reindexAllSegments();
+      }
       this.cdr.markForCheck();
     }
   }
 
   removeColumn(slotKey: string) {
+    const isSegment = slotKey.startsWith('segmentTime');
     this.columnSlots = this.columnSlots.filter(s => s.key !== slotKey);
 
     const newLayouts = { ...this.columnLayouts };
@@ -142,8 +154,85 @@ export class ReorderDialogComponent {
     delete newVisibility[slotKey];
     this.columnVisibility = newVisibility;
 
+    if (isSegment) {
+      this.reindexSegments();
+    }
+
     this.updateDropListIds();
     this.cdr.markForCheck();
+  }
+
+  private reindexSegments() {
+    const segmentSlots = this.columnSlots.filter(s => s.key.startsWith('segmentTime'));
+    if (segmentSlots.length === 0) return;
+
+    const newSlots = [...this.columnSlots];
+    const newLayouts = { ...this.columnLayouts };
+    const newVisibility = { ...this.columnVisibility };
+
+    segmentSlots.forEach((slot, index) => {
+      const oldKey = slot.key;
+      const newKey = index === 0 ? 'segmentTime' : `segmentTime_${index}`;
+
+      if (oldKey !== newKey) {
+        // Update slot key
+        const slotIdx = newSlots.findIndex(s => s.key === oldKey);
+        newSlots[slotIdx] = { ...newSlots[slotIdx], key: newKey };
+
+        // Update layouts root key
+        if (newLayouts[oldKey]) {
+          newLayouts[newKey] = newLayouts[oldKey];
+          delete newLayouts[oldKey];
+        }
+
+        // Update visibility
+        if (newVisibility[oldKey]) {
+          newVisibility[newKey] = newVisibility[oldKey];
+          delete newVisibility[oldKey];
+        }
+      }
+
+      // ALWAYS update the property names inside the layout for segment columns
+      // to match their current index, regardless of whether the slot key changed.
+      // This is crucial because a removal shifted the logical indices.
+      // Re-indexing of internal segment properties is now handled by reindexAllSegments()
+    });
+
+    this.columnSlots = newSlots;
+    this.columnLayouts = newLayouts;
+    this.columnVisibility = newVisibility;
+
+    this.reindexAllSegments();
+  }
+
+  private reindexAllSegments() {
+    const newLayouts = { ...this.columnLayouts };
+
+    // Predetermined order of anchors for consistent indexing within a column
+    const anchorOrder = [
+      AnchorPoint.TopLeft, AnchorPoint.TopCenter, AnchorPoint.TopRight,
+      AnchorPoint.CenterLeft, AnchorPoint.CenterCenter, AnchorPoint.CenterRight,
+      AnchorPoint.BottomLeft, AnchorPoint.BottomCenter, AnchorPoint.BottomRight
+    ];
+
+    this.columnSlots.forEach(slot => {
+      const layout = newLayouts[slot.key];
+      if (layout) {
+        let segmentCounter = 0; // Reset counter for each column
+        const newSlotLayout = { ...layout };
+        anchorOrder.forEach(anchor => {
+          const prop = newSlotLayout[anchor];
+          if (prop && prop.split('_')[0] === 'segmentTime') {
+            const newProp = segmentCounter === 0 ? 'segmentTime' : `segmentTime_${segmentCounter}`;
+            newSlotLayout[anchor] = newProp;
+            segmentCounter++;
+          }
+        });
+        newLayouts[slot.key] = newSlotLayout;
+      }
+    });
+
+    this.columnLayouts = newLayouts;
   }
 
   onAddColumnDrop(event: CdkDragDrop<any>) {
@@ -162,7 +251,9 @@ export class ReorderDialogComponent {
     this.columnSlots = [...this.columnSlots, { key: newKey, label: label }];
 
     const newLayouts = { ...this.columnLayouts };
-    newLayouts[newKey] = { [AnchorPoint.CenterCenter]: propertyKey };
+    // For segmentTime, the property name should match the unique key to preserve indexing
+    const targetProperty = propertyKey === 'segmentTime' ? newKey : propertyKey;
+    newLayouts[newKey] = { [AnchorPoint.CenterCenter]: targetProperty };
     this.columnLayouts = newLayouts;
 
     const newVisibility = { ...this.columnVisibility };
@@ -170,13 +261,24 @@ export class ReorderDialogComponent {
     this.columnVisibility = newVisibility;
 
     this.updateDropListIds();
+    this.reindexAllSegments();
     this.cdr.markForCheck();
   }
 
 
   getLabel(key: string): string {
-    const val = this.availableValuesMap.get(key);
-    return val ? val.label : key;
+    const baseKey = key.split('_')[0];
+    const val = this.availableValuesMap.get(baseKey);
+    let label = val ? val.label : key;
+
+    if (key.startsWith('segmentTime')) {
+      const parts = key.split('_');
+      if (parts.length > 1) {
+        const index = parseInt(parts[1], 10) + 1;
+        return `${this.translationService.translate(label)} ${index}`;
+      }
+    }
+    return label;
   }
 
   getColumnLabel(slotKey: string): string {

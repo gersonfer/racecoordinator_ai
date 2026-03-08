@@ -540,6 +540,7 @@ export class DataService {
   private raceUpdateSubject = new ReplaySubject<com.antigravity.IRace>(1);
   private interfaceEventSubject = new Subject<com.antigravity.IInterfaceEvent>();
   private carDataSubject = new Subject<com.antigravity.ICarData>();
+  private segmentSubject = new Subject<com.antigravity.ISegment>();
   private raceStateSubject = new BehaviorSubject<com.antigravity.RaceState>(com.antigravity.RaceState.UNKNOWN_STATE);
 
   private shouldSubscribeToRaceData = false;
@@ -617,6 +618,8 @@ export class DataService {
           }
         } else if (raceData.carData) {
           this.carDataSubject.next(raceData.carData);
+        } else if (raceData.segment) {
+          this.segmentSubject.next(raceData.segment);
         }
       } catch (e) {
         console.error('Error parsing race data message', e);
@@ -714,5 +717,9 @@ export class DataService {
 
   public getCarData(): Observable<com.antigravity.ICarData> {
     return this.carDataSubject.asObservable();
+  }
+
+  public getSegments(): Observable<com.antigravity.ISegment> {
+    return this.segmentSubject.asObservable();
   }
 }

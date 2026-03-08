@@ -2,17 +2,22 @@ package com.antigravity.protocols.demo;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
 
 import com.antigravity.protocols.DefaultProtocol;
 import com.antigravity.protocols.PartialTime;
 import com.antigravity.proto.DemoPinId;
 
 public class Demo extends DefaultProtocol {
-  private java.util.concurrent.ScheduledExecutorService scheduler;
-  private java.util.concurrent.ScheduledExecutorService statusScheduler;
-  private java.util.concurrent.ScheduledFuture<?> statusFuture;
-  private java.util.concurrent.ScheduledFuture<?> timerHandle;
-  private java.util.Random random;
+  private ScheduledExecutorService scheduler;
+  private ScheduledExecutorService statusScheduler;
+  private ScheduledFuture<?> statusFuture;
+  private ScheduledFuture<?> timerHandle;
+  private Random random;
   private boolean isFuelRace;
 
   private class LaneState {
@@ -26,6 +31,8 @@ public class Demo extends DefaultProtocol {
     long pitExitOffset = 0;
     boolean pitEntrySent = false;
     boolean pitExitSent = false;
+    long[] segmentOffsets = new long[4];
+    boolean[] segmentSent = new boolean[4];
 
     LaneState() {
       setNextTarget();
@@ -34,6 +41,9 @@ public class Demo extends DefaultProtocol {
     void setNextTarget() {
       pitEntrySent = false;
       pitExitSent = false;
+      for (int i = 0; i < segmentSent.length; i++) {
+        segmentSent[i] = false;
+      }
       if (isFirstLap) {
         // First lap is reaction time: (0, 0.5]s
         targetLapDuration = 1 + random.nextInt(500);
@@ -63,6 +73,12 @@ public class Demo extends DefaultProtocol {
         } else {
           isPitLap = false;
           targetLapDuration = lapDuration;
+        }
+
+        // Calculate 4 irregular segment offsets (15%, 40%, 60%, 85%)
+        double[] percentages = { 0.15, 0.40, 0.60, 0.85 };
+        for (int i = 0; i < segmentOffsets.length; i++) {
+          segmentOffsets[i] = (long) (targetLapDuration * percentages[i]);
         }
       }
     }
@@ -117,7 +133,7 @@ public class Demo extends DefaultProtocol {
       } catch (Exception e) {
         System.err.println("Demo: Error reporting status: " + e.getMessage());
       }
-    }, 0, 1, java.util.concurrent.TimeUnit.SECONDS);
+    }, 0, 1, TimeUnit.SECONDS);
   }
 
   @Override
@@ -160,6 +176,20 @@ public class Demo extends DefaultProtocol {
                       com.antigravity.protocols.CarLocation.Main,
                       com.antigravity.protocols.CarLocation.PitRow, 0);
                   listener.onCarData(carData);
+                }
+              }
+            }
+
+            // Handle segment hits
+            if (!state.isFirstLap) {
+              for (int j = 0; j < state.segmentOffsets.length; j++) {
+                if (state.segmentOffsets[j] > 0 && totalElapsed >= state.segmentOffsets[j] && !state.segmentSent[j]) {
+                  state.segmentSent[j] = true;
+                  if (listener != null) {
+                    int segmentId = 101 + i;
+                    long prevOffset = (j == 0) ? 0 : state.segmentOffsets[j - 1];
+                    listener.onSegment(i, (state.segmentOffsets[j] - prevOffset) / 1000.0, segmentId);
+                  }
                 }
               }
             }
@@ -218,8 +248,7 @@ public class Demo extends DefaultProtocol {
     return System.currentTimeMillis();
   }
 
-  protected java.util.concurrent.ScheduledExecutorService createScheduler() {
-    return java.util.concurrent.Executors.newScheduledThreadPool(1);
+  protected ScheduledExecutorService createScheduler() {
+    return Executors.newScheduledThreadPool(1);
   }
-
 }

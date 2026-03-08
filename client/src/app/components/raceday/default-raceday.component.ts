@@ -234,6 +234,21 @@ export class DefaultRacedayComponent implements OnInit, OnDestroy {
       }
     }));
 
+    this.subscriptions.push(this.dataService.getSegments().subscribe(segment => {
+      console.log('Segment Received:', segment);
+      if (this.heat && this.heat.heatDrivers && segment && segment.objectId) {
+        const driverData = this.heat.heatDrivers.find(d => d.objectId === segment.objectId);
+        if (driverData) {
+          const segmentIndex = (segment.segmentNumber || 1) - 1;
+          console.log(`Applying segment to driver ${segment.objectId}: number=${segment.segmentNumber}, index=${segmentIndex}, time=${segment.segmentTime}`);
+          driverData.addSegmentTime(segmentIndex, segment.segmentTime!);
+          if (!this.isDestroyed) {
+            this.cdr.detectChanges();
+          }
+        }
+      }
+    }));
+
     this.subscriptions.push(this.dataService.getReactionTimes().subscribe(rt => {
       if (this.heat && this.heat.heatDrivers && rt && rt.objectId) {
         const driver = this.heat.heatDrivers.find(d => d.objectId === rt.objectId);
@@ -527,7 +542,16 @@ export class DefaultRacedayComponent implements OnInit, OnDestroy {
 
   // Get translated column label
   getColumnLabel(column: ColumnDefinition): string {
-    return this.translationService.translate(column.labelKey);
+    const translation = this.translationService.translate(column.labelKey);
+    if (column.propertyName.startsWith('segmentTime')) {
+      const segmentColumns = this.columns.filter(c => c.propertyName.startsWith('segmentTime'));
+      if (segmentColumns.length > 1) {
+        const parts = column.propertyName.split('_');
+        const index = parts.length > 1 ? parseInt(parts[1], 10) + 1 : 1;
+        return `${translation} ${index}`;
+      }
+    }
+    return translation;
   }
 
   // Helper method to get column X position
@@ -653,10 +677,10 @@ export class DefaultRacedayComponent implements OnInit, OnDestroy {
     const prop = propertyName || column.propertyName;
     // Use column formatter if it's the main property for this column
     if (prop === column.propertyName && column.formatter) {
-      return column.formatter(this.getPropertyValue(heatDriver, prop), heatDriver);
+      return column.formatter(this.getPropertyValue(heatDriver, prop), heatDriver, column);
     }
     const value = this.getPropertyValue(heatDriver, prop);
-    return this.formatValue(prop, value, heatDriver);
+    return this.formatValue(prop, value, heatDriver, column);
   }
 
 
@@ -1155,6 +1179,7 @@ export class DefaultRacedayComponent implements OnInit, OnDestroy {
       'seed': 180,
       'rankHeat': 180,
       'rankOverall': 180,
+      'segmentTime': 275,
       'imageset': 180
     };
 
@@ -1199,8 +1224,8 @@ export class DefaultRacedayComponent implements OnInit, OnDestroy {
       const width = isResizing ? remainingWidth : (fixedWidths[baseKey] || 275);
       const anchor = settings.columnAnchors[key] || AnchorPoint.CenterCenter;
 
-      const renderer = (v: any, hd: DriverHeatData) => {
-        return this.formatValue(baseKey, v, hd);
+      const renderer = (v: any, hd: DriverHeatData, col: ColumnDefinition) => {
+        return this.formatValue(primaryProp, v, hd, col);
       };
 
       if (key.startsWith('imageset_')) {
@@ -1208,19 +1233,40 @@ export class DefaultRacedayComponent implements OnInit, OnDestroy {
         const asset = this.findAssetById(assetId);
         const label = ''; // Hide label for image set columns on raceday
 
-        const renderer = (v: any, hd: DriverHeatData) => {
+        const renderer = (v: any, hd: DriverHeatData, col: ColumnDefinition) => {
           return this.getSelectedImageFromSet(asset, hd);
         };
 
         return new ColumnDefinition(label, key, width, false, 'middle', 0, anchor, renderer, layout);
       }
 
+      const finalLayout = this.reindexColumnLayout(layout);
       if (isResizing) {
-        return new ColumnDefinition(labelKey, key, width, true, 'start', 30, anchor, renderer, layout);
+        return new ColumnDefinition(labelKey, key, width, true, 'start', 30, anchor, renderer, finalLayout);
       }
 
-      return new ColumnDefinition(labelKey, key, width, false, 'middle', 0, anchor, renderer, layout);
+      return new ColumnDefinition(labelKey, key, width, false, 'middle', 0, anchor, renderer, finalLayout);
     });
+  }
+
+  private reindexColumnLayout(layout: { [A in AnchorPoint]?: string }): { [A in AnchorPoint]?: string } {
+    const anchorOrder = [
+      AnchorPoint.TopLeft, AnchorPoint.TopCenter, AnchorPoint.TopRight,
+      AnchorPoint.CenterLeft, AnchorPoint.CenterCenter, AnchorPoint.CenterRight,
+      AnchorPoint.BottomLeft, AnchorPoint.BottomCenter, AnchorPoint.BottomRight
+    ];
+
+    let segmentCounter = 0;
+    const newLayout = { ...layout };
+    anchorOrder.forEach(anchor => {
+      const prop = newLayout[anchor];
+      if (prop && prop.split('_')[0] === 'segmentTime') {
+        const newProp = segmentCounter === 0 ? 'segmentTime' : `segmentTime_${segmentCounter}`;
+        newLayout[anchor] = newProp;
+        segmentCounter++;
+      }
+    });
+    return newLayout;
   }
 
   // Helper method to get the selected image URL from an image set based on fuel percentage
@@ -1275,7 +1321,7 @@ export class DefaultRacedayComponent implements OnInit, OnDestroy {
   }
 
   // Format any value based on property name
-  formatValue(propertyName: string, value: any, hd: DriverHeatData): string {
+  formatValue(propertyName: string, value: any, hd: DriverHeatData, column?: ColumnDefinition): string {
     const baseKey = propertyName.split('_')[0];
 
     if (baseKey.includes('LapTime') || baseKey === 'reactionTime') {
@@ -1319,10 +1365,53 @@ export class DefaultRacedayComponent implements OnInit, OnDestroy {
     } else if (baseKey === 'rankOverall') {
       const rank = hd.participant?.rank;
       return rank ? `(${rank})` : '--';
-    } else if (propertyName.startsWith('imageset_')) {
-      const assetId = propertyName.replace('imageset_', '');
-      const asset = this.findAssetById(assetId);
-      return this.getSelectedImageFromSet(asset, hd);
+    } else if (baseKey === 'segmentTime') {
+      const parts = propertyName.split('_');
+      const index = parts.length > 1 ? parseInt(parts[1], 10) : 0;
+
+      let useIndex = true;
+      let segmentCount = 0;
+      if (column) {
+        // Check if this column has other segments in its layout
+        segmentCount = Object.values(column.layout).filter(v => v?.startsWith('segmentTime')).length;
+        if (segmentCount <= 1) {
+          useIndex = false;
+        }
+      } else if (index === 0) {
+        // Fallback for when column is missing: default to "most recent" for the base property
+        useIndex = false;
+      }
+
+      if (useIndex) {
+        // If propertyName is the bare 'segmentTime' but useIndex is true, we must re-calculate 
+        // its actual relative index in this column's layout to be safe.
+        let actualIndex = index;
+        if (propertyName === 'segmentTime' && column) {
+          // Find which anchor has this property
+          const anchorOrder = [
+            AnchorPoint.TopLeft, AnchorPoint.TopCenter, AnchorPoint.TopRight,
+            AnchorPoint.CenterLeft, AnchorPoint.CenterCenter, AnchorPoint.CenterRight,
+            AnchorPoint.BottomLeft, AnchorPoint.BottomCenter, AnchorPoint.BottomRight
+          ];
+          let counter = 0;
+          for (const anchor of anchorOrder) {
+            const p = column.layout[anchor];
+            if (p && p.split('_')[0] === 'segmentTime') {
+              if (p === 'segmentTime') {
+                actualIndex = counter;
+                break;
+              }
+              counter++;
+            }
+          }
+        }
+
+        const segmentVal = hd.currentLapSegments[actualIndex];
+        return (segmentVal !== undefined && segmentVal > 0) ? segmentVal.toFixed(3) : '--.---';
+      } else {
+        // Fallback to "most recent" for single-segment columns or base property
+        return hd.lastSegmentTime > 0 ? hd.lastSegmentTime.toFixed(3) : '--.---';
+      }
     }
     return value?.toString() ?? '';
   }
@@ -1354,6 +1443,7 @@ export class DefaultRacedayComponent implements OnInit, OnDestroy {
       'seed': 'RD_COL_SEED',
       'rankHeat': 'RD_COL_RANK_HEAT',
       'rankOverall': 'RD_COL_RANK_OVERALL',
+      'segmentTime': 'RD_COL_SEGMENT_TIME',
       'driver.avatarUrl': 'RD_COL_AVATAR'
     };
     return labels[baseKey] ?? 'UNKNOWN';

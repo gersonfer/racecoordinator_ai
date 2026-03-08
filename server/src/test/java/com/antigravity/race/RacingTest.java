@@ -59,7 +59,8 @@ public class RacingTest {
     List<Lane> lanes = new ArrayList<>();
     lanes.add(new Lane("red", "black", 100));
     lanes.add(new Lane("blue", "black", 100));
-    track = new Track("Test Track", lanes, java.util.Collections.singletonList(mock(ArduinoConfig.class)), "track1", new ObjectId());
+    track = new Track("Test Track", lanes, java.util.Collections.singletonList(mock(ArduinoConfig.class)), "track1",
+        new ObjectId());
 
     race = new Race(raceModel, participants, track, true);
   }
@@ -233,7 +234,6 @@ public class RacingTest {
 
     when(mockRace.getRaceModel()).thenReturn(mockModel);
     when(mockModel.getHeatScoring()).thenReturn(allowFinishScoring);
-    when(mockRace.isRacing()).thenReturn(true);
 
     // Mock Heat and Drivers
     Heat mockHeat = mock(Heat.class);
@@ -346,6 +346,78 @@ public class RacingTest {
     racing.onLap(0, 10.0, 1);
 
     assertEquals(100.0 - 0.5, raceWithFuel.getCurrentHeat().getDrivers().get(0).getDriver().getFuelLevel(), 0.001);
+  }
+
+  @Test
+  public void testOnSegmentHandling() {
+    Racing racing = new Racing();
+    race.changeState(racing);
+
+    DriverHeatData driverData = race.getCurrentHeat().getDrivers().get(0);
+
+    // Segments are ignored before reaction time is set (via onLap)
+    racing.onSegment(0, 1.2, 1);
+    assertEquals(0.0, driverData.getReactionTime(), 0.001);
+    assertEquals(0, driverData.getSegments().size());
+
+    // First lap hit sets reaction time
+    racing.onLap(0, 1.5, 1);
+    assertEquals(1.5, driverData.getReactionTime(), 0.001);
+    assertEquals(0, driverData.getSegments().size());
+
+    // Subsequent segments are added
+    racing.onSegment(0, 5.0, 1);
+    assertEquals(1, driverData.getSegments().size());
+    assertEquals(5.0, driverData.getSegments().get(0), 0.001);
+
+    // Another segment
+    racing.onSegment(0, 5.5, 1);
+    assertEquals(2, driverData.getSegments().size());
+    assertEquals(5.5, driverData.getSegments().get(1), 0.001);
+
+    // Lap resets segments
+    racing.onLap(0, 10.0, 1);
+    assertEquals(1, driverData.getLapCount());
+    assertEquals(0, driverData.getSegments().size());
+  }
+
+  @Test
+  public void testMultipleSegmentsAndInterfaceIds() {
+    Racing racing = new Racing();
+    race.changeState(racing);
+    DriverHeatData driverData = race.getCurrentHeat().getDrivers().get(0);
+
+    // Initial lap to set reaction/start time
+    racing.onLap(0, 1.0, 1);
+
+    // Multiple segments with different interface IDs
+    racing.onSegment(0, 5.0, 101);
+    racing.onSegment(0, 5.5, 102);
+    racing.onSegment(0, 6.0, 103);
+
+    assertEquals(3, driverData.getSegments().size());
+    assertEquals(5.0, driverData.getSegments().get(0), 0.001);
+    assertEquals(5.5, driverData.getSegments().get(1), 0.001);
+    assertEquals(6.0, driverData.getSegments().get(2), 0.001);
+  }
+
+  @Test
+  public void testSegmentsIgnoredAfterHeatFinish() {
+    Racing racing = new Racing();
+    race.changeState(racing);
+    DriverHeatData driverData = race.getCurrentHeat().getDrivers().get(0);
+
+    // Complete the race (3 laps)
+    racing.onLap(0, 1.0, 1); // Reaction
+    racing.onLap(0, 5.0, 1); // Lap 1
+    racing.onLap(0, 5.0, 1); // Lap 2
+    racing.onLap(0, 5.0, 1); // Lap 3 (Finish)
+
+    assertTrue(race.getState() instanceof HeatOver);
+
+    // Segment arriving after finish should be ignored
+    racing.onSegment(0, 2.0, 101);
+    assertEquals(0, driverData.getSegments().size());
   }
 
   private void assertEquals(long expected, long actual) {

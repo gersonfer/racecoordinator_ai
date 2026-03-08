@@ -66,13 +66,11 @@ public class ArduinoConfig {
   public int baudRate;
   public int debounceUs;
 
-  public int globalInvertLanes;
+  public boolean globalInvertLanes;
   public boolean normallyClosedRelays;
   public int globalInvertLights;
-  public int usePitsAsLaps;
-  public int useLapsForSegments;
-  public int useLapsForPits;
-  public int useLapsForPitEnd;
+  public boolean usePitsAsLaps;
+  public boolean useLapsForSegments;
   public LapPinPitBehavior lapPinPitBehavior;
 
   public int hardwareType;
@@ -104,32 +102,33 @@ public class ArduinoConfig {
     // None of this is supported yet
     this.debounceUs = 200;
     this.hardwareType = 1;
-    this.globalInvertLanes = 0;
+    this.globalInvertLanes = false;
     this.normallyClosedRelays = true;
     this.globalInvertLights = 0;
-    this.usePitsAsLaps = 0;
-    this.useLapsForSegments = 0;
-    this.useLapsForPits = 0;
-    this.useLapsForPitEnd = 0;
+    this.usePitsAsLaps = false;
+    this.useLapsForSegments = true;
     this.lapPinPitBehavior = LapPinPitBehavior.PIT_OUT;
   }
 
-  public ArduinoConfig(String name,
-      String commPort,
-      int baudRate,
-      int debounceUs,
-      int hardwareType,
-      int globalInvertLanes,
-      boolean normallyClosedRelays,
-      int globalInvertLights,
-      int usePitsAsLaps,
-      int useLapsForSegments,
-      LapPinPitBehavior lapPinPitBehavior,
-      List<Integer> digitalIds,
-      List<Integer> analogIds,
-      List<LedString> ledStrings,
-      List<String> ledLaneColorOverrides,
-      Map<String, Integer> voltageConfigs) {
+  @org.bson.codecs.pojo.annotations.BsonCreator
+  @com.fasterxml.jackson.annotation.JsonCreator
+  public ArduinoConfig(
+      @org.bson.codecs.pojo.annotations.BsonProperty("name") @com.fasterxml.jackson.annotation.JsonProperty("name") String name,
+      @org.bson.codecs.pojo.annotations.BsonProperty("commPort") @com.fasterxml.jackson.annotation.JsonProperty("commPort") String commPort,
+      @org.bson.codecs.pojo.annotations.BsonProperty("baudRate") @com.fasterxml.jackson.annotation.JsonProperty("baudRate") int baudRate,
+      @org.bson.codecs.pojo.annotations.BsonProperty("debounceUs") @com.fasterxml.jackson.annotation.JsonProperty("debounceUs") int debounceUs,
+      @org.bson.codecs.pojo.annotations.BsonProperty("hardwareType") @com.fasterxml.jackson.annotation.JsonProperty("hardwareType") int hardwareType,
+      @org.bson.codecs.pojo.annotations.BsonProperty("globalInvertLanes") @com.fasterxml.jackson.annotation.JsonProperty("globalInvertLanes") boolean globalInvertLanes,
+      @org.bson.codecs.pojo.annotations.BsonProperty("normallyClosedRelays") @com.fasterxml.jackson.annotation.JsonProperty("normallyClosedRelays") boolean normallyClosedRelays,
+      @org.bson.codecs.pojo.annotations.BsonProperty("globalInvertLights") @com.fasterxml.jackson.annotation.JsonProperty("globalInvertLights") int globalInvertLights,
+      @org.bson.codecs.pojo.annotations.BsonProperty("usePitsAsLaps") @com.fasterxml.jackson.annotation.JsonProperty("usePitsAsLaps") boolean usePitsAsLaps,
+      @org.bson.codecs.pojo.annotations.BsonProperty("useLapsForSegments") @com.fasterxml.jackson.annotation.JsonProperty("useLapsForSegments") boolean useLapsForSegments,
+      @org.bson.codecs.pojo.annotations.BsonProperty("lapPinPitBehavior") @com.fasterxml.jackson.annotation.JsonProperty("lapPinPitBehavior") LapPinPitBehavior lapPinPitBehavior,
+      @org.bson.codecs.pojo.annotations.BsonProperty("digitalIds") @com.fasterxml.jackson.annotation.JsonProperty("digitalIds") List<Integer> digitalIds,
+      @org.bson.codecs.pojo.annotations.BsonProperty("analogIds") @com.fasterxml.jackson.annotation.JsonProperty("analogIds") List<Integer> analogIds,
+      @org.bson.codecs.pojo.annotations.BsonProperty("ledStrings") @com.fasterxml.jackson.annotation.JsonProperty("ledStrings") List<LedString> ledStrings,
+      @org.bson.codecs.pojo.annotations.BsonProperty("ledLaneColorOverrides") @com.fasterxml.jackson.annotation.JsonProperty("ledLaneColorOverrides") List<String> ledLaneColorOverrides,
+      @org.bson.codecs.pojo.annotations.BsonProperty("voltageConfigs") @com.fasterxml.jackson.annotation.JsonProperty("voltageConfigs") java.util.Map<String, Integer> voltageConfigs) {
     this.name = name;
     this.commPort = commPort;
     this.baudRate = baudRate;

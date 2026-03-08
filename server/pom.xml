@@ -98,7 +98,7 @@
         <artifactId>protobuf-maven-plugin</artifactId>
         <version>0.6.1</version>
         <configuration>
-          <protocArtifact>com.google.protobuf:protoc:3.25.1:exe:${os.detected.classifier}</protocArtifact>
+          <protocExecutable>/tmp/racecoordinator-client/bin/protoc</protocExecutable>
           <protoSourceRoot>${project.basedir}/../proto</protoSourceRoot>
           <skip>${skipProtobuf}</skip>
         </configuration>

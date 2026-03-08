@@ -19,10 +19,22 @@ module.exports = function (config) {
 
   // Override environment variables
   process.env.HOME = chromeHome;
-  process.env.CHROME_USER_DATA_DIR = chromeUserData;
+  process.env.XDG_CONFIG_HOME = path.join(tmpDir, 'config');
+  process.env.XDG_CACHE_HOME = path.join(tmpDir, 'cache');
+  process.env.XDG_RUNTIME_DIR = path.join(tmpDir, 'run');
+  process.env.TMPDIR = path.join(tmpDir, 't');
+
+  if (!fs.existsSync(process.env.XDG_CONFIG_HOME)) fs.mkdirSync(process.env.XDG_CONFIG_HOME, { recursive: true });
+  if (!fs.existsSync(process.env.XDG_CACHE_HOME)) fs.mkdirSync(process.env.XDG_CACHE_HOME, { recursive: true });
+  if (!fs.existsSync(process.env.XDG_RUNTIME_DIR)) fs.mkdirSync(process.env.XDG_RUNTIME_DIR, { recursive: true });
+  if (!fs.existsSync(process.env.TMPDIR)) fs.mkdirSync(process.env.TMPDIR, { recursive: true });
 
   console.log('DEBUG: Overridden process.env.HOME =', process.env.HOME);
   console.log('DEBUG: process.env.CHROME_USER_DATA_DIR =', process.env.CHROME_USER_DATA_DIR);
+  console.log('DEBUG: XDG_CONFIG_HOME =', process.env.XDG_CONFIG_HOME);
+  console.log('DEBUG: XDG_CACHE_HOME =', process.env.XDG_CACHE_HOME);
+  console.log('DEBUG: XDG_RUNTIME_DIR =', process.env.XDG_RUNTIME_DIR);
+  console.log('DEBUG: TMPDIR =', process.env.TMPDIR);
   console.log('DEBUG: chromeUserData =', chromeUserData);
 
   config.set({
@@ -65,7 +77,7 @@ module.exports = function (config) {
       ChromeHeadlessWithCustomConfig: {
         base: 'Chrome',
         flags: [
-          '--headless=new',
+          '--headless=old',
           '--no-sandbox',
           '--disable-gpu',
           '--disable-dev-shm-usage',
@@ -76,7 +88,10 @@ module.exports = function (config) {
           '--no-default-browser-check',
           '--no-first-run',
           '--disable-signin',
-          '--disable-sync'
+          '--disable-sync',
+          '--remote-debugging-port=9222',
+          '--disable-software-rasterizer',
+          '--disk-cache-dir=' + path.join(tmpDir, 'cache')
         ]
       }
     },

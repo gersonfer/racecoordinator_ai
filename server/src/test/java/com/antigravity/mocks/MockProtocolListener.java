@@ -14,6 +14,20 @@ public class MockProtocolListener implements ProtocolListener {
   public com.antigravity.proto.InterfaceStatus lastStatus;
   public com.antigravity.proto.InterfaceEvent lastEvent;
 
+  public static class MockSegment {
+    public int lane;
+    public double time;
+    public int interfaceId;
+
+    public MockSegment(int lane, double time, int interfaceId) {
+      this.lane = lane;
+      this.time = time;
+      this.interfaceId = interfaceId;
+    }
+  }
+
+  public List<MockSegment> segments = new ArrayList<>();
+
   @Override
   public void onLap(int lane, double lapTime, int interfaceId) {
     laps.add(lapTime);
@@ -25,6 +39,7 @@ public class MockProtocolListener implements ProtocolListener {
   public void onSegment(int lane, double segmentTime, int interfaceId) {
     lastLane = lane;
     lastSegmentTime = segmentTime;
+    segments.add(new MockSegment(lane, segmentTime, interfaceId));
   }
 
   @Override

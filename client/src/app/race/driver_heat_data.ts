@@ -11,6 +11,7 @@ export class DriverHeatData {
     readonly actualDriver?: Driver;
 
     private laps!: number[];
+    private _currentLapSegments: number[] = [];
 
     // These are all updated by the addLapTime method.
     private _bestLapTime!: number;
@@ -43,6 +44,7 @@ export class DriverHeatData {
         this._reactionTime = 0;
         this._gapLeader = 0;
         this._gapPosition = 0;
+        this._currentLapSegments = [];
     }
 
     addLapTime(lapNumber: number, lapTime: number, averageLapTime: number, medianLapTime: number, bestLapTime: number): void {
@@ -59,6 +61,9 @@ export class DriverHeatData {
         } else {
             this.laps[lapIndex] = lapTime;
         }
+
+        // When a lap is handled, clear current segments for the next lap
+        this._currentLapSegments = [];
 
         this._bestLapTime = bestLapTime;
         this._averageLapTime = averageLapTime;
@@ -116,5 +121,28 @@ export class DriverHeatData {
 
     set gapPosition(value: number) {
         this._gapPosition = value;
+    }
+
+    addSegmentTime(index: number, segmentTime: number): void {
+        // Ensure array is large enough
+        while (this._currentLapSegments.length < index) {
+            this._currentLapSegments.push(0);
+        }
+
+        if (this._currentLapSegments.length <= index) {
+            this._currentLapSegments.push(segmentTime);
+        } else {
+            this._currentLapSegments[index] = segmentTime;
+        }
+    }
+
+    get currentLapSegments(): number[] {
+        return this._currentLapSegments;
+    }
+
+    get lastSegmentTime(): number {
+        return this._currentLapSegments.length > 0
+            ? this._currentLapSegments[this._currentLapSegments.length - 1]
+            : 0;
     }
 }

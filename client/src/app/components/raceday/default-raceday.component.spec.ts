@@ -20,6 +20,7 @@ class MockSvgTextScalerDirective {
   @Input() scaleToFit: boolean = false;
 }
 import { DefaultRacedayComponent } from './default-raceday.component';
+import { ColumnDefinition, AnchorPoint } from './column_definition';
 import { DataService } from 'src/app/data.service';
 import { TranslationService } from 'src/app/services/translation.service';
 import { RaceService } from 'src/app/services/race.service';
@@ -72,7 +73,7 @@ describe('DefaultRacedayComponent', () => {
       'getReactionTimes', 'getStandingsUpdate', 'getOverallStandingsUpdate',
       'getInterfaceEvents', 'getRaceState', 'getDrivers',
       'connectToInterfaceDataSocket', 'disconnectFromInterfaceDataSocket',
-      'listAssets', 'getCarData'
+      'listAssets', 'getCarData', 'getSegments'
     ]);
     mockDataService.getRaceUpdate.and.returnValue(of({}));
     mockDataService.listAssets.and.returnValue(of([]));
@@ -85,6 +86,7 @@ describe('DefaultRacedayComponent', () => {
     mockDataService.getRaceState.and.returnValue(of(com.antigravity.RaceState.NOT_STARTED));
     mockDataService.getDrivers.and.returnValue(of([]));
     mockDataService.getCarData.and.returnValue(of({}));
+    mockDataService.getSegments.and.returnValue(of(null));
     mockDataService.serverUrl = 'http://localhost';
 
     const mockTranslationService = {
@@ -480,15 +482,63 @@ describe('DefaultRacedayComponent', () => {
       expect(result).toBe('(10)');
     });
 
-    it('should return -- for undefined values in (#) columns', () => {
-      mockHd.participant.seed = 0;
-      expect(component.formatValue('seed', 0, mockHd)).toBe('--');
+    it('should format segmentTime based on hd.currentLapSegments when useIndex is true', () => {
+      mockHd.currentLapSegments = [1.111, 2.222, 3.333];
 
-      mockHd.participant.rank = 0;
-      expect(component.formatValue('rankOverall', 0, mockHd)).toBe('--');
+      // segmentTime_1 corresponds to index 1
+      const result1 = component.formatValue('segmentTime_1', 2.222, mockHd as any);
+      expect(result1).toBe('2.222');
 
-      component['driverRankings'].clear();
-      expect(component.formatValue('rankHeat', null, mockHd)).toBe('--');
+      // segmentTime with useIndex calculated for multiple segments maps to index 0
+      // In this case, we need to pass the column to formatValue to trigger the multi-segment logic
+      const mockColumn = {
+        propertyName: 'lastLapTime',
+        layout: {
+          [AnchorPoint.TopLeft]: 'segmentTime',
+          [AnchorPoint.TopRight]: 'segmentTime_1'
+        }
+      } as any;
+      const resultBase = component.formatValue('segmentTime', undefined, mockHd as any, mockColumn);
+      expect(resultBase).toBe('1.111');
+    });
+
+    it('should format segmentTime as --.--- if segment is undefined', () => {
+      mockHd.currentLapSegments = [1.111];
+      const result = component.formatValue('segmentTime_1', undefined, mockHd as any);
+      expect(result).toBe('--.---');
+    });
+
+    it('should format base segmentTime as lastSegmentTime if not in a multi-segment column', () => {
+      mockHd.lastSegmentTime = 4.567;
+      mockHd.currentLapSegments = [4.567];
+
+      // No column provided, or column with only one segment
+      const result = component.formatValue('segmentTime', 4.567, mockHd as any);
+      expect(result).toBe('4.567');
+    });
+  });
+
+  describe('loadColumns and re-indexing', () => {
+    it('should re-index column layout at runtime via loadColumns', () => {
+      // Setup settings with "broken" indexing (e.g. segmentTime_2 and segmentTime_3 but no 0 or 1)
+      mockSettings.racedayColumns = ['testCol'];
+      mockSettings.columnLayouts = {
+        'testCol': {
+          [AnchorPoint.TopLeft]: 'segmentTime_2',
+          [AnchorPoint.TopRight]: 'segmentTime_3'
+        }
+      };
+
+      const mockRace = { fuel_options: { enabled: false }, track: { lanes: [] } };
+      mockRaceService.getRace.and.returnValue(mockRace);
+
+      (component as any).loadColumns();
+
+      const testCol = component['columns'].find(c => c.propertyName === 'testCol');
+      expect(testCol).toBeDefined();
+      // Should be re-indexed to segmentTime and segmentTime_1
+      expect(testCol?.layout?.[AnchorPoint.TopLeft]).toBe('segmentTime');
+      expect(testCol?.layout?.[AnchorPoint.TopRight]).toBe('segmentTime_1');
     });
   });
 

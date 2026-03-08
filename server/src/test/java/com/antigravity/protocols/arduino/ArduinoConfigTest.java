@@ -49,12 +49,20 @@ public class ArduinoConfigTest {
   }
 
   @Test
-  public void testVoltageConfigs() {
-    ArduinoConfig config = new ArduinoConfig();
-    config.voltageConfigs.put("1", 512);
-    config.voltageConfigs.put("2", 1023);
+  public void testConstructor() {
+    ArduinoConfig config1 = new ArduinoConfig(
+        "Test1", "COM1", 115200, 200, 1,
+        true,
+        false,
+        0,
+        true,
+        false,
+        ArduinoConfig.LapPinPitBehavior.NONE,
+        null, null, null, null, null);
 
-    assertEquals(Integer.valueOf(512), config.voltageConfigs.get("1"));
-    assertEquals(Integer.valueOf(1023), config.voltageConfigs.get("2"));
+    assertTrue(config1.globalInvertLanes);
+    assertFalse(config1.normallyClosedRelays);
+    assertTrue(config1.usePitsAsLaps);
+    assertFalse(config1.useLapsForSegments);
   }
 }
