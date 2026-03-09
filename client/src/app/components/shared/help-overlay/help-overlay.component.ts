@@ -33,8 +33,7 @@ export class HelpOverlayComponent implements OnInit, OnDestroy, AfterViewInit {
 
     this.subscriptions.add(this.helpService.currentStep$.subscribe(step => {
       this.currentStep = step;
-      // Wait for view update before positioning
-      setTimeout(() => this.updatePosition(), 0);
+      this.updatePosition();
     }));
 
     this.subscriptions.add(this.helpService.hasNext$.subscribe(hasNext => {

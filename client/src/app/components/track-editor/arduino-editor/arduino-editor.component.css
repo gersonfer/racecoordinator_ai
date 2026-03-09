@@ -192,6 +192,7 @@
 }
 
 .status-badge {
+  display: inline-block;
   width: 12px;
   height: 12px;
   border-radius: 50%;
@@ -334,9 +335,14 @@
 }
 
 .status-badge.small {
-  width: 8px;
-  height: 8px;
+  position: relative;
+  right: auto;
+  top: auto;
+  transform: none;
+  width: 10px;
+  height: 10px;
   background-color: #475569;
+  border-radius: 50%;
   box-shadow: none;
 }
 

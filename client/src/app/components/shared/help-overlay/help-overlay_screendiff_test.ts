@@ -15,6 +15,34 @@ test.describe('Help Overlay Visuals', () => {
     await TestSetupHelper.setupSessionStorage(page, { skipIntro: 'true' });
   });
 
+  async function waitForPopoverStable(page, overlay) {
+    const popover = overlay.locator('.help-popover');
+    await expect(popover).toBeVisible();
+
+    // Wait for the popover to stop moving/resizing
+    // We check every 50ms for 3 consecutive stable readings
+    let lastBox = await popover.boundingBox();
+    let stableCount = 0;
+
+    for (let i = 0; i < 20; i++) { // Max 1s
+      await page.waitForTimeout(50);
+      const currentBox = await popover.boundingBox();
+
+      if (currentBox && lastBox &&
+        currentBox.x === lastBox.x &&
+        currentBox.y === lastBox.y &&
+        currentBox.width === lastBox.width &&
+        currentBox.height === lastBox.height) {
+        stableCount++;
+      } else {
+        stableCount = 0;
+      }
+
+      if (stableCount >= 3) break;
+      lastBox = currentBox;
+    }
+  }
+
   test('should display help guide and navigate correctly', async ({ page }) => {
     // 1. Load Page
     await TestSetupHelper.waitForLocalization(page, 'en', page.goto('/'));
@@ -30,7 +58,7 @@ test.describe('Help Overlay Visuals', () => {
     // Wait for overlay to appear
     const overlay = page.locator('app-help-overlay');
     const popover = overlay.locator('.help-popover');
-    await expect(popover).toBeVisible();
+    await waitForPopoverStable(page, overlay);
 
     // 3. Verify Step 1 (Welcome - general modal, centered)
     await expect(popover).toContainText('Welcome to Race Day Setup');
@@ -43,6 +71,7 @@ test.describe('Help Overlay Visuals', () => {
 
     // Wait for transition/position update
     // The highlight mask should appear around the help icon
+    await waitForPopoverStable(page, overlay);
     await expect(popover).toContainText('Walkthrough');
     await expect(overlay.locator('.highlight-mask')).toBeVisible();
 
@@ -51,6 +80,7 @@ test.describe('Help Overlay Visuals', () => {
 
     // 5. Click Next -> Step 3 (Driver Selection - targets driver panel)
     await nextBtn.click();
+    await waitForPopoverStable(page, overlay);
     await expect(popover).toContainText('Driver Selection');
     // Capture Step 3
     await expect(page).toHaveScreenshot('help-step-3-driver-panel.png');
@@ -60,6 +90,7 @@ test.describe('Help Overlay Visuals', () => {
     await prevBtn.click();
 
     // Should be back at Step 2
+    await waitForPopoverStable(page, overlay);
     await expect(popover).toContainText('Walkthrough');
     // Verify visual match with previous capture (optional, but good for logic check)
     // We'll just capture to ensure consistency
