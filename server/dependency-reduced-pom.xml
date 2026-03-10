@@ -47,8 +47,9 @@
           </execution>
         </executions>
         <configuration>
-          <protocArtifact>com.google.protobuf:protoc:3.25.1:exe:${os.detected.classifier}</protocArtifact>
+          <protocArtifact>com.google.protobuf:protoc:${protobuf.java.version}:exe:${os.detected.classifier}</protocArtifact>
           <protoSourceRoot>${project.basedir}/../proto</protoSourceRoot>
+          <outputDirectory>${generated.sources.dir}</outputDirectory>
           <skip>${skipProtobuf}</skip>
         </configuration>
       </plugin>
@@ -97,6 +98,7 @@
     <build.dist.dir>target_test</build.dist.dir>
     <maven.compiler.source>1.8</maven.compiler.source>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    <generated.sources.dir>${project.build.directory}/generated-sources/protobuf/java</generated.sources.dir>
+    <generated.sources.dir>${build.dist.dir}/generated-sources/protobuf/java</generated.sources.dir>
+    <protobuf.java.version>3.25.1</protobuf.java.version>
   </properties>
 </project>
