@@ -793,18 +793,43 @@ export class TestSetupHelper {
   }
 
   static async disableAnimations(page: Page) {
-    await page.addStyleTag({
-      content: `
-        *, *::before, *::after {
-          transition: none !important;
-          animation: none !important;
-          transition-duration: 0s !important;
-          animation-duration: 0s !important;
-          scroll-behavior: auto !important;
-          caret-color: transparent !important;
-          clip-path: none !important;
+    const css = `
+      *, *::before, *::after {
+        transition: none !important;
+        animation: none !important;
+        transition-duration: 0s !important;
+        animation-duration: 0s !important;
+        scroll-behavior: auto !important;
+        caret-color: transparent !important;
+        clip-path: none !important;
+      }
+    `;
+
+    // Persist across navigation
+    await page.addInitScript((styleContent) => {
+      const injectStyle = () => {
+        if (document.getElementById('playwright-disable-animations')) return;
+        const style = document.createElement('style');
+        style.id = 'playwright-disable-animations';
+        style.textContent = styleContent;
+        document.head.appendChild(style);
+      };
+      if (document.head) {
+        injectStyle();
+      } else {
+        document.addEventListener('DOMContentLoaded', injectStyle);
+      }
+      
+      // Also inject periodically just in case Angular or something rewrites head
+      const observer = new MutationObserver(() => {
+        if (document.head && !document.getElementById('playwright-disable-animations')) {
+          injectStyle();
         }
-      `
-    });
+      });
+      observer.observe(document, { childList: true, subtree: true });
+    }, css);
+
+    // Apply immediately to current execution context to be safe
+    await page.addStyleTag({ content: css }).catch(() => {});
   }
 }
