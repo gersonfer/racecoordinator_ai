@@ -1274,7 +1274,7 @@ export class DefaultRacedayComponent implements OnInit, OnDestroy {
         const label = ''; // Hide label for image set columns on raceday
 
         const renderer = (v: any, hd: DriverHeatData, col: ColumnDefinition) => {
-          return this.getSelectedImageFromSet(asset, hd);
+          return this.getSelectedImageFromSet(asset, v, hd);
         };
 
         return new ColumnDefinition(label, key, width, false, 'middle', 0, anchor, renderer, layout);
@@ -1309,30 +1309,44 @@ export class DefaultRacedayComponent implements OnInit, OnDestroy {
     return newLayout;
   }
 
-  // Helper method to get the selected image URL from an image set based on fuel percentage
-  private getSelectedImageFromSet(asset: com.antigravity.IAssetMessage | undefined, hd: DriverHeatData): string {
+  // Helper method to get the selected image URL from an image set based on value or fuel percentage
+  private getSelectedImageFromSet(asset: any, value: any, hd: DriverHeatData): string {
     if (!asset || asset.type !== 'image_set' || !asset.images || asset.images.length === 0) {
       return '';
     }
 
+    // If value is a string that explicitly points to an image in the set by name
+    if (typeof value === 'string') {
+      const match = asset.images.find((img: any) => img.name === value || img.url?.includes(value));
+      if (match) return this.getFullUrl(match.url || '');
+    }
+
+    // Calculate fuel percentage if value is not provided or is a number
     const level = hd.participant?.fuelLevel;
     const race = this.raceService.getRace();
     const capacity = (this.track?.hasDigitalFuel() ? race?.digital_fuel_options?.capacity : race?.fuel_options?.capacity) || 100;
-    if (level === undefined || capacity === undefined || capacity <= 0) {
+
+    let fuelPercentage = 0;
+    if (typeof value === 'number') {
+      fuelPercentage = value;
+    } else if (level !== undefined && capacity !== undefined && capacity > 0) {
+      fuelPercentage = (level / capacity) * 100;
+    } else {
       return '';
     }
 
-    const fuelPercentage = (level / capacity) * 100;
-
     // Special case: 0 percent should only be used if it is exactly 0
     if (fuelPercentage === 0) {
-      const zeroImage = asset.images.find(img => img.percentage === 0);
-      return zeroImage ? this.getFullUrl(zeroImage.url || '') : '';
+      const zeroImage = asset.images.find((img: any) => img.percentage === 0);
+      if (zeroImage) return this.getFullUrl(zeroImage.url || '');
     }
 
     // Filter out 0 from candidates for non-zero percentages
-    const candidates = asset.images.filter(img => img.percentage !== 0);
-    if (candidates.length === 0) return '';
+    const candidates = asset.images.filter((img: any) => (img.percentage || 0) !== 0);
+    if (candidates.length === 0) {
+      // Fallback to any image if no non-zero ones exist
+      return this.getFullUrl(asset.images[0].url || '');
+    }
 
     // Find the image with percentage closest to current fuelPercentage
     let bestMatch = candidates[0];
@@ -1345,11 +1359,10 @@ export class DefaultRacedayComponent implements OnInit, OnDestroy {
         bestMatch = img;
       }
     }
-
     return this.getFullUrl(bestMatch.url || '');
   }
 
-  private findAssetById(assetId: string): com.antigravity.IAssetMessage | undefined {
+  private findAssetById(assetId: string): any {
     let asset = this.assets.find(a => a.model?.entityId === assetId);
 
     // Robustness: fallback for builtin fuel gauge if ID doesn't match
@@ -1360,9 +1373,26 @@ export class DefaultRacedayComponent implements OnInit, OnDestroy {
     return asset;
   }
 
+  private isEmptyDriver(hd: DriverHeatData): boolean {
+    if (!hd) return true;
+    const name = hd.actualDriver?.name || hd.driver?.name;
+    const entityId = hd.actualDriver?.entity_id ?? hd.participant?.driver?.entity_id;
+
+    // A driver is empty IF it has the literal name "Empty" AND either an empty/missing entityId.
+    // This avoids false positives on minimal mocks in unit/screendiff tests that omit IDs.
+    return name === 'Empty' && (!entityId || entityId === '');
+  }
+
   // Format any value based on property name
   formatValue(propertyName: string, value: any, hd: DriverHeatData, column?: ColumnDefinition): string {
     const baseKey = propertyName.split('_')[0];
+
+    if (this.isEmptyDriver(hd)) {
+      // Hide some columns for empty lanes.  All others not in this list should show the default formatting for the colunn.
+      if (baseKey === 'seed' || baseKey === 'rankHeat' || baseKey === 'rankOverall') {
+        return '';
+      }
+    }
 
     if (baseKey.includes('LapTime') || baseKey === 'reactionTime') {
       return value > 0 ? value.toFixed(3) : '--.---';
@@ -1374,8 +1404,14 @@ export class DefaultRacedayComponent implements OnInit, OnDestroy {
       if (value === 0 && hd.reactionTime === 0) return '--';
       return value.toString();
     } else if (baseKey === 'driver.name') {
+      if (this.isEmptyDriver(hd)) {
+        return this.translationService.translate('RD_EMPTY_LANE');
+      }
       return hd.actualDriver?.name || hd.driver.name;
     } else if (baseKey === 'driver.nickname') {
+      if (this.isEmptyDriver(hd)) {
+        return this.translationService.translate('RD_EMPTY_LANE');
+      }
       return hd.actualDriver?.nickname || hd.driver.nickname || hd.driver.name;
     } else if (baseKey === 'participant.team.name') {
       return hd.participant?.team?.name || '';
@@ -1400,9 +1436,11 @@ export class DefaultRacedayComponent implements OnInit, OnDestroy {
       const seed = hd.participant?.seed;
       return seed ? `(${seed})` : '--';
     } else if (baseKey === 'rankHeat') {
+      if (this.isEmptyDriver(hd)) return '';
       const rank = this.driverRankings.get(hd.objectId);
       return rank ? `(${rank})` : '--';
     } else if (baseKey === 'rankOverall') {
+      if (this.isEmptyDriver(hd)) return '';
       const rank = hd.participant?.rank;
       return rank ? `(${rank})` : '--';
     } else if (baseKey === 'segmentTime') {

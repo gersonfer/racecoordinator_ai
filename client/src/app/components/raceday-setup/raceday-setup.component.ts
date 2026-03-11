@@ -63,7 +63,7 @@ export class RacedaySetupComponent implements OnInit {
   tempServerIp = 'localhost';
   tempServerPort = 7070;
   serverVersion: string = '';
-  clientVersion: string = '0.0.0.1';
+  clientVersion: string = '0.0.0.2';
   showAboutDialog = false;
 
   scale: number = 1;

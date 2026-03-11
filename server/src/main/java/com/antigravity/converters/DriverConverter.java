@@ -21,15 +21,15 @@ public class DriverConverter {
         sentObjectIds.add(key);
       }
       com.antigravity.proto.AudioConfig lapAudio = com.antigravity.proto.AudioConfig.newBuilder()
-          .setType(driver.getLapAudio().getType())
-          .setUrl(driver.getLapAudio().getUrl() != null ? driver.getLapAudio().getUrl() : "")
-          .setText(driver.getLapAudio().getText() != null ? driver.getLapAudio().getText() : "")
+          .setType(driver.getLapAudio() != null ? driver.getLapAudio().getType() : "preset")
+          .setUrl(driver.getLapAudio() != null && driver.getLapAudio().getUrl() != null ? driver.getLapAudio().getUrl() : "")
+          .setText(driver.getLapAudio() != null && driver.getLapAudio().getText() != null ? driver.getLapAudio().getText() : "")
           .build();
 
       com.antigravity.proto.AudioConfig bestLapAudio = com.antigravity.proto.AudioConfig.newBuilder()
-          .setType(driver.getBestLapAudio().getType())
-          .setUrl(driver.getBestLapAudio().getUrl() != null ? driver.getBestLapAudio().getUrl() : "")
-          .setText(driver.getBestLapAudio().getText() != null ? driver.getBestLapAudio().getText() : "")
+          .setType(driver.getBestLapAudio() != null ? driver.getBestLapAudio().getType() : "preset")
+          .setUrl(driver.getBestLapAudio() != null && driver.getBestLapAudio().getUrl() != null ? driver.getBestLapAudio().getUrl() : "")
+          .setText(driver.getBestLapAudio() != null && driver.getBestLapAudio().getText() != null ? driver.getBestLapAudio().getText() : "")
           .build();
 
       return DriverModel.newBuilder()

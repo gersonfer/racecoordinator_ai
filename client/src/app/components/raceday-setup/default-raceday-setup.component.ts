@@ -224,6 +224,30 @@ export class DefaultRacedaySetupComponent implements OnInit, AfterViewInit {
     return participant.avatarUrl;
   }
 
+  getLocalizedName(participant: Participant): string {
+    if (participant.name === 'Empty' && (!participant.entity_id || participant.entity_id === '')) {
+      return this.translationService.translate('RD_EMPTY_LANE');
+    }
+    return participant.name || '';
+  }
+
+  getLocalizedNickname(participant: Participant): string {
+    if (this.isDriver(participant)) {
+      if ((participant.nickname === 'Empty' || participant.name === 'Empty') && (!participant.entity_id || participant.entity_id === '')) {
+        return this.translationService.translate('RD_EMPTY_LANE');
+      }
+      return participant.nickname || participant.name || '';
+    }
+    return '';
+  }
+
+  getLocalizedTeamMembers(participant: Participant): string {
+    if (this.isTeam(participant)) {
+      return `${participant.driverIds.length} ${this.translationService.translate('RDS_TEAM_DRIVERS')}`;
+    }
+    return '';
+  }
+
   onParticipantImageError(participant: Participant) {
     this.imageErrors.add((this.isDriver(participant) ? 'd_' : 't_') + participant.entity_id);
   }
@@ -275,11 +299,11 @@ export class DefaultRacedaySetupComponent implements OnInit, AfterViewInit {
   }
 
   isDriver(participant: Participant | undefined): participant is Driver {
-    return participant instanceof Driver;
+    return !!participant && (participant instanceof Driver || ('nickname' in participant && !('driverIds' in participant)));
   }
 
   isTeam(participant: Participant | undefined): participant is Team {
-    return participant instanceof Team;
+    return !!participant && (participant instanceof Team || ('driverIds' in participant));
   }
 
   getDriver(participant: Participant | undefined): Driver | undefined {

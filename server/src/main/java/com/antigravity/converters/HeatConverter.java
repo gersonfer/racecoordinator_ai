@@ -46,7 +46,7 @@ public class HeatConverter {
     if (sentObjectIds.contains(key)) {
       return DriverHeatData.newBuilder()
           .setObjectId(data.getObjectId())
-          .setDriverId(data.getActualDriver() != null ? data.getActualDriver().getEntityId() : "")
+          .setDriverId(data.getActualDriver() != null && data.getActualDriver().getEntityId() != null ? data.getActualDriver().getEntityId() : "")
           .build();
     } else {
       sentObjectIds.add(key);
@@ -59,7 +59,7 @@ public class HeatConverter {
       return DriverHeatData.newBuilder()
           .setObjectId(data.getObjectId())
           .setDriver(RaceParticipantConverter.toProto(data.getDriver(), sentObjectIds))
-          .setDriverId(data.getActualDriver() != null ? data.getActualDriver().getEntityId() : "")
+          .setDriverId(data.getActualDriver() != null && data.getActualDriver().getEntityId() != null ? data.getActualDriver().getEntityId() : "")
           .setActualDriver(data.getActualDriver() != null
               ? DriverConverter.toProto(data.getActualDriver(), sentObjectIds)
               : com.antigravity.proto.DriverModel.getDefaultInstance())

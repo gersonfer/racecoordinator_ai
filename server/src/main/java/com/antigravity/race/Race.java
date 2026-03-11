@@ -55,6 +55,13 @@ public class Race implements ProtocolListener {
     }
 
     this.track = track;
+    
+    // Fill with empty drivers if we have fewer drivers than lanes
+    int numLanes = this.track.getLanes().size();
+    while (this.drivers.size() < numLanes) {
+      this.drivers.add(new RaceParticipant(com.antigravity.models.Driver.EMPTY_DRIVER));
+    }
+
     this.heats = HeatBuilder.buildHeats(this, this.drivers);
     this.currentHeat = this.heats.get(0);
 
