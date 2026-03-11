@@ -107,31 +107,19 @@ public class DatabaseService {
 
     List<Lane> lanes = new ArrayList<>();
     // Client expects: background_color=COLOR, foreground_color=BLACK
-    Lane l1 = new Lane("#ef4444", "black", 100, getNextSequence(database, "lanes"), null);
+    Lane l1 = new Lane("#ef4444", "black", 0, getNextSequence(database, "lanes"), null);
     lanes.add(l1);
-
-    Lane l2 = new Lane("#ffffff", "black", 100, getNextSequence(database, "lanes"), null);
+    Lane l2 = new Lane("#ffffff", "black", 0, getNextSequence(database, "lanes"), null);
     lanes.add(l2);
-
-    Lane l3 = new Lane("#3b82f6", "black", 100, getNextSequence(database, "lanes"), null);
+    Lane l3 = new Lane("#3b82f6", "black", 0, getNextSequence(database, "lanes"), null);
     lanes.add(l3);
-
-    Lane l4 = new Lane("#fbbf24", "black", 100, getNextSequence(database, "lanes"), null);
+    Lane l4 = new Lane("#fbbf24", "black", 0, getNextSequence(database, "lanes"), null);
     lanes.add(l4);
-
-    // Create a default track with no Arduino config
-    List<Lane> defaultLanes = new ArrayList<>();
-    defaultLanes.add(new Lane("#ef4444", "black", 100, "1", null));
-    defaultLanes.add(new Lane("#ffffff", "black", 100, "2", null));
-    defaultLanes.add(new Lane("#3b82f6", "black", 100, "3", null));
-    defaultLanes.add(new Lane("#fbbf24", "black", 100, "4", null));
-    com.antigravity.models.Track defaultTrack = new com.antigravity.models.Track("Default", defaultLanes,
-        new ArrayList<>(), "new", null);
 
     com.antigravity.protocols.arduino.ArduinoConfig config = new com.antigravity.protocols.arduino.ArduinoConfig();
     List<com.antigravity.protocols.arduino.ArduinoConfig> configs = new ArrayList<>();
     configs.add(config);
-    Track track = new Track("Bright Plume Raceway", lanes, configs, getNextSequence(database, "tracks"),
+    Track track = new Track("The Heights", lanes, configs, getNextSequence(database, "tracks"),
         null);
 
     trackCollection.insertOne(track);
