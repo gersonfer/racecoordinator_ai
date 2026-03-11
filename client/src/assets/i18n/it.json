@@ -92,7 +92,7 @@
   "AS_PINS_COUNT": "{{count}} Pin",
   "AS_PLACEHOLDER_TEXT": "Inserisci testo...",
   "AS_SELECT_SOUND": "Seleziona Suono...",
-  "AS_TITLE": "Riepilogo Interfaccia",
+  "AS_TITLE": "Riepilogo Arduino",
   "AS_TITLE_SELECT_SOUND": "SELEZIONA SUONO",
   "AS_TTS_NOT_SUPPORTED": "Text-to-speech non supportato in questo browser.",
   "AS_UNKNOWN_ASSET": "Asset Sconosciuto",

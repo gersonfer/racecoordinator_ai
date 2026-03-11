@@ -87,7 +87,7 @@
   "AS_PINS_COUNT": "{{count}} Pin(s)",
   "AS_PLACEHOLDER_TEXT": "Enter text...",
   "AS_SELECT_SOUND": "Select Sound...",
-  "AS_TITLE": "Interface Summary",
+  "AS_TITLE": "Arduino Summary",
   "AS_TITLE_SELECT_SOUND": "SELECT SOUND",
   "AS_TTS_NOT_SUPPORTED": "Text-to-speech not supported in this browser.",
   "AS_UNKNOWN_ASSET": "Unknown Asset",

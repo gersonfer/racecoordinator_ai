@@ -12,9 +12,32 @@
   display: flex;
   align-items: center;
   gap: 10px;
+  cursor: pointer;
   padding: 10px 0;
+  user-select: none;
+  transition: background-color 0.2s;
   border-radius: 4px;
-  margin-bottom: 5px;
+}
+
+.section-header:hover {
+  background: rgba(148, 163, 184, 0.05);
+}
+
+.expander-icon {
+  font-size: 0.8rem;
+  color: #38bdf8;
+  transition: transform 0.2s;
+  width: 14px;
+  text-align: center;
+  display: inline-block;
+}
+
+.expander-icon.collapsed {
+  transform: rotate(-90deg);
+}
+
+.section-content {
+  padding-top: 10px;
 }
 
 .section-header h1 {

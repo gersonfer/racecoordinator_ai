@@ -41,17 +41,23 @@
         </div>
       </div>
       <div class="detail-content">
-        <div class="arduino-summary-container" *ngIf="selectedTrack.arduino_configs" style="padding: 0; border: none;">
-          <app-arduino-summary [track]="selectedTrack"></app-arduino-summary>
+        <div class="arduino-summary-container" *ngIf="selectedTrack.arduino_configs && selectedTrack.arduino_configs.length > 0" style="padding: 0; border: none; display: flex; flex-direction: column; gap: 15px;">
+          <app-arduino-summary *ngFor="let config of selectedTrack.arduino_configs; let i = index" 
+            [config]="config" 
+            [index]="selectedTrack.arduino_configs.length > 1 ? i + 1 : undefined">
+          </app-arduino-summary>
         </div>
         <div class="lane-viz-container">
-          <div class="section-header" style="margin-bottom: 15px;">
+          <div class="section-header" (click)="toggleLaneSummary()" style="margin-bottom: 15px; cursor: pointer;">
+            <span class="expander-icon" [class.collapsed]="!isLaneSummaryExpanded">▼</span>
             <h1>{{ 'TM_LANE_COUNT' | translate }} ({{ selectedTrack.lanes.length }})</h1>
           </div>
-          <div class="lanes-grid">
-            <div *ngFor="let lane of selectedTrack.lanes; let i = index" class="lane-badge"
-              [style.background-color]="lane.background_color" [style.color]="lane.foreground_color">
-              {{ 'TM_LANE_LENGTH' | translate:{ lane: i + 1, length: lane.length } }}
+          <div class="section-content" *ngIf="isLaneSummaryExpanded">
+            <div class="lanes-grid">
+              <div *ngFor="let lane of selectedTrack.lanes; let i = index" class="lane-badge"
+                [style.background-color]="lane.background_color" [style.color]="lane.foreground_color">
+                {{ 'TM_LANE_LENGTH' | translate:{ lane: i + 1, length: lane.length } }}
+              </div>
             </div>
           </div>
         </div>

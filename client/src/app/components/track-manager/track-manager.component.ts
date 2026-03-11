@@ -17,6 +17,7 @@ export class TrackManagerComponent implements OnInit {
   isLoading: boolean = true;
   isSaving: boolean = false;
   showDeleteConfirm: boolean = false;
+  isLaneSummaryExpanded = true;
 
   constructor(
     private dataService: DataService,
@@ -25,6 +26,10 @@ export class TrackManagerComponent implements OnInit {
     private router: Router,
     private route: ActivatedRoute
   ) { }
+
+  toggleLaneSummary() {
+    this.isLaneSummaryExpanded = !this.isLaneSummaryExpanded;
+  }
 
   ngOnInit() {
     this.updateScale();
