@@ -453,18 +453,22 @@ export class TestSetupHelper {
 
     // Mock interface initialization and updates to avoid browser errors
     await page.route('**/api/initialize-interface', async (route) => {
+      const response = com.antigravity.InitializeInterfaceResponse.create({ success: true });
+      const buffer = com.antigravity.InitializeInterfaceResponse.encode(response).finish();
       await route.fulfill({
         status: 200,
-        contentType: 'application/json',
-        body: JSON.stringify({ success: true }),
+        contentType: 'application/octet-stream',
+        body: Buffer.from(buffer),
       });
     });
 
     await page.route('**/api/update-interface-config', async (route) => {
+      const response = com.antigravity.UpdateInterfaceConfigResponse.create({ success: true });
+      const buffer = com.antigravity.UpdateInterfaceConfigResponse.encode(response).finish();
       await route.fulfill({
         status: 200,
-        contentType: 'application/json',
-        body: JSON.stringify({ success: true }),
+        contentType: 'application/octet-stream',
+        body: Buffer.from(buffer),
       });
     });
   }
