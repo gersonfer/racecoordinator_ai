@@ -144,6 +144,24 @@ class MockUndoRedoControlsComponent {
   @Input() manager: any;
 }
 
+import { EventEmitter, Output } from '@angular/core';
+
+@Component({
+  selector: 'app-editor-title',
+  template: '',
+  standalone: false
+})
+class MockEditorTitleComponent {
+  @Input() titleKey: string = '';
+  @Input() backRoute: string = '';
+  @Input() backConfirm: boolean = false;
+  @Input() backQueryParams: any = {};
+  @Input() backConfirmTitle: string = '';
+  @Input() backConfirmMessage: string = '';
+  @Input() undoManager: any;
+  @Output() help = new EventEmitter<void>();
+}
+
 describe('TrackEditorComponent', () => {
   let component: TrackEditorComponent;
   let fixture: ComponentFixture<TrackEditorComponent>;
@@ -152,7 +170,7 @@ describe('TrackEditorComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      declarations: [TrackEditorComponent, TranslatePipe, MockBackButtonComponent, MockUndoRedoControlsComponent],
+      declarations: [TrackEditorComponent, TranslatePipe, MockBackButtonComponent, MockUndoRedoControlsComponent, MockEditorTitleComponent],
       imports: [FormsModule],
       schemas: [NO_ERRORS_SCHEMA],
       providers: [

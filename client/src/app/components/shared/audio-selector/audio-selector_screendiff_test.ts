@@ -15,7 +15,7 @@ test.describe('Audio Selector Visuals', () => {
   test('should display audio selector', async ({ page }) => {
     // Navigate to Driver Editor which uses Audio Selector
     await TestSetupHelper.waitForLocalization(page, 'en', page.goto('/driver-editor?id=d1'));
-    await TestSetupHelper.waitForText(page, 'DRIVER CONFIGURATION');
+    await page.locator('.page-container').waitFor();
 
     // Locate an audio selector (e.g. Lap Sound)
     // We might need to target a specific one if there are multiple, or just taking the first one
@@ -29,7 +29,7 @@ test.describe('Audio Selector Visuals', () => {
   test('should display item selector with play icons', async ({ page }) => {
     // Navigate to Driver Editor which uses Audio Selector
     await TestSetupHelper.waitForLocalization(page, 'en', page.goto('/driver-editor?id=d1'));
-    await TestSetupHelper.waitForText(page, 'DRIVER CONFIGURATION');
+    await page.locator('.page-container').waitFor();
 
     // Open the audio selector for one of the sounds
     // Driver Editor has multiple audio selectors, use .first() to target one specifically

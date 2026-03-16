@@ -1,83 +1,79 @@
-<div class="dm-container" [style.transform]="'translate(-50%, -50%) scale(' + scale + ')'">
-  <!-- Header -->
-  <div class="dm-header">
-    <app-back-button [label]="'DE_BTN_BACK' | translate" route="/driver-manager"
-      [queryParams]="{ id: editingDriver?.entity_id }" [confirm]="hasChanges()"
-      [confirmTitle]="'DE_CONFIRM_DISCARD_TITLE'" [confirmMessage]="'DE_CONFIRM_DISCARD_MESSAGE'"></app-back-button>
+<div class="page-container" [style.transform]="'translate(-50%, -50%) scale(' + scale + ')'">
+  <app-editor-title
+    titleKey="DE_TITLE"
+    backRoute="/driver-manager"
+    [backConfirm]="hasChanges()"
+    [backQueryParams]="{ id: editingDriver?.entity_id }"
+    backConfirmTitle="DE_CONFIRM_DISCARD_TITLE"
+    backConfirmMessage="DE_CONFIRM_DISCARD_MESSAGE"
+    [undoManager]="undoManager"
+    (help)="startHelp()">
+  </app-editor-title>
 
-    <!-- Undo/Redo Controls -->
-    <app-undo-redo-controls [manager]="undoManager"></app-undo-redo-controls>
-  </div>
-
-  <div class="content-area editor-centered" *ngIf="!isLoading">
-    <!-- ONLY CONFIGURATION PANELS NOW -->
-    <div class="config-panels" *ngIf="editingDriver">
-      <!-- DRIVER CONFIG -->
-      <div class="panel config-panel">
-        <div class="panel-header">{{ 'DE_HEADER_DRIVER_CONFIG' | translate }}</div>
-        <div class="config-content driver-config-layout">
-          <div class="inputs-column">
-            <div class="form-group">
-              <label>{{ 'RDS_LABEL_NAME' | translate }}</label>
-              <input type="text" [(ngModel)]="editingDriver.name" (ngModelChange)="onInputChange()"
-                (focus)="onInputFocus()" (blur)="onInputBlur()" class="dm-input">
-            </div>
-            <div class="form-group">
-              <label>{{ 'RDS_LABEL_NICKNAME' | translate }}</label>
-              <input type="text" [(ngModel)]="editingDriver.nickname" (ngModelChange)="onInputChange()"
-                (focus)="onInputFocus()" (blur)="onInputBlur()" class="dm-input">
-            </div>
-          </div>
-          <div class="avatar-column">
-            <app-image-selector [(imageUrl)]="editingDriver.avatarUrl" (imageUrlChange)="captureState()"
-              [assets]="avatarAssets" [size]="'large'">
-            </app-image-selector>
-          </div>
-        </div>
+  <div class="content-split" *ngIf="!isLoading && editingDriver">
+    <!-- Left Panel: Driver Config -->
+    <div class="editor-panel">
+      <!-- Avatar Section -->
+      <div id="driver-avatar-section" class="editor-section">
+        <app-image-selector [(imageUrl)]="editingDriver.avatarUrl" (imageUrlChange)="captureState()"
+          [assets]="avatarAssets" [size]="'large'">
+        </app-image-selector>
       </div>
 
-      <!-- AUDIO CONFIG -->
-      <div class="panel audio-panel">
-        <div class="panel-header">{{ 'DE_HEADER_AUDIO_CONFIG' | translate }}</div>
+      <!-- Name Section -->
+      <div id="driver-name-section" class="editor-section" [class.invalid]="isNameInvalid">
+        <label class="section-label">{{ 'RDS_LABEL_NAME' | translate }}</label>
+        <input id="driver-name-input" type="text" [(ngModel)]="editingDriver.name" (ngModelChange)="onInputChange()"
+          (focus)="onInputFocus()" (blur)="onInputBlur()" class="dm-input" autocomplete="off" data-lpignore="true"
+          data-form-type="other" name="driverNameInput">
+      </div>
 
-        <div class="audio-section">
-          <app-audio-selector *ngIf="editingDriver.lapAudio" [label]="'DE_LABEL_LAP_SOUNDS' | translate"
-            [assets]="soundAssets" [type]="editingDriver.lapAudio.type"
-            (typeChange)="editingDriver.lapAudio.type=$event; captureState()" [url]="editingDriver.lapAudio.url"
-            (urlChange)="onInputChange(); editingDriver.lapAudio.url=$event" [text]="editingDriver.lapAudio.text"
-            (textChange)="onInputChange(); editingDriver.lapAudio.text=$event" [backButtonRoute]="'/driver-editor'"
-            [backButtonQueryParams]="{ id: editingDriver.entity_id }" [context]="ttsContext">
-          </app-audio-selector>
+      <!-- Nickname Section -->
+      <div id="driver-nickname-section" class="editor-section" [class.invalid]="isNicknameInvalid">
+        <label class="section-label">{{ 'RDS_LABEL_NICKNAME' | translate }}</label>
+        <input id="driver-nickname-input" type="text" [(ngModel)]="editingDriver.nickname" (ngModelChange)="onInputChange()"
+          (focus)="onInputFocus()" (blur)="onInputBlur()" class="dm-input" autocomplete="off" data-lpignore="true"
+          data-form-type="other" name="driverNicknameInput">
+      </div>
+
+      <div class="editor-actions">
+        <div class="spacer"></div>
+        <button id="driver-duplicate-btn" class="action-btn" (click)="saveAsNew()" [disabled]="isSaving || hasChanges()">
+          {{ 'DE_BTN_SAVE_AS_NEW' | translate }}
+        </button>
+      </div>
+    </div>
+
+    <!-- Right Panel: Audio Config -->
+    <div class="preview-panel">
+      <div class="config-section">
+        <div class="section-header" (click)="toggleSection('audio')">
+          <span class="expander-icon" [class.collapsed]="!sectionsExpanded?.audio">▼</span>
+          <h1>{{ 'DE_HEADER_AUDIO_CONFIG' | translate }}</h1>
         </div>
 
-        <div class="audio-section">
-          <app-audio-selector *ngIf="editingDriver.bestLapAudio" [label]="'DE_LABEL_BEST_LAP_SOUNDS' | translate"
-            [assets]="soundAssets" [type]="editingDriver.bestLapAudio.type"
-            (typeChange)="editingDriver.bestLapAudio.type=$event; captureState()" [url]="editingDriver.bestLapAudio.url"
-            (urlChange)="onInputChange(); editingDriver.bestLapAudio.url=$event"
-            [text]="editingDriver.bestLapAudio.text"
-            (textChange)="onInputChange(); editingDriver.bestLapAudio.text=$event" [backButtonRoute]="'/driver-editor'"
-            [backButtonQueryParams]="{ id: editingDriver.entity_id }" [context]="ttsContext">
-          </app-audio-selector>
-        </div>
+        <div class="section-content" *ngIf="sectionsExpanded?.audio">
+          <div class="audio-sections-row">
+            <div class="audio-section">
+              <app-audio-selector *ngIf="editingDriver.lapAudio" [label]="'DE_LABEL_LAP_SOUNDS' | translate"
+                [assets]="soundAssets" [type]="editingDriver.lapAudio.type"
+                (typeChange)="editingDriver.lapAudio.type=$event; captureState()" [url]="editingDriver.lapAudio.url"
+                (urlChange)="onInputChange(); editingDriver.lapAudio.url=$event" [text]="editingDriver.lapAudio.text"
+                (textChange)="onInputChange(); editingDriver.lapAudio.text=$event" [backButtonRoute]="'/driver-editor'"
+                [backButtonQueryParams]="{ id: editingDriver.entity_id }" [context]="ttsContext">
+              </app-audio-selector>
+            </div>
 
-        <div class="editor-actions">
-          <button class="btn btn-update" (click)="updateDriver()" [disabled]="!hasChanges()"
-            [title]="hasChanges() ? '' : ('DE_TOOLTIP_NO_CHANGES' | translate)">
-            <span class="icon">🔄</span> {{ 'DE_BTN_UPDATE_DRIVER' | translate }}
-          </button>
-
-          <button *ngIf="editingDriver.entity_id !== 'new'" class="btn btn-new" (click)="saveAsNew()"
-            [disabled]="!isNameUnique(false) || !isNicknameUnique(false)"
-            [title]="(!isNameUnique(false) || !isNicknameUnique(false)) ? ('DE_TOOLTIP_NAME_EXISTS' | translate) : ''">
-            <span class="icon">💾</span> {{ 'DE_BTN_SAVE_AS_NEW' | translate }}
-          </button>
-        </div>
-
-        <div class="more-options">
-          <div class="more-btn">
-            <span>{{ 'DE_BTN_MORE' | translate }}</span>
-            <span class="settings-icon">⚙</span>
+            <div class="audio-section">
+              <app-audio-selector *ngIf="editingDriver.bestLapAudio" [label]="'DE_LABEL_BEST_LAP_SOUNDS' | translate"
+                [assets]="soundAssets" [type]="editingDriver.bestLapAudio.type"
+                (typeChange)="editingDriver.bestLapAudio.type=$event; captureState()" [url]="editingDriver.bestLapAudio.url"
+                (urlChange)="onInputChange(); editingDriver.bestLapAudio.url=$event"
+                [text]="editingDriver.bestLapAudio.text"
+                (textChange)="onInputChange(); editingDriver.bestLapAudio.text=$event" [backButtonRoute]="'/driver-editor'"
+                [backButtonQueryParams]="{ id: editingDriver.entity_id }" [context]="ttsContext">
+              </app-audio-selector>
+            </div>
           </div>
         </div>
       </div>
@@ -96,3 +92,6 @@
   </div>
 
 </div>
+<app-help-overlay></app-help-overlay>
+
+

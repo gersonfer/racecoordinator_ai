@@ -13,7 +13,7 @@ test.describe('Item Selector Visuals', () => {
   test('should display item selector', async ({ page }) => {
     // Navigate to Driver Editor with an ID to ensure it loads
     await TestSetupHelper.waitForLocalization(page, 'en', page.goto('/driver-editor?id=d1'));
-    await TestSetupHelper.waitForText(page, 'DRIVER CONFIGURATION');
+    await page.locator('.page-container').waitFor();
 
     // Wait for the avatar preview to be visible (clickable)
     const avatarPreview = page.locator('app-image-selector .image-preview');

@@ -7,6 +7,9 @@ import { ConnectionMonitorService, ConnectionState } from '../../services/connec
 import { Subscription, forkJoin } from 'rxjs';
 import { UndoManager } from '../shared/undo-redo-controls/undo-manager';
 import { createTTSContext, mockTTSContext } from 'src/app/utils/audio';
+import { Location } from '@angular/common';
+import { HelpService, GuideStep } from '../../services/help.service';
+import { SettingsService } from '../../services/settings.service';
 
 @Component({
   selector: 'app-driver-editor',
@@ -38,6 +41,15 @@ export class DriverEditorComponent implements OnInit, OnDestroy {
   // Connection Monitoring
   isConnectionLost = false;
   private connectionSubscription: Subscription | null = null;
+  private subscriptions: Subscription[] = [];
+
+  sectionsExpanded = {
+    audio: true
+  };
+
+  toggleSection(section: keyof typeof this.sectionsExpanded) {
+    this.sectionsExpanded[section] = !this.sectionsExpanded[section];
+  }
 
   constructor(
     private dataService: DataService,
@@ -45,7 +57,10 @@ export class DriverEditorComponent implements OnInit, OnDestroy {
     private translationService: TranslationService,
     private router: Router,
     private route: ActivatedRoute,
-    private connectionMonitor: ConnectionMonitorService
+    private connectionMonitor: ConnectionMonitorService,
+    private location: Location,
+    private helpService: HelpService,
+    private settingsService: SettingsService
   ) {
     this.undoManager = new UndoManager<Driver>(
       {
@@ -69,6 +84,22 @@ export class DriverEditorComponent implements OnInit, OnDestroy {
     this.connectionMonitor.startMonitoring();
     this.monitorConnection();
     this.loadData();
+
+    if (this.undoManager) {
+      this.subscriptions.push(this.undoManager.stateCommitted$.subscribe(() => {
+        this.autoSaveDriver();
+      }));
+    }
+
+    // Trigger help automatically on first visit
+    setTimeout(() => {
+      const settings = this.settingsService.getSettings();
+      if (!settings.driverEditorHelpShown) {
+        this.startHelp();
+        settings.driverEditorHelpShown = true;
+        this.settingsService.saveSettings(settings);
+      }
+    }, 800);
   }
 
   ngOnDestroy() {
@@ -79,6 +110,7 @@ export class DriverEditorComponent implements OnInit, OnDestroy {
     if (this.dataSubscription) {
       this.dataSubscription.unsubscribe();
     }
+    this.subscriptions.forEach(s => s.unsubscribe());
     this.undoManager.destroy();
   }
 
@@ -167,6 +199,16 @@ export class DriverEditorComponent implements OnInit, OnDestroy {
     );
   }
 
+  get isNameInvalid(): boolean {
+    if (this.isLoading || !this.editingDriver) return false;
+    return !this.editingDriver.name.trim() || !this.isNameUnique(true);
+  }
+
+  get isNicknameInvalid(): boolean {
+    if (this.isLoading || !this.editingDriver) return false;
+    return !this.isNicknameUnique(true);
+  }
+
   private areDriversEqual(d1: Driver, d2: Driver): boolean {
     return d1.name === d2.name &&
       d1.nickname === d2.nickname &&
@@ -238,15 +280,56 @@ export class DriverEditorComponent implements OnInit, OnDestroy {
 
   saveAsNew() {
     if (!this.editingDriver) return;
+    this.editingDriver.name = this.generateUniqueName(this.editingDriver.name);
+    if (this.editingDriver.nickname) {
+      this.editingDriver.nickname = this.generateUniqueNickname(this.editingDriver.nickname);
+    }
     this.updateDriver(true);
   }
 
-  updateDriver(isSaveAsNew: boolean = false) {
+  private generateUniqueName(baseName: string): string {
+    let counter = 1;
+    const pattern = /(_\d+)$/;
+    const base = baseName.replace(pattern, '');
+
+    while (true) {
+      const candidate = `${base}_${counter}`;
+      if (!this.allDrivers.some(d => d.name.toLowerCase() === candidate.toLowerCase())) {
+        return candidate;
+      }
+      counter++;
+    }
+  }
+
+  private generateUniqueNickname(baseNickname: string): string {
+    let counter = 1;
+    const pattern = /(_\d+)$/;
+    const base = baseNickname.replace(pattern, '');
+
+    while (true) {
+      const candidate = `${base}_${counter}`;
+      if (!this.allDrivers.some(d => d.nickname?.toLowerCase() === candidate.toLowerCase())) {
+        return candidate;
+      }
+      counter++;
+    }
+  }
+
+  private autoSaveDriver() {
+    if (!this.editingDriver) return;
+    if (this.isNameInvalid || this.isNicknameInvalid) return;
+    if (this.isSaving) return;
+    this.updateDriver(false, true);
+  }
+
+  updateDriver(isSaveAsNew: boolean = false, isAutoSave: boolean = false) {
     if (!this.editingDriver) return;
     if (!isSaveAsNew && !this.hasChanges()) return;
 
-    this.isSaving = true;
-    this.saveDriverData(isSaveAsNew);
+    if (!isAutoSave) {
+      this.isSaving = true;
+    }
+    this.saveDriverData(isSaveAsNew, isAutoSave);
   }
 
   private loadDataInternal(rawDrivers: any[], assets: any[]) {
@@ -303,7 +386,7 @@ export class DriverEditorComponent implements OnInit, OnDestroy {
     this.undoManager.initialize(this.editingDriver);
   }
 
-  private saveDriverData(isSaveAsNew: boolean = false) {
+  private saveDriverData(isSaveAsNew: boolean = false, isAutoSave: boolean = false) {
     if (!this.editingDriver) return;
 
     const driverToSend = { ...this.editingDriver };
@@ -327,17 +410,24 @@ export class DriverEditorComponent implements OnInit, OnDestroy {
         }
 
         if (wasNew) {
-          this.router.navigate(['/driver-editor'], { queryParams: { id: result.entity_id } });
+          if (isAutoSave) {
+            const url = this.router.serializeUrl(this.router.createUrlTree(['/driver-editor'], { queryParams: { id: result.entity_id } }));
+            this.location.replaceState(url);
+          } else {
+            this.router.navigate(['/driver-editor'], { queryParams: { id: result.entity_id } });
+          }
         }
 
         this.refreshDriverList();
       },
       error: (err) => {
         console.error('Failed to save driver', err);
-        if (err.status === 409) {
-          alert(err.error || this.translationService.translate('DE_ERROR_NAME_EXISTS'));
-        } else {
-          alert(this.translationService.translate('DE_ERROR_SAVE_FAILED') + (err.error || err.message));
+        if (!isAutoSave) {
+          if (err.status === 409) {
+            alert(err.error || this.translationService.translate('DE_ERROR_NAME_EXISTS'));
+          } else {
+            alert(this.translationService.translate('DE_ERROR_SAVE_FAILED') + (err.error || err.message));
+          }
         }
         this.isSaving = false;
         this.cdr.detectChanges();
@@ -389,5 +479,17 @@ export class DriverEditorComponent implements OnInit, OnDestroy {
     if (!url) return 'assets/images/default_avatar.svg';
     if (url.startsWith('/')) return `http://localhost:7070${url}`;
     return url;
+  }
+
+  startHelp() {
+    const steps: GuideStep[] = [
+      {
+        title: this.translationService.translate('DE_HELP_WELCOME_TITLE'),
+        content: this.translationService.translate('DE_HELP_WELCOME_CONTENT'),
+        position: 'center'
+      }
+    ];
+
+    this.helpService.startGuide(steps);
   }
 }

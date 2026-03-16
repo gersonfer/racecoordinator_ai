@@ -4,11 +4,11 @@ export abstract class DriverEditorHarnessBase {
   static readonly hostSelector = 'app-driver-editor';
 
   static readonly selectors = {
-    nameInput: '.inputs-column .form-group:nth-child(1) input',
-    nicknameInput: '.inputs-column .form-group:nth-child(2) input',
-    undoBtn: 'app-undo-redo-controls button:nth-child(1)',
-    redoBtn: 'app-undo-redo-controls button:nth-child(2)',
-    backBtn: 'app-back-button button'
+    nameInput: '#driver-name-input',
+    nicknameInput: '#driver-nickname-input',
+    undoBtn: 'app-editor-title .undo',
+    redoBtn: 'app-editor-title .redo',
+    backBtn: 'app-editor-title app-back-button'
   };
 
   abstract getName(): Promise<string>;

@@ -20,7 +20,7 @@ import { ReorderDialogComponent } from '../ui-editor/reorder-dialog/reorder-dial
 import { ColumnPreviewComponent } from '../ui-editor/column-preview/column-preview.component';
 import { AboutDialogComponent } from './about-dialog/about-dialog.component';
 import { ManagerHeaderComponent } from './manager-header/manager-header.component';
-
+import { EditorTitleComponent } from './editor-title/editor-title.component';
 
 @NgModule({
   declarations: [
@@ -40,7 +40,8 @@ import { ManagerHeaderComponent } from './manager-header/manager-header.componen
     ColumnPreviewComponent,
     AboutDialogComponent,
     ToolbarComponent,
-    ManagerHeaderComponent
+    ManagerHeaderComponent,
+    EditorTitleComponent
   ],
 
   imports: [
@@ -70,7 +71,8 @@ import { ManagerHeaderComponent } from './manager-header/manager-header.componen
     ColumnPreviewComponent,
     AboutDialogComponent,
     ToolbarComponent,
-    ManagerHeaderComponent
+    ManagerHeaderComponent,
+    EditorTitleComponent
   ]
 
 })

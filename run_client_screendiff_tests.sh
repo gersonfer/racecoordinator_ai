@@ -14,7 +14,7 @@ mkdir -p "$ISOLATED_DIR"
 # Sync current source and configuration to isolated directory
 echo "Syncing source to $ISOLATED_DIR..."
 rm -rf "$ISOLATED_DIR/src"
-cp -Rf src package.json angular.json tsconfig.json playwright.config.ts "$ISOLATED_DIR/"
+cp -Rf src package.json angular.json tsconfig*.json playwright.config.ts "$ISOLATED_DIR/"
 
 cd "$ISOLATED_DIR" || exit
 
@@ -32,5 +32,18 @@ echo "Installing Playwright browsers..."
 npx -y playwright install chromium
 
 npx -y playwright test "$@"
+
+# If updating snapshots, copy them back to the original source directory
+if [[ "$*" == *"--update-snapshots"* ]]; then
+    echo "Syncing updated snapshots back to source..."
+    cd "$ISOLATED_DIR/src" || exit
+    find . -type d -name "*-snapshots" | while read -r dir; do
+        # Strip leading ./ for destination path
+        dest_dir="${CLIENT_DIR}/src/${dir#./}"
+        mkdir -p "$dest_dir"
+        cp -Rf "$dir/" "$dest_dir/"
+        echo "Copied snapshots to $dest_dir"
+    done
+fi
 
 

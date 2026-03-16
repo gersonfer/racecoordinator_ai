@@ -1,0 +1,13 @@
+<div class="header">
+  <div class="header-left">
+    <app-back-button [route]="backRoute" [confirm]="backConfirm"
+      [queryParams]="backQueryParams" [confirmTitle]="backConfirmTitle"
+      [confirmMessage]="backConfirmMessage"></app-back-button>
+    <h1 class="page-title">{{ titleKey | translate }}</h1>
+  </div>
+  <div class="header-right">
+    <app-toolbar [showUndo]="showUndo" [showRedo]="showRedo" [showHelp]="showHelp" [undoManager]="undoManager"
+      (help)="onHelp()">
+    </app-toolbar>
+  </div>
+</div>

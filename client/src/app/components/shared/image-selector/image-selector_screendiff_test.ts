@@ -14,7 +14,7 @@ test.describe('Image Selector Visuals', () => {
   test('should display image selector in driver editor', async ({ page }) => {
     // Navigate to Driver Editor which uses Image Selector
     await TestSetupHelper.waitForLocalization(page, 'en', page.goto('/driver-editor?id=d1'));
-    await TestSetupHelper.waitForText(page, 'DRIVER CONFIGURATION');
+    await page.locator('.page-container').waitFor();
 
     const imageSelector = page.locator('app-image-selector').first();
     await expect(imageSelector).toBeVisible();

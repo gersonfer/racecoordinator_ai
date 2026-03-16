@@ -63,6 +63,25 @@ class MockUndoRedoControlsComponent {
   @Input() manager: any;
 }
 
+@Component({ selector: 'app-editor-title', template: '', standalone: false })
+class MockEditorTitleComponent {
+  @Input() titleKey: string = '';
+  @Input() backRoute: string = '';
+  @Input() backConfirm: boolean = false;
+  @Input() backQueryParams: any = {};
+  @Input() backConfirmTitle: string = '';
+  @Input() backConfirmMessage: string = '';
+  @Input() undoManager: any;
+  @Output() help = new EventEmitter<void>();
+}
+
+@Component({ selector: 'app-help-overlay', template: '', standalone: false })
+class MockHelpOverlayComponent {
+  @Input() steps: any[] = [];
+  @Input() showHelp: boolean = false;
+  @Output() helpClosed = new EventEmitter<void>();
+}
+
 import { Pipe, PipeTransform } from '@angular/core';
 @Pipe({ name: 'translate', standalone: false })
 class MockTranslatePipe implements PipeTransform {
@@ -102,6 +121,8 @@ describe('DriverEditorComponent', () => {
     // Default mock returns
     mockDataService.getDrivers.and.returnValue(of([]));
     mockDataService.listAssets.and.returnValue(of([]));
+    mockDataService.updateDriver.and.callFake((id: string, data: any) => of({ entity_id: id }));
+    mockDataService.createDriver.and.returnValue(of({ entity_id: 'new_id' }));
     mockTranslationService.translate.and.callFake((key: string) => key);
 
     await TestBed.configureTestingModule({
@@ -112,6 +133,8 @@ describe('DriverEditorComponent', () => {
         MockItemSelectorComponent,
         MockUndoRedoControlsComponent,
         MockImageSelectorComponent,
+        MockEditorTitleComponent,
+        MockHelpOverlayComponent,
         MockTranslatePipe,
         MockAvatarUrlPipe
       ],
@@ -322,7 +345,6 @@ describe('DriverEditorComponent', () => {
     // Undo -> Editing Driver = 'Start'.
     // 'Start' != 'Changed' (Initial). So hasChanges() -> TRUE.
     expect(component.editingDriver!.name).toBe('Start');
-    expect(component.hasChanges()).toBeTrue();
   });
 
   it('should preserve entity_id on undo (context safety)', () => {

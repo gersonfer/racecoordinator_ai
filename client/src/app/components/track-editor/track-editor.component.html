@@ -1,17 +1,14 @@
 <div class="page-container" [style.transform]="'translate(-50%, -50%) scale(' + scale + ')'">
-  <div class="header">
-    <div class="header-left">
-      <app-back-button route="/track-manager" [confirm]="isDirty"
-        [queryParams]="{ selectedId: editingTrack?.entity_id }" confirmTitle="TE_CONFIRM_DISCARD_TITLE"
-        confirmMessage="TE_CONFIRM_DISCARD_MESSAGE"></app-back-button>
-      <h1 class="page-title">{{ 'TE_TITLE' | translate }}</h1>
-    </div>
-    <div class="header-right">
-      <app-toolbar [showUndo]="true" [showRedo]="true" [showHelp]="true" [undoManager]="undoManager"
-        (help)="startHelp()">
-      </app-toolbar>
-    </div>
-  </div>
+  <app-editor-title
+    titleKey="TE_TITLE"
+    backRoute="/track-manager"
+    [backConfirm]="isDirty"
+    [backQueryParams]="{ selectedId: editingTrack?.entity_id }"
+    backConfirmTitle="TE_CONFIRM_DISCARD_TITLE"
+    backConfirmMessage="TE_CONFIRM_DISCARD_MESSAGE"
+    [undoManager]="undoManager"
+    (help)="startHelp()">
+  </app-editor-title>
 
   <div class="content-split">
     <!-- Editor Panel -->

@@ -18,7 +18,7 @@ test.describe('Driver Manager Visuals', () => {
     await expect(page).toHaveScreenshot('driver-manager-initial.png');
   });
 
-  test('should select a driver', async ({ page }) => {
+  test('should select the second driver', async ({ page }) => {
     await TestSetupHelper.waitForLocalization(page, 'en', page.goto('/driver-manager'));
 
     const container = page.locator('.page-container');
@@ -26,7 +26,7 @@ test.describe('Driver Manager Visuals', () => {
 
     // Wait for driver items to load
     await page.locator('.list-item').first().waitFor();
-    await harness.selectDriver(0);
+    await harness.selectDriver(1);
 
     await expect(page).toHaveScreenshot('driver-manager-selected.png');
   });
