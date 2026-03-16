@@ -103,7 +103,7 @@ test.describe('Driver Editor Visuals', () => {
 
     // 3. Verify Modal
     const modalHarness = await harness.getConfirmationModal();
-    expect(await modalHarness.isVisible()).toBe(true);
+    await expect(container.locator('app-confirmation-modal').locator('.modal-content')).toBeVisible();
     // Modal message checked visually
 
     await expect(page).toHaveScreenshot('driver-editor-unsaved-modal.png');

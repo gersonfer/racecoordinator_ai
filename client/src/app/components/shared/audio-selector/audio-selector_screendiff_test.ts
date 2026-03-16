@@ -40,7 +40,7 @@ test.describe('Audio Selector Visuals', () => {
     // Wait for item selector to be visible
     const itemSelector = audioSelector.locator('app-item-selector');
     const itemHarness = new ItemSelectorHarnessE2e(itemSelector);
-    expect(await itemHarness.isVisible()).toBe(true);
+    await expect(itemSelector.locator('.modal-content')).toBeVisible();
 
     // Items count checked visually
 

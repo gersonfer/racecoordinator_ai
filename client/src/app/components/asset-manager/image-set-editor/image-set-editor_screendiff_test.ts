@@ -28,7 +28,7 @@ test.describe('Image Set Editor Visuals', () => {
     const modalHost = page.locator('app-image-set-editor');
     const harness = new ImageSetEditorHarnessE2e(modalHost);
 
-    expect(await harness.isVisible()).toBe(true);
+    await expect(modalHost.locator('.modal-content')).toBeVisible();
     // Title checked visually
 
     await expect(modalHost.locator('.modal-content')).toHaveScreenshot('image-set-editor-new.png');
@@ -64,7 +64,7 @@ test.describe('Image Set Editor Visuals', () => {
     const modalHost = page.locator('app-image-set-editor');
     const harness = new ImageSetEditorHarnessE2e(modalHost);
 
-    expect(await harness.isVisible()).toBe(true);
+    await expect(modalHost.locator('.modal-content')).toBeVisible();
     // Title checked visually
 
     // Custom Dash has 2 entries in setupAssetMocks
