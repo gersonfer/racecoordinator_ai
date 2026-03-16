@@ -345,6 +345,7 @@ public class App {
     new com.antigravity.handlers.AssetTaskHandler(databaseContext, app);
 
     app.get("/api/version", ctx -> ctx.result(SERVER_VERSION));
+    app.get("/api/server-ip", ctx -> ctx.result(getLocalIpAddress()));
 
     // Open Browser after successful start
     if (!headless) {
@@ -496,6 +497,32 @@ public class App {
       System.err.println("Error starting MongoDB: " + e.getMessage());
       e.printStackTrace();
       System.exit(1);
+    }
+  }
+
+  /* package */ static String getLocalIpAddress() {
+    try {
+      java.util.Enumeration<java.net.NetworkInterface> interfaces = java.net.NetworkInterface.getNetworkInterfaces();
+      while (interfaces.hasMoreElements()) {
+        java.net.NetworkInterface iface = interfaces.nextElement();
+        if (iface.isLoopback() || !iface.isUp()) continue;
+        
+        java.util.Enumeration<java.net.InetAddress> addresses = iface.getInetAddresses();
+        while(addresses.hasMoreElements()) {
+          java.net.InetAddress addr = addresses.nextElement();
+          if (addr.isLoopbackAddress()) continue;
+          if (addr instanceof java.net.Inet4Address) {
+            return addr.getHostAddress();
+          }
+        }
+      }
+    } catch (Exception e) {
+      // Fallback
+    }
+    try {
+      return java.net.InetAddress.getLocalHost().getHostAddress();
+    } catch (Exception e) {
+      return "Unknown";
     }
   }
 }

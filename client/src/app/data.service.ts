@@ -65,6 +65,10 @@ export class DataService {
     return this.http.get(`${this.baseUrl}/api/version`, { responseType: 'text' });
   }
 
+  getServerIp(): Observable<string> {
+    return this.http.get(`${this.baseUrl}/api/server-ip`, { responseType: 'text' });
+  }
+
   createDriver(driver: any): Observable<any> {
     return this.http.post<any>(this.driversUrl, driver);
   }

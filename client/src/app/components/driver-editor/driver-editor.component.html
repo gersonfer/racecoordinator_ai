@@ -48,11 +48,11 @@
     <div class="preview-panel">
       <div class="config-section">
         <div class="section-header" (click)="toggleSection('audio')">
-          <span class="expander-icon" [class.collapsed]="!sectionsExpanded?.audio">▼</span>
+          <span class="expander-icon" [class.collapsed]="!sectionsExpanded.audio">▼</span>
           <h1>{{ 'DE_HEADER_AUDIO_CONFIG' | translate }}</h1>
         </div>
-
-        <div class="section-content" *ngIf="sectionsExpanded?.audio">
+        
+        <div class="section-content" *ngIf="sectionsExpanded.audio">
           <div class="audio-sections-row">
             <div class="audio-section">
               <app-audio-selector *ngIf="editingDriver.lapAudio" [label]="'DE_LABEL_LAP_SOUNDS' | translate"

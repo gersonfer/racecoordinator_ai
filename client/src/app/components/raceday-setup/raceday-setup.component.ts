@@ -62,6 +62,7 @@ export class RacedaySetupComponent implements OnInit {
   showServerConfig = false;
   tempServerIp = 'localhost';
   tempServerPort = 7070;
+  serverIp: string = '';
   serverVersion: string = '';
   clientVersion: string = '0.0.0.3';
   showAboutDialog = false;
@@ -117,7 +118,7 @@ export class RacedaySetupComponent implements OnInit {
     this.isLoading = true;
     this.container.clear();
 
-    this.refreshServerVersion();
+    this.refreshServerInfo();
 
     // Start Splash Screen Logic ONLY when translations are ready
     // This prevents raw keys from showing
@@ -157,7 +158,7 @@ export class RacedaySetupComponent implements OnInit {
       // Wait for connection service
       await this.connectionMonitor.waitForConnection();
       this.connectionVerified = true;
-      this.refreshServerVersion();
+      this.refreshServerInfo();
 
       // Wait for the remainder of the 5s (if any)
       await minTimePromise;
@@ -221,7 +222,7 @@ export class RacedaySetupComponent implements OnInit {
   handleConnectionRestored() {
     console.log('Connection restored!');
     this.isConnectionLost = false;
-    this.refreshServerVersion();
+    this.refreshServerInfo();
     this.cdr.detectChanges();
   }
 
@@ -253,12 +254,12 @@ export class RacedaySetupComponent implements OnInit {
     this.connectionMonitor.waitForConnection().then(() => {
       this.showSplash = false;
       this.stopQuoteRotation();
-      this.refreshServerVersion();
+      this.refreshServerInfo();
       this.cdr.detectChanges();
     });
   }
 
-  private refreshServerVersion() {
+  private refreshServerInfo() {
     this.dataService.getServerVersion().subscribe({
       next: (version) => {
         this.serverVersion = version;
@@ -266,6 +267,16 @@ export class RacedaySetupComponent implements OnInit {
       },
       error: (err) => {
         console.warn('Failed to fetch server version', err);
+      }
+    });
+
+    this.dataService.getServerIp().subscribe({
+      next: (ip) => {
+        this.serverIp = ip;
+        this.cdr.detectChanges();
+      },
+      error: (err) => {
+        console.warn('Failed to fetch server IP', err);
       }
     });
   }

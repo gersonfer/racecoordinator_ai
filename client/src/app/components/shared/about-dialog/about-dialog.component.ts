@@ -10,6 +10,7 @@ import { Component, EventEmitter, Input, Output } from '@angular/core';
         <div class="version-info">
           <p>{{ 'RDS_ABOUT_CLIENT_VERSION' | translate:{version: clientVersion} }}</p>
           <p>{{ 'RDS_ABOUT_SERVER_VERSION' | translate:{version: serverVersion} }}</p>
+          <p *ngIf="serverIp">{{ 'RDS_ABOUT_SERVER_ADDRESS' | translate:{ip: serverIp, port: serverPort} }}</p>
         </div>
         <div class="modal-actions">
           <button class="btn-confirm" (click)="onClose()">{{ 'RDS_ABOUT_CLOSE' | translate }}</button>
@@ -82,6 +83,8 @@ export class AboutDialogComponent {
   @Input() visible = false;
   @Input() clientVersion = '';
   @Input() serverVersion = '';
+  @Input() serverIp = '';
+  @Input() serverPort = 7070;
 
   @Output() close = new EventEmitter<void>();
 

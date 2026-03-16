@@ -204,6 +204,7 @@
   "RDS_ABOUT_CLIENT_VERSION": "Versión del cliente: {{version}}",
   "RDS_ABOUT_CLOSE": "Cerrar",
   "RDS_ABOUT_SERVER_VERSION": "Versión del servidor: {{version}}",
+  "RDS_ABOUT_SERVER_ADDRESS": "Dirección del servidor: {{ip}}:{{port}}",
   "RDS_ABOUT_TITLE": "Acerca de Race Coordinator AI",
   "RDS_BTN_ADD_ALL": "Añadir Todo",
   "RDS_BTN_CANCEL": "Cancelar",

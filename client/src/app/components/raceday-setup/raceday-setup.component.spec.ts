@@ -34,7 +34,7 @@ describe('RacedaySetupComponent', () => {
         requestAbout: { subscribe: () => { } }
       }
     });
-    mockDataService = jasmine.createSpyObj('DataService', ['getDrivers', 'setServerAddress', 'getServerVersion']);
+    mockDataService = jasmine.createSpyObj('DataService', ['getDrivers', 'setServerAddress', 'getServerVersion', 'getServerIp']);
     mockSettingsService = jasmine.createSpyObj('SettingsService', ['getSettings', 'saveSettings']);
     mockDynamicComponentService = jasmine.createSpyObj('DynamicComponentService', ['createDynamicComponent']);
     mockTranslationService = jasmine.createSpyObj('TranslationService', ['getTranslationsLoaded', 'translate']);
@@ -48,6 +48,7 @@ describe('RacedaySetupComponent', () => {
 
     mockDataService.getDrivers.and.returnValue(of([]));
     mockDataService.getServerVersion.and.returnValue(of('0.0.0'));
+    mockDataService.getServerIp.and.returnValue(of('192.168.1.100'));
     mockSettingsService.getSettings.and.returnValue(new Settings());
     mockTranslationService.getTranslationsLoaded.and.returnValue(of(true));
     mockTranslationService.translate.and.callFake((key: string) => key);
@@ -85,6 +86,12 @@ describe('RacedaySetupComponent', () => {
       expect(component.minTimeElapsed).toBeFalse();
       expect(component.connectionVerified).toBeFalse();
     });
+
+    it('should fetch and update server IP address on init', fakeAsync(() => {
+      component.ngOnInit();
+      tick(100);
+      expect(component.serverIp).toBe('192.168.1.100');
+    }));
 
     it('should wait for minimum time and connection service before hiding splash', fakeAsync(() => {
       component.ngOnInit();

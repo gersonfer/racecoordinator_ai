@@ -107,6 +107,15 @@ export class TestSetupHelper {
       });
     });
 
+    // Mock Server IP API
+    await page.route('**/api/server-ip', async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'text/plain',
+        body: '192.168.1.100'
+      });
+    });
+
     // Mock Database Stats API
     await page.route('**/api/databases/current*', async (route) => {
       await route.fulfill({

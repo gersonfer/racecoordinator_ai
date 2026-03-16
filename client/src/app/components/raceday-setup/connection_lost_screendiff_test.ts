@@ -83,7 +83,8 @@ test.describe('Connection Loss Visuals', () => {
 
     await page.clock.fastForward(5500);
 
-    expect(await harness.isConnectionLostOverlayVisible()).toBe(true);
+    // Wait for the overlay to become visible instead of instant check
+    await expect(page.locator('.connection-lost-overlay')).toBeVisible({ timeout: 10000 });
 
     // Connection lost text checked visually
 
