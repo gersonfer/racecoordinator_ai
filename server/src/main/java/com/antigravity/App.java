@@ -263,7 +263,7 @@ public class App {
     System.out.println("Connected to MongoDB successfully.");
 
     // Determine client path once
-    String[] possiblePaths = { "web", "client/dist/client", "../client/dist/client" };
+    String[] possiblePaths = { "web", "server/web", "client/dist/client", "../client/dist/client" };
     String resolvedClientPath = null;
     for (String path : possiblePaths) {
       if (Files.exists(Paths.get(path))) {

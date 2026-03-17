@@ -8,7 +8,7 @@
 #define MyAppExeName "RaceCoordinator.jar"
 
 [Setup]
-AppId={C6F6F6F6-E6E6-4E4E-A7A7-9D9D9D9D9D9D}
+AppId={{C6F6F6F6-E6E6-4E4E-A7A7-9D9D9D9D9D9D}
 AppName={#MyAppName}
 AppVersion={#MyAppVersion}
 AppPublisher={#MyAppPublisher}
@@ -33,7 +33,7 @@ Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{
 ; Server JAR
 Source: "release\RaceCoordinator\RaceCoordinator.jar"; DestDir: "{app}"; Flags: ignoreversion
 ; Web Client Files
-Source: "release\RaceCoordinator\web\*"; DestDir: "{app}\web"; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "release\RaceCoordinator\web\*"; DestDir: "{app}\server\web"; Flags: ignoreversion recursesubdirs createallsubdirs
 ; Arduino Resources
 Source: "release\RaceCoordinator\arduino\*"; DestDir: "{app}\arduino"; Flags: ignoreversion recursesubdirs createallsubdirs
 
@@ -46,7 +46,7 @@ Name: "{autodesktop}\Race Coordinator Server (Headless)"; Filename: "{app}\jre\b
 
 ; Client Shortcut (opens browser)
 Name: "{autodesktop}\Race Coordinator Client"; Filename: "cmd.exe"; \
-    Parameters: "/c start {#MyAppURL}"; IconFilename: "{app}\web\favicon.ico"
+    Parameters: "/c start {#MyAppURL}"; IconFilename: "{app}\server\web\favicon.ico"
 
 [Dirs]
 ; Writable data directory in ProgramData
