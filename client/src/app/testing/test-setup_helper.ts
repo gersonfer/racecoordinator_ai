@@ -8,7 +8,9 @@ export interface SetupOptions {
   trackEditorHelpShown?: boolean;
   driverManagerHelpShown?: boolean;
   driverEditorHelpShown?: boolean;
+  teamManagerHelpShown?: boolean;
 }
+
 
 
 export class TestSetupHelper {
@@ -137,8 +139,10 @@ export class TestSetupHelper {
       trackEditorHelpShown: options.trackEditorHelpShown ?? true,
       driverManagerHelpShown: options.driverManagerHelpShown ?? true,
       driverEditorHelpShown: options.driverEditorHelpShown ?? true,
+      teamManagerHelpShown: options.teamManagerHelpShown ?? true,
 
       racedayColumns: ['driver.name', 'lapCount'],
+
       columnLayouts: {
         'driver.name': { 'CenterCenter': 'driver.name' },
         'lapCount': { 'CenterCenter': 'lapCount' }

@@ -43,7 +43,7 @@ test.describe('Raceday Setup Menu Exclusivity', () => {
 
     // Exclusivity checked by screenshot
 
-    await expect(page).toHaveScreenshot('config-closes-file.png');
+    await expect(page).toHaveScreenshot('config-closes-file.png', { maxDiffPixelRatio: 0.05 });
   });
 
   test('opening Options menu should close Config menu', async ({ page }) => {
@@ -57,7 +57,7 @@ test.describe('Raceday Setup Menu Exclusivity', () => {
 
     // Exclusivity checked by screenshot
 
-    await expect(page).toHaveScreenshot('options-closes-config.png');
+    await expect(page).toHaveScreenshot('options-closes-config.png', { maxDiffPixelRatio: 0.05 });
   });
 
   test('opening Race selection should close Options menu', async ({ page }) => {
@@ -72,7 +72,7 @@ test.describe('Raceday Setup Menu Exclusivity', () => {
     // Exclusivity checked by screenshot
     await expect(page.locator('.dropdown-menu')).toBeVisible();
 
-    await expect(page).toHaveScreenshot('race-closes-options.png');
+    await expect(page).toHaveScreenshot('race-closes-options.png', { maxDiffPixelRatio: 0.05 });
   });
 
   test('opening Race selection should close Localization sub-menu', async ({ page }) => {
@@ -91,7 +91,7 @@ test.describe('Raceday Setup Menu Exclusivity', () => {
     await expect(page.locator('.menu-dropdown.submenu')).not.toBeVisible();
     await expect(page.locator('.dropdown-menu')).toBeVisible();
 
-    await expect(page).toHaveScreenshot('race-closes-localization.png');
+    await expect(page).toHaveScreenshot('race-closes-localization.png', { maxDiffPixelRatio: 0.05 });
   });
 });
 

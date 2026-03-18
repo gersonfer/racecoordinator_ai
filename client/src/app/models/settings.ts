@@ -21,6 +21,8 @@ export class Settings {
   trackEditorHelpShown: boolean = false;
   driverEditorHelpShown: boolean = false;
   driverManagerHelpShown: boolean = false;
+  teamManagerHelpShown: boolean = false;
+
 
 
   flagGreen?: string;

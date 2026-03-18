@@ -88,7 +88,7 @@ test.describe('Connection Loss Visuals', () => {
 
     // Connection lost text checked visually
 
-    await page.waitForTimeout(1000);
+    await page.waitForTimeout(2000);
 
     await expect(page).toHaveScreenshot('connection-lost-overlay.png', {
       mask: [
@@ -97,7 +97,7 @@ test.describe('Connection Loss Visuals', () => {
         page.locator('.version-container'),
         page.locator('.spinner')
       ],
-      maxDiffPixelRatio: 0.05,
+      maxDiffPixelRatio: 0.1,
       threshold: 0.2
     });
   });

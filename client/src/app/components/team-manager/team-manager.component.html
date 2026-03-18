@@ -1,100 +1,74 @@
-<div class="dm-container" [style.transform]="'translate(-50%, -50%) scale(' + scale + ')'">
-  <div class="dm-header">
-    <app-back-button [label]="'TMM_BTN_BACK' | translate" route="/raceday-setup"></app-back-button>
-    <button class="btn btn-add" (click)="createNewTeam()">{{ 'TMM_BTN_NEW_TEAM' | translate }}</button>
-  </div>
+<app-confirmation-modal [visible]="showDeleteConfirmation" [title]="'TMM_BTN_DELETE_TEAM' | translate"
+  [message]="'TMM_CONFIRM_DELETE' | translate" (confirm)="onConfirmDelete()" (cancel)="onCancelDelete()">
+</app-confirmation-modal>
 
-  <div class="main-content">
-    <!-- LEFT PANEL: TEAMS TABLE -->
-    <div class="panel list-panel">
-      <div class="panel-header">
-        <div class="panel-title">{{ 'TMM_HEADER_TEAMS' | translate }}</div>
-        <div class="search-container">
-          <input type="text" [placeholder]="'TMM_PLACEHOLDER_SEARCH' | translate" [(ngModel)]="searchQuery"
-            class="search-input">
+<div class="page-container" [style.transform]="'translate(-50%, -50%) scale(' + scale + ')'">
+  <app-manager-header 
+    [title]="'TMM_HEADER_TEAMS'" 
+    [showActions]="selectedTeam != null" 
+    [isSaving]="isSaving" 
+    (edit)="updateTeam()" 
+    (help)="startHelp()" 
+    (delete)="deleteTeam()">
+  </app-manager-header>
+
+  <div class="content-area">
+    <div class="sidebar-list">
+      <div class="list-container">
+        <div *ngFor="let team of filteredTeams; let i = index" class="list-item"
+          [class.selected]="team.entity_id === selectedTeam?.entity_id" (click)="selectTeam(team)"
+          [class.odd]="i % 2 !== 0">
+          <div class="item-name">{{ team.name }}</div>
         </div>
       </div>
-      <div class="table-header-fixed">
-        <table class="driver-table header-only">
-          <thead>
-            <tr>
-              <th class="col-avatar">{{ 'TMM_COL_AVATAR' | translate }}</th>
-              <th class="col-name">{{ 'TMM_COL_NAME' | translate }}</th>
-              <th class="col-nickname">{{ 'TMM_COL_MEMBERS' | translate }}</th>
-            </tr>
-          </thead>
-        </table>
-      </div>
-      <div class="table-body-scroll">
-        <table class="driver-table body-only">
-          <tbody>
-            <tr *ngFor="let team of filteredTeams; trackBy: trackByTeam"
-              [class.active]="selectedTeam?.entity_id === team.entity_id" (click)="selectTeam(team)">
-              <td class="avatar-cell col-avatar">
-                <div class="avatar-mini">
-                  <img [src]="team.avatarUrl | avatarUrl" alt="Avatar">
-                </div>
-              </td>
-              <td class="name-cell col-name">{{ team.name }}</td>
-              <td class="nickname-cell col-nickname">{{ team.driverIds.length }} drivers</td>
-            </tr>
-          </tbody>
-        </table>
+      <div class="list-actions">
+        <button id="create-team-btn" class="action-btn primary full-width" (click)="createNewTeam()">
+          {{ 'TMM_BTN_NEW_TEAM' | translate }}
+        </button>
       </div>
     </div>
 
-    <!-- RIGHT PANEL: CONFIGURATION -->
-    <div class="panel config-panel">
-      <div class="avatar-preview-container" *ngIf="editingTeam">
-        <div class="avatar-preview-large">
-          <img [src]="editingTeam.avatarUrl | avatarUrl" alt="Avatar Large">
-        </div>
+    <div class="detail-panel" *ngIf="selectedTeam">
+      <div class="detail-header">
+        <h2>{{ selectedTeam.name }}</h2>
       </div>
-
-      <div class="config-header">{{ 'TMM_HEADER_CONFIG' | translate }}</div>
-
-      <div class="config-form" *ngIf="editingTeam">
-        <div class="form-group">
-          <label>{{ 'TMM_LABEL_NAME' | translate }}</label>
-          <input type="text" [(ngModel)]="editingTeam.name" class="dm-input" readonly>
-        </div>
-
-        <div class="form-group">
-          <label>{{ 'TMM_LABEL_MEMBERS' | translate }}</label>
-          <div class="member-count-display">{{ editingTeam.driverIds.length }} Drivers</div>
-
-          <!-- Driver List Moved Here -->
-          <div class="team-drivers-list" style="margin-top: 10px;">
-            <div class="driver-badge" *ngFor="let driver of getDriversForTeam(editingTeam)">
-              <div class="driver-avatar-micro">
-                <img [src]="driver.avatarUrl | avatarUrl" alt="A">
-              </div>
-              <span class="driver-name-micro">{{ driver.name }}</span>
-              <span class="driver-nickname-micro" *ngIf="driver.nickname">({{ driver.nickname }})</span>
-            </div>
+      <div class="detail-content">
+        <div class="avatar-preview-container" *ngIf="selectedTeam.avatarUrl">
+          <div class="avatar-preview-large">
+            <img [src]="selectedTeam.avatarUrl | avatarUrl" alt="Team Avatar">
           </div>
         </div>
 
-        <div class="action-buttons">
-          <button class="btn btn-edit" (click)="updateTeam()">{{ 'TMM_BTN_EDIT' | translate }}</button>
-          <button class="btn btn-delete" (click)="deleteTeam()">{{ 'TMM_BTN_DELETE_TEAM' | translate }}</button>
+        <div class="config-header" style="margin-top: 20px; font-size: 1.5rem; color: #38bdf8; border-bottom: 1px solid rgba(56, 189, 248, 0.3); padding-bottom: 5px;">{{ 'TMM_LABEL_MEMBERS' | translate }}</div>
+        <div class="member-count-display" style="font-size: 1.2rem; color: #94a3b8; margin-top: 10px;">{{ selectedTeam.driverIds.length }} Drivers</div>
+
+        <div class="team-drivers-list" style="margin-top: 15px; display: flex; flex-wrap: wrap; gap: 10px;">
+          <div class="driver-badge" *ngFor="let driver of getDriversForTeam(selectedTeam)" style="display: flex; align-items: center; gap: 8px; background: rgba(56, 189, 248, 0.1); padding: 8px 12px; border-radius: 20px; border: 1px solid rgba(56, 189, 248, 0.2);">
+            <div class="driver-avatar-micro" style="width: 24px; height: 24px; border-radius: 50%; overflow: hidden;">
+              <img [src]="driver.avatarUrl | avatarUrl" alt="A" style="width: 100%; height: 100%; object-fit: cover;">
+            </div>
+            <span class="driver-name-micro" style="font-weight: 600;">{{ driver.name }}</span>
+            <span class="driver-nickname-micro" *ngIf="driver.nickname" style="color: #94a3b8; font-size: 0.9em;">({{ driver.nickname }})</span>
+          </div>
         </div>
       </div>
     </div>
-  </div>
 
-  <!-- Connection Lost Overlay -->
-  <div class="connection-lost-overlay" *ngIf="isConnectionLost">
-    <div class="connection-spinner"></div>
-    <div class="connection-lost-text">{{ 'TMM_LOST_CONNECTION' | translate }}</div>
+    <div class="detail-panel empty-state" *ngIf="!selectedTeam && !isLoading">
+      <p>{{ 'TMM_NO_TEAM_SELECTED' | translate }}</p>
+    </div>
   </div>
-
-  <!-- Loading Overlay -->
-  <div class="loader-overlay" *ngIf="isLoading || isSaving">
-    <div class="spinner"></div>
-  </div>
-
-  <app-confirmation-modal [visible]="showDeleteConfirmation" [title]="'TMM_BTN_DELETE_TEAM'"
-    [message]="'TMM_CONFIRM_DELETE'" (confirm)="onConfirmDelete()" (cancel)="onCancelDelete()">
-  </app-confirmation-modal>
 </div>
+
+<!-- Connection Lost Overlay -->
+<div class="connection-lost-overlay" *ngIf="isConnectionLost">
+  <div class="connection-spinner"></div>
+  <div class="connection-lost-text">{{ 'TMM_LOST_CONNECTION' | translate }}</div>
+</div>
+
+<!-- Loading Overlay -->
+<div class="loader-overlay" *ngIf="isLoading || isSaving">
+  <div class="spinner"></div>
+</div>
+
+<app-help-overlay></app-help-overlay>

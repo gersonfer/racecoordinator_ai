@@ -7,6 +7,9 @@ import { TranslationService } from 'src/app/services/translation.service';
 import { ConnectionMonitorService, ConnectionState } from '../../services/connection-monitor.service';
 import { Subscription, forkJoin } from 'rxjs';
 import { ActivatedRoute } from '@angular/router';
+import { HelpService, GuideStep } from '../../services/help.service';
+import { SettingsService } from '../../services/settings.service';
+
 
 @Component({
   selector: 'app-team-manager',
@@ -44,8 +47,11 @@ export class TeamManagerComponent implements OnInit, OnDestroy {
     private translationService: TranslationService,
     private router: Router,
     private route: ActivatedRoute,
-    private connectionMonitor: ConnectionMonitorService
+    private connectionMonitor: ConnectionMonitorService,
+    private helpService: HelpService,
+    private settingsService: SettingsService
   ) { }
+
 
   drivers: Driver[] = [];
   driversMap: Map<string, Driver> = new Map();
@@ -55,7 +61,23 @@ export class TeamManagerComponent implements OnInit, OnDestroy {
     this.connectionMonitor.startMonitoring();
     this.monitorConnection();
     this.loadData();
+
+    // Trigger help automatically on first visit or if requested via query param
+    this.route.queryParams.subscribe(params => {
+      const forceHelp = params['help'] === 'true';
+      const settings = this.settingsService.getSettings();
+      if (forceHelp || !settings.teamManagerHelpShown) {
+        setTimeout(() => {
+          this.startHelp();
+          if (!forceHelp) {
+            settings.teamManagerHelpShown = true;
+            this.settingsService.saveSettings(settings);
+          }
+        }, 500); // Small delay to ensure view is ready
+      }
+    });
   }
+
 
   ngOnDestroy() {
     if (this.connectionSubscription) {
@@ -120,6 +142,54 @@ export class TeamManagerComponent implements OnInit, OnDestroy {
     });
   }
 
+  startHelp() {
+    const steps: GuideStep[] = [
+      {
+        title: this.translationService.translate('TMM_HELP_WELCOME_TITLE'),
+        content: this.translationService.translate('TMM_HELP_WELCOME_CONTENT'),
+        position: 'center'
+      },
+      {
+        selector: '.sidebar-list',
+        title: this.translationService.translate('TMM_HELP_SIDEBAR_TITLE'),
+        content: this.translationService.translate('TMM_HELP_SIDEBAR_CONTENT'),
+        position: 'right'
+      },
+      {
+        selector: '.detail-panel',
+        title: this.translationService.translate('TMM_HELP_DETAIL_TITLE'),
+        content: this.translationService.translate('TMM_HELP_DETAIL_CONTENT'),
+        position: 'left'
+      },
+      {
+        selector: '#edit-track-btn',
+        title: this.translationService.translate('TMM_HELP_EDIT_TITLE'),
+        content: this.translationService.translate('TMM_HELP_EDIT_CONTENT'),
+        position: 'bottom'
+      },
+      {
+        selector: '#help-track-btn',
+        title: this.translationService.translate('TMM_HELP_HELP_TITLE'),
+        content: this.translationService.translate('TMM_HELP_HELP_CONTENT'),
+        position: 'bottom'
+      },
+      {
+        selector: '#delete-track-btn',
+        title: this.translationService.translate('TMM_HELP_DELETE_TITLE'),
+        content: this.translationService.translate('TMM_HELP_DELETE_CONTENT'),
+        position: 'bottom'
+      },
+      {
+        selector: '#create-team-btn',
+        title: this.translationService.translate('TMM_HELP_CREATE_TITLE'),
+        content: this.translationService.translate('TMM_HELP_CREATE_CONTENT'),
+        position: 'top'
+      }
+    ];
+    this.helpService.startGuide(steps);
+  }
+
+
   getDriversForTeam(team: Team): Driver[] {
     if (!team || !team.driverIds) return [];
     return team.driverIds
@@ -154,9 +224,43 @@ export class TeamManagerComponent implements OnInit, OnDestroy {
   }
 
   createNewTeam() {
-    this.router.navigate(['/team-editor'], {
-      queryParams: { id: 'new' }
+    if (this.isSaving) return;
+    this.isSaving = true;
+
+    const baseName = this.translationService.translate('TMM_DEFAULT_TEAM_NAME');
+    const uniqueName = this.generateUniqueTeamName(baseName);
+
+    const newTeam = {
+      name: uniqueName,
+      driverIds: [],
+      avatarUrl: undefined
+    };
+
+    this.dataService.createTeam(newTeam).subscribe({
+      next: (createdTeam: any) => {
+        this.isSaving = false;
+        this.router.navigate(['/team-editor'], { queryParams: { id: createdTeam.entity_id } });
+      },
+      error: (err: any) => {
+        console.error('Failed to create new team', err);
+        this.isSaving = false;
+      }
     });
+  }
+
+  private generateUniqueTeamName(baseName: string): string {
+    let name = baseName;
+    if (!this.teams.some(t => t.name.toLowerCase() === name.toLowerCase())) {
+      return name;
+    }
+    let counter = 1;
+    while (true) {
+      const candidate = `${baseName}_${counter}`;
+      if (!this.teams.some(t => t.name.toLowerCase() === candidate.toLowerCase())) {
+        return candidate;
+      }
+      counter++;
+    }
   }
 
   showDeleteConfirmation = false;

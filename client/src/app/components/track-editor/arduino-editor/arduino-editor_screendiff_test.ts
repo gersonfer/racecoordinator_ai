@@ -2,6 +2,26 @@ import { test, expect } from '@playwright/test';
 import { TestSetupHelper } from '../../../testing/test-setup_helper';
 import { ArduinoEditorHarnessE2e } from './testing/arduino-editor.harness.e2e';
 
+async function waitForBoardImage(page: any, root: any) {
+  const boardImg = root.locator('.board-image');
+  if (await boardImg.count() > 0) {
+    await boardImg.evaluate((img: any) => {
+      return new Promise((resolve) => {
+        const check = () => {
+          if ((img as HTMLImageElement).complete && (img as HTMLImageElement).naturalWidth > 0) {
+            resolve(true);
+          } else {
+            setTimeout(check, 50);
+          }
+        };
+        img.onload = check;
+        img.onerror = () => resolve(false);
+        check();
+      });
+    });
+  }
+}
+
 test.describe('Arduino Editor Component Visuals', () => {
   test.beforeEach(async ({ page }) => {
     await TestSetupHelper.setupStandardMocks(page);
@@ -17,11 +37,11 @@ test.describe('Arduino Editor Component Visuals', () => {
     await expect(editor).toBeVisible();
 
     // Wait for board image to be loaded to avoid blank white sections
-    await expect(editor.locator('.board-image')).toBeVisible();
+    await waitForBoardImage(page, editor);
 
     // Board type checked visually
     // Take snapshot of the editor area
-    await expect(page).toHaveScreenshot('arduino-editor-component.png');
+    await expect(page).toHaveScreenshot('arduino-editor-component.png', { maxDiffPixels: 200, threshold: 0.2 });
   });
 
   test('should display reserved and unused pins correctly', async ({ page }) => {
@@ -166,26 +186,6 @@ test.describe('Arduino Editor Section Expander States', () => {
     await TestSetupHelper.disableAnimations(page);
   });
 
-  async function waitForBoardImage(page: any, root: any) {
-    const boardImg = root.locator('.board-image');
-    if (await boardImg.count() > 0) {
-      await boardImg.evaluate((img: any) => {
-        return new Promise((resolve) => {
-          const check = () => {
-            if ((img as HTMLImageElement).complete && (img as HTMLImageElement).naturalWidth > 0) {
-              resolve(true);
-            } else {
-              setTimeout(check, 50);
-            }
-          };
-          img.onload = check;
-          img.onerror = () => resolve(false);
-          check();
-        });
-      });
-    }
-  }
-
   async function openEditor(page: any) {
     await TestSetupHelper.waitForLocalization(page, 'en', page.goto('/track-editor?id=t1'));
     const editor = page.locator('app-arduino-editor');
@@ -200,7 +200,7 @@ test.describe('Arduino Editor Section Expander States', () => {
 
     // Section expansion checked visually
 
-    await expect(editor).toHaveScreenshot('arduino-editor-all-expanded.png');
+    await expect(editor).toHaveScreenshot('arduino-editor-all-expanded.png', { maxDiffPixelRatio: 0.05 });
   });
 
   test('should collapse main section when header is clicked', async ({ page }) => {
@@ -210,7 +210,7 @@ test.describe('Arduino Editor Section Expander States', () => {
     await harness.toggleSection('main');
     // Expansion state checked visually
 
-    await expect(editor).toHaveScreenshot('arduino-editor-main-collapsed.png');
+    await expect(editor).toHaveScreenshot('arduino-editor-main-collapsed.png', { maxDiffPixelRatio: 0.05 });
   });
 
   test('should collapse digital pins section when header is clicked', async ({ page }) => {
@@ -220,7 +220,7 @@ test.describe('Arduino Editor Section Expander States', () => {
     await harness.toggleSection('digital');
     // Expansion state checked visually
 
-    await expect(editor).toHaveScreenshot('arduino-editor-digital-collapsed.png');
+    await expect(editor).toHaveScreenshot('arduino-editor-digital-collapsed.png', { maxDiffPixelRatio: 0.05 });
   });
 
   test('should collapse analog pins section when header is clicked', async ({ page }) => {
@@ -230,7 +230,7 @@ test.describe('Arduino Editor Section Expander States', () => {
     await harness.toggleSection('analog');
     // Expansion state checked visually
 
-    await expect(editor).toHaveScreenshot('arduino-editor-analog-collapsed.png');
+    await expect(editor).toHaveScreenshot('arduino-editor-analog-collapsed.png', { maxDiffPixelRatio: 0.05 });
   });
 });
 

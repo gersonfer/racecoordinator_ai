@@ -4,7 +4,6 @@ import { TeamManagerHarnessBase } from './team-manager.harness.base';
 export class TeamManagerHarness extends ComponentHarness implements TeamManagerHarnessBase {
   static hostSelector = TeamManagerHarnessBase.hostSelector;
 
-  protected getSearchInput = this.locatorFor(TeamManagerHarnessBase.selectors.searchInput);
   protected getTeamRows = this.locatorForAll(TeamManagerHarnessBase.selectors.teamRow);
   protected getConfigNameInput = this.locatorFor(TeamManagerHarnessBase.selectors.configNameInput);
   protected getMemberCountDisplay = this.locatorFor(TeamManagerHarnessBase.selectors.memberCountDisplay);
@@ -17,12 +16,9 @@ export class TeamManagerHarness extends ComponentHarness implements TeamManagerH
   }
 
   async getTeamName(index: number): Promise<string> {
-    const rows = await this.getTeamRows();
-    if (index < rows.length) {
-      const nameCell = await rows[index].locatorFor(TeamManagerHarnessBase.selectors.nameCell)();
-      return await nameCell.text();
-    }
-    return '';
+    const els = await this.locatorForAll(TeamManagerHarnessBase.selectors.teamRow + ' ' + TeamManagerHarnessBase.selectors.nameCell)();
+    const texts = await Promise.all(els.map(el => el.text()));
+    return index < texts.length ? texts[index] : '';
   }
 
   async selectTeam(index: number): Promise<void> {
@@ -32,15 +28,9 @@ export class TeamManagerHarness extends ComponentHarness implements TeamManagerH
     }
   }
 
-  async setSearchQuery(query: string): Promise<void> {
-    const input = await this.getSearchInput();
-    await input.clear();
-    await input.sendKeys(query);
-  }
-
   async getSelectedTeamName(): Promise<string> {
-    const input = await this.getConfigNameInput();
-    return await input.getProperty('value');
+    const el = await this.getConfigNameInput();
+    return await el.text();
   }
 
   async getMemberCount(): Promise<number> {

@@ -6,8 +6,8 @@ export class TeamManagerHarnessE2e implements TeamManagerHarnessBase {
 
   private get base() { return TeamManagerHarnessBase; }
 
-  private get searchInput() { return this.locator.locator(this.base.selectors.searchInput); }
   private get teamRows() { return this.locator.locator(this.base.selectors.teamRow); }
+
   private get configNameInput() { return this.locator.locator(this.base.selectors.configNameInput).first(); }
   private get memberCountDisplay() { return this.locator.locator(this.base.selectors.memberCountDisplay); }
   private get newTeamBtn() { return this.locator.locator(this.base.selectors.newTeamBtn); }
@@ -27,13 +27,10 @@ export class TeamManagerHarnessE2e implements TeamManagerHarnessBase {
     await this.teamRows.nth(index).click();
   }
 
-  async setSearchQuery(query: string): Promise<void> {
-    await this.searchInput.fill(query);
+  async getSelectedTeamName(): Promise<string> {
+    return await this.configNameInput.innerText();
   }
 
-  async getSelectedTeamName(): Promise<string> {
-    return await this.configNameInput.inputValue();
-  }
 
   async getMemberCount(): Promise<number> {
     const text = await this.memberCountDisplay.innerText();

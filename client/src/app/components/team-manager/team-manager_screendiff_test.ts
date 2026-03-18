@@ -11,34 +11,23 @@ test.describe('Team Manager Visuals', () => {
   test('should display team list', async ({ page }) => {
     await TestSetupHelper.waitForLocalization(page, 'en', page.goto('/team-manager'));
 
-    const container = page.locator('.dm-container');
+    const container = page.locator('.page-container');
     const harness = new TeamManagerHarnessE2e(container);
 
-    await expect(page.locator('.list-panel')).toBeVisible();
-    await expect(page.locator('.config-panel')).toBeVisible();
+    await page.locator('.sidebar-list').waitFor();
+    await page.locator('.detail-panel').waitFor();
+
 
     // Panel title checked visually
 
     await expect(page).toHaveScreenshot('team-manager-initial.png');
   });
 
-  test('should filter team list', async ({ page }) => {
-    await TestSetupHelper.waitForLocalization(page, 'en', page.goto('/team-manager'));
-
-    const container = page.locator('.dm-container');
-    const harness = new TeamManagerHarnessE2e(container);
-
-    await harness.setSearchQuery('Beta');
-
-    // Filter results checked visually
-
-    await expect(page).toHaveScreenshot('team-manager-filtered.png');
-  });
 
   test('should select a team', async ({ page }) => {
     await TestSetupHelper.waitForLocalization(page, 'en', page.goto('/team-manager'));
 
-    const container = page.locator('.dm-container');
+    const container = page.locator('.page-container');
     const harness = new TeamManagerHarnessE2e(container);
 
     // Find index of Team Beta
@@ -58,6 +47,16 @@ test.describe('Team Manager Visuals', () => {
     // expect(await harness.getSelectedTeamName()).toBe('Team Beta'); // Removed
 
     await expect(page).toHaveScreenshot('team-manager-selected.png');
+  });
+
+  test('should show guided help on first visit', async ({ page }) => {
+    await TestSetupHelper.setupStandardMocks(page, { teamManagerHelpShown: false });
+    await TestSetupHelper.waitForLocalization(page, 'en', page.goto('/team-manager'));
+
+    const overlay = page.locator('app-help-overlay');
+    await overlay.waitFor({ state: 'attached' });
+    
+    await expect(page).toHaveScreenshot('team-manager-guided-help.png');
   });
 });
 

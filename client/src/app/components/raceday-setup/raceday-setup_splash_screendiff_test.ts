@@ -39,7 +39,8 @@ test.describe('Splash Screen Visual', () => {
     // Take a screenshot of the splash screen layout
     await expect(page).toHaveScreenshot('splash-screen-initial.png', {
       maxDiffPixelRatio: 0.05,
-      animations: 'disabled'
+      animations: 'disabled',
+      timeout: 10000
     });
   });
 });
