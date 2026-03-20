@@ -48,7 +48,7 @@ public class App {
   private static MongoClient mongoClient;
   private static final Logger logger = LoggerFactory.getLogger(App.class);
 
-  public static final String SERVER_VERSION = "0.0.0.10";
+  public static final String SERVER_VERSION = "0.0.0.11";
 
   public static void main(String[] args) {
     System.out.println("Race Coordinator AI Server " + SERVER_VERSION);
@@ -505,12 +505,14 @@ public class App {
       java.util.Enumeration<java.net.NetworkInterface> interfaces = java.net.NetworkInterface.getNetworkInterfaces();
       while (interfaces.hasMoreElements()) {
         java.net.NetworkInterface iface = interfaces.nextElement();
-        if (iface.isLoopback() || !iface.isUp()) continue;
-        
+        if (iface.isLoopback() || !iface.isUp())
+          continue;
+
         java.util.Enumeration<java.net.InetAddress> addresses = iface.getInetAddresses();
-        while(addresses.hasMoreElements()) {
+        while (addresses.hasMoreElements()) {
           java.net.InetAddress addr = addresses.nextElement();
-          if (addr.isLoopbackAddress()) continue;
+          if (addr.isLoopbackAddress())
+            continue;
           if (addr instanceof java.net.Inet4Address) {
             return addr.getHostAddress();
           }
