@@ -10,6 +10,8 @@ import { TranslationService } from 'src/app/services/translation.service';
 import { ActivatedRoute } from '@angular/router';
 import { of } from 'rxjs';
 import { ChangeDetectorRef } from '@angular/core';
+import { RaceConnectionService } from 'src/app/services/race-connection.service';
+
 
 @Pipe({
   name: 'translate',
@@ -26,6 +28,8 @@ describe('DriverStationComponent', () => {
   let fixture: ComponentFixture<DriverStationComponent>;
   let mockDataService: any;
   let mockRaceService: any;
+  let mockRaceConnectionService: any;
+
 
   beforeEach(async () => {
     mockDataService = jasmine.createSpyObj('DataService', [
@@ -42,6 +46,8 @@ describe('DriverStationComponent', () => {
     mockRaceService = jasmine.createSpyObj('RaceService', [
       'getRace', 'getCurrentHeat', 'setRace', 'setParticipants', 'setHeats', 'setCurrentHeat'
     ]);
+    mockRaceService.currentHeat$ = of({});
+    mockRaceService.race$ = of({});
     mockRaceService.getRace.and.returnValue({
       name: 'Mock Race',
       track: { lanes: [{ objectId: 'l1', backgroundColor: '#550000', foregroundColor: '#ffffff' }] }
@@ -55,11 +61,21 @@ describe('DriverStationComponent', () => {
       translate: (key: string) => key
     };
 
+    mockRaceConnectionService = jasmine.createSpyObj('RaceConnectionService', ['connect', 'disconnect']);
+    mockRaceConnectionService.laps$ = of(null);
+    mockRaceConnectionService.raceTime$ = of(0);
+    mockRaceConnectionService.carData$ = of({});
+    mockRaceConnectionService.standingsUpdate$ = of({});
+    mockRaceConnectionService.interfaceEvents$ = of({});
+    mockRaceConnectionService.interfaceAlert$ = of({});
+
+
     await TestBed.configureTestingModule({
       declarations: [DriverStationComponent, MockTranslatePipe],
       providers: [
         { provide: DataService, useValue: mockDataService },
         { provide: RaceService, useValue: mockRaceService },
+        { provide: RaceConnectionService, useValue: mockRaceConnectionService },
         { provide: ActivatedRoute, useValue: mockActivatedRoute },
         { provide: TranslationService, useValue: mockTranslationService },
         ChangeDetectorRef

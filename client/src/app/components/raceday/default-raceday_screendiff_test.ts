@@ -49,81 +49,78 @@ test.describe('Raceday Visuals for Fuel', () => {
 
     await expect(page.locator('.scalable-content')).toBeVisible();
 
-    await page.evaluate(() => {
-      const raceData = {
+    const raceData = {
+      race: {
         race: {
-          race: {
-            model: { entityId: 'r1' },
-            name: 'Mock GP',
-            fuelOptions: {
-              enabled: true,
-              capacity: 100,
-              usageType: 0,
-              usageRate: 1.0,
-              startLevel: 100
-            },
-            track: {
-              model: { entityId: 't1' },
-              name: 'Test Track',
-              lanes: [
-                { objectId: 'l1', length: 10, backgroundColor: '#550000', foregroundColor: '#ffffff' },
-                { objectId: 'l2', length: 10, backgroundColor: '#005500', foregroundColor: '#ffffff' }
-              ]
-            }
+          model: { entityId: 'r1' },
+          name: 'Mock GP',
+          fuelOptions: {
+            enabled: true,
+            capacity: 100,
+            usageType: 0,
+            usageRate: 1.0,
+            startLevel: 100
           },
-          drivers: [
-            {
-              objectId: 'rp1',
-              fuelLevel: 75.5,
-              driver: {
-                model: { entityId: 'd1' },
-                name: 'Driver 1'
-              }
-            },
-            {
-              objectId: 'rp2',
-              fuelLevel: 42.0,
-              driver: {
-                model: { entityId: 'd2' },
-                name: 'Driver 2'
-              }
-            }
-          ],
-          currentHeat: {
-            objectId: 'h1',
-            heatNumber: 1,
-            heatDrivers: [
-              {
-                objectId: 'hd1',
-                laneIndex: 0,
-                driver: {
-                  objectId: 'rp1',
-                  fuelLevel: 75.5,
-                  driver: {
-                    model: { entityId: 'd1' },
-                    name: 'Driver 1'
-                  }
-                }
-              },
-              {
-                objectId: 'hd2',
-                laneIndex: 1,
-                driver: {
-                  objectId: 'rp2',
-                  fuelLevel: 42.0,
-                  driver: {
-                    model: { entityId: 'd2' },
-                    name: 'Driver 2'
-                  }
-                }
-              }
+          track: {
+            model: { entityId: 't1' },
+            name: 'Test Track',
+            lanes: [
+              { objectId: 'l1', length: 10, backgroundColor: '#550000', foregroundColor: '#ffffff' },
+              { objectId: 'l2', length: 10, backgroundColor: '#005500', foregroundColor: '#ffffff' }
             ]
           }
+        },
+        drivers: [
+          {
+            objectId: 'rp1',
+            fuelLevel: 75.5,
+            driver: {
+              model: { entityId: 'd1' },
+              name: 'Driver 1'
+            }
+          },
+          {
+            objectId: 'rp2',
+            fuelLevel: 42.0,
+            driver: {
+              model: { entityId: 'd2' },
+              name: 'Driver 2'
+            }
+          }
+        ],
+        currentHeat: {
+          objectId: 'h1',
+          heatNumber: 1,
+          heatDrivers: [
+            {
+              objectId: 'hd1',
+              laneIndex: 0,
+              driver: {
+                objectId: 'rp1',
+                fuelLevel: 75.5,
+                driver: {
+                  model: { entityId: 'd1' },
+                  name: 'Driver 1'
+                }
+              }
+            },
+            {
+              objectId: 'hd2',
+              laneIndex: 1,
+              driver: {
+                objectId: 'rp2',
+                fuelLevel: 42.0,
+                driver: {
+                  model: { entityId: 'd2' },
+                  name: 'Driver 2'
+                }
+              }
+            }
+          ]
         }
-      };
-      // @ts-ignore
-      window.mockRaceData(raceData);
-    });
+      }
+    };
+    await TestSetupHelper.mockRaceData(page, raceData);
 
     await page.waitForTimeout(500);
 
@@ -155,54 +152,51 @@ test.describe('Raceday Visuals for Fuel', () => {
     const container = page.locator('.dashboard-wrapper');
     const harness = new DefaultRacedayHarnessE2e(container);
 
-    await page.evaluate(() => {
-      if ((window as any).mockRaceData) {
-        const driverModel = {
-          model: { entityId: 'd1' },
-          name: 'Dave',
-          avatarUrl: '/api/assets/download?filename=img1.png'
-        };
-        const participant = {
-          objectId: 'p1',
-          fuelLevel: 75,
-          driver: driverModel
-        };
+    const driverModel = {
+      model: { entityId: 'd1' },
+      name: 'Dave',
+      avatarUrl: '/api/assets/download?filename=img1.png'
+    };
+    const participant = {
+      objectId: 'p1',
+      fuelLevel: 75,
+      driver: driverModel
+    };
 
-        (window as any).mockRaceData({
-          race: {
-            race: {
-              model: { entityId: 'r1' },
-              name: 'Avatar Race',
-              fuelOptions: {
-                enabled: true,
-                capacity: 100
-              },
-              track: {
-                model: { entityId: 't1' },
-                name: 'Test Track',
-                lanes: [
-                  { objectId: 'l1', length: 10, backgroundColor: '#550000', foregroundColor: '#ffffff' },
-                  { objectId: 'l2', length: 10, backgroundColor: '#005500', foregroundColor: '#ffffff' }
-                ]
-               }
-            },
-            drivers: [participant],
-            currentHeat: {
-              objectId: 'h1',
-              heatNumber: 1,
-              heatDrivers: [
-                {
-                  objectId: 'hd1',
-                  laneIndex: 0,
-                  driver: participant,
-                  actualDriver: driverModel
-                }
-              ]
-            }
+    const raceData = {
+      race: {
+        race: {
+          model: { entityId: 'r1' },
+          name: 'Avatar Race',
+          fuelOptions: {
+            enabled: true,
+            capacity: 100
+          },
+          track: {
+            model: { entityId: 't1' },
+            name: 'Test Track',
+            lanes: [
+              { objectId: 'l1', length: 10, backgroundColor: '#550000', foregroundColor: '#ffffff' },
+              { objectId: 'l2', length: 10, backgroundColor: '#005500', foregroundColor: '#ffffff' }
+            ]
           }
-        });
+        },
+        drivers: [participant],
+        currentHeat: {
+          objectId: 'h1',
+          heatNumber: 1,
+          heatDrivers: [
+            {
+              objectId: 'hd1',
+              laneIndex: 0,
+              driver: participant,
+              actualDriver: driverModel
+            }
+          ]
+        }
       }
-    });
+    };
+    await TestSetupHelper.mockRaceData(page, raceData);
 
     await page.waitForTimeout(500);
 
@@ -218,55 +212,52 @@ test.describe('Raceday Visuals for Fuel', () => {
     const container = page.locator('.dashboard-wrapper');
     const harness = new DefaultRacedayHarnessE2e(container);
 
-    await page.evaluate(() => {
-      if ((window as any).mockRaceData) {
-        (window as any).mockRaceData({
-          race: {
-            race: {
-              model: { entityId: 'r_digital' },
-              name: 'Digital Haven Race',
-              digitalFuelOptions: {
-                enabled: true,
-                capacity: 50,
-                usageType: 0,
-                usageRate: 4.0,
-                startLevel: 50
-              },
-              track: {
-                model: { entityId: 't_digital' },
-                name: 'Digital Haven',
-                hasDigitalFuel: true,
-                lanes: [
-                  { objectId: 'l1', length: 15, backgroundColor: '#ffff00', foregroundColor: '#000000' }
-                ]
-               }
-            },
-            drivers: [
-              {
+    const raceData = {
+      race: {
+        race: {
+          model: { entityId: 'r_digital' },
+          name: 'Digital Haven Race',
+          digitalFuelOptions: {
+            enabled: true,
+            capacity: 50,
+            usageType: 0,
+            usageRate: 4.0,
+            startLevel: 50
+          },
+          track: {
+            model: { entityId: 't_digital' },
+            name: 'Digital Haven',
+            hasDigitalFuel: true,
+            lanes: [
+              { objectId: 'l1', length: 15, backgroundColor: '#ffff00', foregroundColor: '#000000' }
+            ]
+          }
+        },
+        drivers: [
+          {
+            objectId: 'p1',
+            fuelLevel: 25,
+            driver: { name: 'Digital Racer' }
+          }
+        ],
+        currentHeat: {
+          objectId: 'h1',
+          heatNumber: 1,
+          heatDrivers: [
+            {
+              objectId: 'hd1',
+              laneIndex: 0,
+              driver: {
                 objectId: 'p1',
                 fuelLevel: 25,
                 driver: { name: 'Digital Racer' }
               }
-            ],
-            currentHeat: {
-              objectId: 'h1',
-              heatNumber: 1,
-              heatDrivers: [
-                {
-                  objectId: 'hd1',
-                  laneIndex: 0,
-                  driver: {
-                    objectId: 'p1',
-                    fuelLevel: 25,
-                    driver: { name: 'Digital Racer' }
-                  }
-                }
-              ]
             }
-          }
-        });
+          ]
+        }
       }
-    });
+    };
+    await TestSetupHelper.mockRaceData(page, raceData);
 
     await page.waitForTimeout(500);
 
@@ -304,45 +295,42 @@ test.describe('Raceday Visuals for Fuel', () => {
 
     await TestSetupHelper.waitForLocalization(page, 'en', page.goto('/default-raceday'));
 
-    await page.evaluate(() => {
-      if ((window as any).mockRaceData) {
-        (window as any).mockRaceData({
-          race: {
-            race: {
-              model: { entityId: 'r1' },
-              name: '1-Lane Scaling Race',
-              fuelOptions: { enabled: true, capacity: 100 },
-              track: {
-                model: { entityId: 't1' },
-                name: '1-Lane Track',
-                lanes: [{ objectId: 'l1', length: 10, backgroundColor: '#0000ff', foregroundColor: '#ffffff' }]
-              }
-            },
-            drivers: [{
+    const raceData = {
+      race: {
+        race: {
+          model: { entityId: 'r1' },
+          name: '1-Lane Scaling Race',
+          fuelOptions: { enabled: true, capacity: 100 },
+          track: {
+            model: { entityId: 't1' },
+            name: '1-Lane Track',
+            lanes: [{ objectId: 'l1', length: 10, backgroundColor: '#0000ff', foregroundColor: '#ffffff' }]
+          }
+        },
+        drivers: [{
+          objectId: 'p1',
+          fuelLevel: 50,
+          driver: { name: 'Swamper', nickname: 'Swamper G', avatarUrl: '/api/assets/download?filename=img1.png' }
+        }],
+        heats: [{ heatNumber: 1 }],
+        currentHeat: {
+          objectId: 'h1',
+          heatNumber: 1,
+          heatDrivers: [{
+            objectId: 'hd1',
+            laneIndex: 0,
+            lapCount: 4,
+            lastLapTime: 12.345,
+            driver: {
               objectId: 'p1',
               fuelLevel: 50,
               driver: { name: 'Swamper', nickname: 'Swamper G', avatarUrl: '/api/assets/download?filename=img1.png' }
-            }],
-            heats: [{ heatNumber: 1 }],
-            currentHeat: {
-              objectId: 'h1',
-              heatNumber: 1,
-              heatDrivers: [{
-                objectId: 'hd1',
-                laneIndex: 0,
-                lapCount: 4,
-                lastLapTime: 12.345,
-                driver: {
-                  objectId: 'p1',
-                  fuelLevel: 50,
-                  driver: { name: 'Swamper', nickname: 'Swamper G', avatarUrl: '/api/assets/download?filename=img1.png' }
-                }
-              }]
             }
-          }
-        });
+          }]
+        }
       }
-    });
+    };
+    await TestSetupHelper.mockRaceData(page, raceData);
 
     await page.waitForTimeout(500);
     await expect(page).toHaveScreenshot('raceday-1-lane-fuel-gauge.png', { maxDiffPixelRatio: 0.1 });
@@ -376,48 +364,45 @@ test.describe('Raceday Visuals for Fuel', () => {
 
     await TestSetupHelper.waitForLocalization(page, 'en', page.goto('/default-raceday'));
 
-    await page.evaluate(() => {
-      if ((window as any).mockRaceData) {
-        const lanes = Array.from({ length: 8 }, (_, i) => ({
-          objectId: `l${i + 1}`,
-          length: 10,
-          backgroundColor: i % 2 === 0 ? '#333333' : '#555555',
-          foregroundColor: '#ffffff'
-        }));
+    const lanes = Array.from({ length: 8 }, (_, i) => ({
+      objectId: `l${i + 1}`,
+      length: 10,
+      backgroundColor: i % 2 === 0 ? '#333333' : '#555555',
+      foregroundColor: '#ffffff'
+    }));
 
-        const heatDrivers = lanes.map((_, i) => ({
-          objectId: `hd${i + 1}`,
-          laneIndex: i,
-          lapCount: i + 1,
-          lastLapTime: 10 + i,
-          driver: {
-            objectId: `p${i + 1}`,
-            fuelLevel: 100 - (i * 10),
-            driver: { name: `Driver ${i + 1}`, nickname: `Nick ${i + 1}`, avatarUrl: '/api/assets/download?filename=img1.png' }
-          }
-        }));
-
-        (window as any).mockRaceData({
-          race: {
-            race: {
-              model: { entityId: 'r8' },
-              name: '8-Lane Scaling Race',
-              fuelOptions: { enabled: true, capacity: 100 },
-              track: {
-                model: { entityId: 't8' },
-                name: '8-Lane Track',
-                lanes: lanes
-              }
-            },
-            currentHeat: {
-              objectId: 'h1',
-              heatNumber: 1,
-              heatDrivers: heatDrivers
-            }
-          }
-        });
+    const heatDrivers = lanes.map((_, i) => ({
+      objectId: `hd${i + 1}`,
+      laneIndex: i,
+      lapCount: i + 1,
+      lastLapTime: 10 + i,
+      driver: {
+        objectId: `p${i + 1}`,
+        fuelLevel: 100 - (i * 10),
+        driver: { name: `Driver ${i + 1}`, nickname: `Nick ${i + 1}`, avatarUrl: '/api/assets/download?filename=img1.png' }
       }
-    });
+    }));
+
+    const raceData = {
+      race: {
+        race: {
+          model: { entityId: 'r8' },
+          name: '8-Lane Scaling Race',
+          fuelOptions: { enabled: true, capacity: 100 },
+          track: {
+            model: { entityId: 't8' },
+            name: '8-Lane Track',
+            lanes: lanes
+          }
+        },
+        currentHeat: {
+          objectId: 'h1',
+          heatNumber: 1,
+          heatDrivers: heatDrivers
+        }
+      }
+    };
+    await TestSetupHelper.mockRaceData(page, raceData);
 
     await page.waitForTimeout(500);
     await expect(page).toHaveScreenshot('raceday-8-lane-fuel-gauge.png', { maxDiffPixelRatio: 0.1 });

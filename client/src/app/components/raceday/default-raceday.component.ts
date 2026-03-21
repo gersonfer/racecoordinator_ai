@@ -13,7 +13,6 @@ import { DriverConverter } from 'src/app/converters/driver.converter';
 import { HeatConverter } from 'src/app/converters/heat.converter';
 import { TrackConverter } from 'src/app/converters/track.converter';
 import { LaneConverter } from 'src/app/converters/lane.converter';
-import { RaceParticipantConverter } from 'src/app/converters/race_participant.converter';
 import { playSound, createTTSContext } from 'src/app/utils/audio';
 import { com } from 'src/app/proto/message';
 import { SettingsService } from 'src/app/services/settings.service';
@@ -21,7 +20,7 @@ import { AnchorPoint } from './column_definition';
 import { Settings, ColumnVisibility } from 'src/app/models/settings';
 import { FinishMethod } from 'src/app/models/heat_scoring';
 import InterfaceStatus = com.antigravity.InterfaceStatus;
-
+import { RaceConnectionService } from 'src/app/services/race-connection.service';
 
 import { ColumnDefinition } from './column_definition';
 
@@ -70,12 +69,12 @@ export class DefaultRacedayComponent implements OnInit, OnDestroy {
     return (window as any).WATCHDOG_TIMEOUT || 5000;
   }
 
-
   constructor(
     private translationService: TranslationService,
     private dataService: DataService,
     private raceService: RaceService,
     private settingsService: SettingsService,
+    private raceConnectionService: RaceConnectionService,
     private router: Router,
     private cdr: ChangeDetectorRef
   ) {
@@ -111,75 +110,31 @@ export class DefaultRacedayComponent implements OnInit, OnDestroy {
       }
     }));
 
-    // Hydrate Driver Converter with all known drivers from DB to handle ID-only references in Proto
-    this.subscriptions.push(this.dataService.getDrivers().subscribe({
-      next: (drivers) => {
-        console.log(`RacedayComponent: Hydrating ${drivers.length} drivers into cache.`);
-        drivers.forEach(d => {
-          const driver = DriverConverter.fromJSON(d);
-          DriverConverter.register(driver);
-        });
-        console.log('RacedayComponent: Hydration COMPLETE. Current Cache Keys:', (DriverConverter as any).cache.getKeys());
-        this.driversLoaded = true;
-        if (this.pendingUpdate) {
-          console.log('RacedayComponent: Processing pending race update after hydration.');
-          this.processRaceUpdate(this.pendingUpdate);
-          this.pendingUpdate = null;
-        }
-      },
-      error: (err) => {
-        console.error('RacedayComponent: Failed to load drivers for hydration', err);
-        // Proceed anyway to avoid blocking execution, though names might be missing
-        this.driversLoaded = true;
-        if (this.pendingUpdate) {
-          this.processRaceUpdate(this.pendingUpdate);
-          this.pendingUpdate = null;
-        }
-      }
-    }));
-
     this.detectShortcutKey();
     this.updateScale();
 
-    // Subscribe to race data
-    this.dataService.updateRaceSubscription(true);
+    this.raceConnectionService.connect();
 
-    // Listen for Race Update to initialize race data
-    this.subscriptions.push(this.dataService.getRaceUpdate().subscribe(update => {
-      if (this.driversLoaded) {
-        this.processRaceUpdate(update);
-      } else {
-        console.log('RacedayComponent: Deferring race update until drivers are hydrated.');
-        this.pendingUpdate = update;
-      }
+    this.subscriptions.push(this.raceService.currentHeat$.subscribe(() => {
+      this.loadRaceData();
+      this.cdr.detectChanges();
+      this.updateScale();
     }));
 
-    this.subscriptions.push(this.dataService.getRaceTime().subscribe(time => {
-      // Determine timer direction and format
-      // If new time > previous time (and not 0 reset), it's increasing -> Whole Numbers
-      // If new time < previous time, it's decreasing -> Check for < 10s
-
+    this.subscriptions.push(this.raceConnectionService.raceTime$.subscribe(time => {
       if (time > this.previousTime) {
-        // Increasing
         this.timeFormat = '1.0-0';
       } else if (time < this.previousTime) {
-        // Decreasing
         if (time < 10) {
           this.timeFormat = '1.2-2';
         } else {
           this.timeFormat = '1.0-0';
         }
       } else {
-        // Equal (paused or no change), keep previous format or default?
-        // If 0, assume default
         if (time === 0) this.timeFormat = '1.0-0';
       }
 
-      // Fallback for initial state or reset
-      if (this.previousTime === 0 && time > 0) {
-        this.timeFormat = '1.0-0';
-      }
-
+      const prev = this.previousTime;
       this.time = time;
       this.previousTime = time;
       if (!this.isDestroyed) {
@@ -187,36 +142,24 @@ export class DefaultRacedayComponent implements OnInit, OnDestroy {
       }
     }));
 
-    this.subscriptions.push(this.dataService.getLaps().subscribe(lap => {
-      console.log('Lap Received:', lap);
-      // Locate driver by objectId from the lap message
+    this.subscriptions.push(this.raceConnectionService.laps$.subscribe(lap => {
       if (this.heat && this.heat.heatDrivers && lap && lap.objectId) {
         const driverData = this.heat.heatDrivers.find(d => d.objectId === lap.objectId);
         if (driverData) {
-          driverData.addLapTime(lap.lapNumber!, lap.lapTime!, lap.averageLapTime!, lap.medianLapTime!, lap.bestLapTime!);
           if (!this.isDestroyed) {
             this.cdr.detectChanges();
           }
 
-          // Audio Feedback
           const driver = driverData.driver;
           const isBestLap = lap.lapTime === lap.bestLapTime;
-
           const ttsContext = createTTSContext(driver, driverData);
 
           if (isBestLap && (driver.bestLapAudio.url || (driver.bestLapAudio.type === 'tts' && driver.bestLapAudio.text))) {
-            // Play Best Lap Sound
-            console.log('Triggering Best Lap Sound');
             playSound(driver.bestLapAudio.type, driver.bestLapAudio.url, driver.bestLapAudio.text, this.dataService.serverUrl, ttsContext);
           } else if (driver.lapAudio.url || (driver.lapAudio.type === 'tts' && driver.lapAudio.text)) {
-            // Play Regular Lap Sound
-            console.log('Triggering Regular Lap Sound');
             playSound(driver.lapAudio.type, driver.lapAudio.url, driver.lapAudio.text, this.dataService.serverUrl, ttsContext);
-          } else {
-            console.log('No audio configured for this driver/scenario');
           }
 
-          // Highlighting
           const settings = this.settingsService.getSettings();
           if (settings.highlightRowOnLap) {
             this.highlightedDrivers.add(lap.objectId!);
@@ -230,120 +173,48 @@ export class DefaultRacedayComponent implements OnInit, OnDestroy {
               }
             }, 400);
           }
-        } else {
-          console.warn(`Lap objectId ${lap.objectId} not found among heat drivers. Heat Drivers:`, this.heat.heatDrivers.map(d => d.objectId));
+        }
+      }
+    }));
+
+    this.subscriptions.push(this.raceConnectionService.carData$.subscribe(carData => {
+      if (!this.isDestroyed) {
+        this.cdr.detectChanges();
+      }
+    }));
+
+    this.subscriptions.push(this.raceConnectionService.segments$.subscribe(segment => {
+      if (!this.isDestroyed) {
+        this.cdr.detectChanges();
+      }
+    }));
+
+    this.subscriptions.push(this.raceConnectionService.reactionTimes$.subscribe(rt => {
+      if (!this.isDestroyed) {
+        this.cdr.detectChanges();
+      }
+    }));
+
+    this.subscriptions.push(this.raceConnectionService.standingsUpdate$.subscribe(update => {
+      this.sortHeatDrivers();
+    }));
+
+    this.subscriptions.push(this.raceConnectionService.interfaceEvents$.subscribe(event => {
+      this.isInterfaceConnected = this.raceConnectionService.isInterfaceConnected;
+      this.cdr.detectChanges();
+    }));
+
+    this.subscriptions.push(this.raceConnectionService.interfaceAlert$.subscribe(alert => {
+      if (alert.titleKey === 'ACK_MODAL_TITLE_CONNECTED') {
+        if (this.showAckModal) {
+          this.showInterfaceError(alert.titleKey, alert.messageKey);
         }
       } else {
-        console.warn('Lap received but heat or drivers not ready', { heat: !!this.heat, lap: !!lap });
+        this.showInterfaceError(alert.titleKey, alert.messageKey);
       }
     }));
 
-    this.subscriptions.push(this.dataService.getCarData().subscribe(carData => {
-      if (this.heat && this.heat.heatDrivers && carData && carData.lane != null) {
-        const driverData = this.heat.heatDrivers[carData.lane];
-        if (driverData && carData.fuelLevel != null) {
-          driverData.participant.fuelLevel = carData.fuelLevel as number;
-          if (!this.isDestroyed) {
-            this.cdr.detectChanges();
-          }
-        }
-      }
-    }));
-
-    this.subscriptions.push(this.dataService.getSegments().subscribe(segment => {
-      console.log('Segment Received:', segment);
-      if (this.heat && this.heat.heatDrivers && segment && segment.objectId) {
-        const driverData = this.heat.heatDrivers.find(d => d.objectId === segment.objectId);
-        if (driverData) {
-          const segmentIndex = (segment.segmentNumber || 1) - 1;
-          console.log(`Applying segment to driver ${segment.objectId}: number=${segment.segmentNumber}, index=${segmentIndex}, time=${segment.segmentTime}`);
-          driverData.addSegmentTime(segmentIndex, segment.segmentTime!);
-          if (!this.isDestroyed) {
-            this.cdr.detectChanges();
-          }
-        }
-      }
-    }));
-
-    this.subscriptions.push(this.dataService.getReactionTimes().subscribe(rt => {
-      if (this.heat && this.heat.heatDrivers && rt && rt.objectId) {
-        const driver = this.heat.heatDrivers.find(d => d.objectId === rt.objectId);
-        if (driver) {
-          driver.reactionTime = rt.reactionTime!;
-          if (!this.isDestroyed) {
-            this.cdr.detectChanges();
-          }
-        }
-      }
-    }));
-
-    this.subscriptions.push(this.dataService.getStandingsUpdate().subscribe(update => {
-      if (this.heat && update && update.updates) {
-        update.updates.forEach(u => {
-          if (u.objectId) {
-            this.driverRankings.set(u.objectId, u.rank || 0);
-
-            // Apply gaps to the local driver data
-            const driverData = this.heat!.heatDrivers.find(d => d.objectId === u.objectId);
-            if (driverData) {
-              driverData.gapLeader = u.gapLeader || 0;
-              driverData.gapPosition = u.gapPosition || 0;
-            }
-          }
-        });
-
-        this.sortHeatDrivers();
-      }
-    }));
-
-    this.subscriptions.push(this.dataService.getOverallStandingsUpdate().subscribe(update => {
-      if (update && update.participants) {
-        const participants = update.participants.map(p => RaceParticipantConverter.fromProto(p));
-        this.raceService.setParticipants(participants);
-        if (!this.isDestroyed) {
-          this.cdr.detectChanges();
-        }
-      }
-    }));
-
-    this.subscriptions.push(this.dataService.getInterfaceEvents().subscribe(event => {
-      if (event.status) {
-        const status = event.status.status;
-        if (status === this.lastInterfaceStatus) {
-          // KICK WATCHDOG FOR LIVE PULSES, BUT NOT FOR TIMED STATES LIKE DISCONNECTED AS IT OVERRIDES THEM
-          if (status !== InterfaceStatus.DISCONNECTED && status !== InterfaceStatus.NO_DATA) {
-            this.resetWatchdog();
-          }
-          return;
-        }
-
-        this.resetWatchdog();
-        this.lastInterfaceStatus = status ?? -1;
-
-        this.isInterfaceConnected = status === InterfaceStatus.CONNECTED;
-
-        if (status === InterfaceStatus.NO_DATA) {
-          if (!this.hasInitiallyConnected) {
-            this.scheduleDisconnectedError('ACK_MODAL_TITLE_NO_DATA', 'ACK_MODAL_MSG_NO_DATA');
-          } else {
-            this.showInterfaceError('ACK_MODAL_TITLE_NO_DATA', 'ACK_MODAL_MSG_NO_DATA');
-          }
-        } else if (status === InterfaceStatus.DISCONNECTED) {
-          this.scheduleDisconnectedError('ACK_MODAL_TITLE_DISCONNECTED', 'ACK_MODAL_MSG_DISCONNECTED');
-        } else if (status === InterfaceStatus.CONNECTED) {
-          this.clearDisconnectedError();
-          if (this.showAckModal) {
-            this.showInterfaceError('ACK_MODAL_TITLE_CONNECTED', 'ACK_MODAL_MSG_CONNECTED');
-          }
-          this.hasInitiallyConnected = true;
-        }
-        if (!this.isDestroyed) {
-          this.cdr.detectChanges();
-        }
-      }
-    }));
-
-    this.subscriptions.push(this.dataService.getRaceState().subscribe(state => {
+    this.subscriptions.push(this.raceConnectionService.raceState$.subscribe(state => {
       this.raceState = state;
       if (state === com.antigravity.RaceState.RACING) {
         this.hasRacedInCurrentHeat = true;
@@ -352,70 +223,18 @@ export class DefaultRacedayComponent implements OnInit, OnDestroy {
         this.cdr.detectChanges();
       }
     }));
-
-    // Ensure we are connected to the interface socket to receive status updates
-    this.dataService.connectToInterfaceDataSocket();
-
-    // Start watchdog
-    this.resetWatchdog();
-
-    // Test hooks for screendiff tests
-    (window as any).mockRaceData = (data: com.antigravity.IRaceData) => {
-      if (data.race) {
-        this.processRaceUpdate(data.race);
-        this.cdr.detectChanges();
-      }
-    };
   }
 
-  private processRaceUpdate(update: com.antigravity.IRace) {
-    console.log('RacedayComponent: Processing Race Update:', update);
-    let raceDataChanged = false;
 
-    if (update.race) {
-      const race = RaceConverter.fromProto(update.race);
-      this.raceService.setRace(race);
-      raceDataChanged = true;
-    }
-
-    if (update.drivers && update.drivers.length > 0) {
-      const participants = update.drivers.map(d => RaceParticipantConverter.fromProto(d));
-      this.raceService.setParticipants(participants);
-      raceDataChanged = true;
-    }
-
-    if (update.heats && update.heats.length > 0) {
-      const heats = update.heats.map((h, index) => HeatConverter.fromProto(h, index + 1));
-      this.raceService.setHeats(heats);
-      raceDataChanged = true;
-    }
-
-    if (update.currentHeat) {
-      const currentHeat = HeatConverter.fromProto(update.currentHeat);
-      this.raceService.setCurrentHeat(currentHeat);
-      raceDataChanged = true;
-    }
-
-    if (raceDataChanged) {
-      this.loadRaceData();
-      // Force change detection and update scale just in case
-      this.cdr.detectChanges();
-      this.updateScale();
-    }
-  }
 
   private leaderBoardWindow: Window | null = null;
 
   ngOnDestroy() {
     this.isDestroyed = true;
-    this.dataService.updateRaceSubscription(false);
-    this.dataService.disconnectFromInterfaceDataSocket();
+    this.raceConnectionService.disconnect();
 
     this.subscriptions.forEach(sub => sub.unsubscribe());
     this.subscriptions = [];
-
-    if (this.noStatusWatchdog) clearTimeout(this.noStatusWatchdog);
-    this.clearDisconnectedError();
 
     if (this.leaderBoardWindow) {
       this.leaderBoardWindow.close();
@@ -423,45 +242,11 @@ export class DefaultRacedayComponent implements OnInit, OnDestroy {
     }
   }
 
-  private resetWatchdog() {
-    if (this.noStatusWatchdog) clearTimeout(this.noStatusWatchdog);
-    this.noStatusWatchdog = setTimeout(() => {
-      this.lastInterfaceStatus = -1;
-      if (!this.hasInitiallyConnected) {
-        this.showInterfaceError('ACK_MODAL_TITLE_DISCONNECTED', 'ACK_MODAL_MSG_DISCONNECTED');
-      } else {
-        this.showInterfaceError('ACK_MODAL_TITLE_NO_STATUS', 'ACK_MODAL_MSG_NO_STATUS');
-      }
-    }, this.WATCHDOG_TIMEOUT);
-  }
-
   private showInterfaceError(titleKey: string, messageKey: string) {
-    this.clearDisconnectedError();
     this.ackModalTitle = titleKey;
     this.ackModalMessage = messageKey;
     this.showAckModal = true;
     this.cdr.detectChanges();
-  }
-
-  private scheduleDisconnectedError(title: string = 'ACK_MODAL_TITLE_DISCONNECTED', message: string = 'ACK_MODAL_MSG_DISCONNECTED') {
-    // ALWAYS clear the generic watchdog if we are explicitly scheduling (or have already scheduled) a disconnect
-    if (this.noStatusWatchdog) {
-      clearTimeout(this.noStatusWatchdog);
-      this.noStatusWatchdog = null;
-    }
-
-    if (this.disconnectedTimeout) return; // Already scheduled
-
-    this.disconnectedTimeout = setTimeout(() => {
-      this.showInterfaceError(title, message);
-    }, this.WATCHDOG_TIMEOUT);
-  }
-
-  private clearDisconnectedError() {
-    if (this.disconnectedTimeout) {
-      clearTimeout(this.disconnectedTimeout);
-      this.disconnectedTimeout = null;
-    }
   }
 
   onAcknowledgeModal() {
@@ -1246,7 +1031,6 @@ export class DefaultRacedayComponent implements OnInit, OnDestroy {
       resizingColumnKey = selectedColumns[0];
     }
 
-
     // Sum up widths of all OTHER columns
     selectedColumns.forEach(key => {
       if (key === resizingColumnKey) return;
@@ -1412,7 +1196,7 @@ export class DefaultRacedayComponent implements OnInit, OnDestroy {
       const sign = value > 0 ? '+' : '';
       return sign + value.toFixed(3);
     } else if (baseKey === 'lapCount') {
-      if (value === 0 && hd.reactionTime === 0) return '--';
+      if (value === null || value === undefined || (value === 0 && hd.reactionTime === 0)) return '--';
       return value.toString();
     } else if (baseKey === 'driver.name') {
       if (this.isEmptyDriver(hd)) {
@@ -1521,9 +1305,6 @@ export class DefaultRacedayComponent implements OnInit, OnDestroy {
     return value?.toString() ?? '';
   }
 
-
-
-
   private getLabelKeyForColumn(key: string, layout?: { [A in AnchorPoint]?: string }): string {
     const propertyKey = layout?.[AnchorPoint.CenterCenter] ||
       (layout ? Object.values(layout)[0] : null) ||
@@ -1557,11 +1338,7 @@ export class DefaultRacedayComponent implements OnInit, OnDestroy {
     return labels[baseKey] ?? 'UNKNOWN';
   }
 
-
-
   protected trackByDriverId(index: number, hd: DriverHeatData): string {
     return hd.objectId;
   }
-
-
 }

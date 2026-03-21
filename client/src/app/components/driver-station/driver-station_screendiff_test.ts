@@ -24,8 +24,7 @@ test.describe('Driver Station Visuals', () => {
     // Wait for the view container to render
     await expect(page.locator('.driver-station-container')).toBeVisible();
 
-    await page.evaluate(() => {
-      const raceData = {
+    const raceData = {
         race: {
           race: {
             model: { entityId: 'r1' },
@@ -50,10 +49,7 @@ test.describe('Driver Station Visuals', () => {
         }
       };
       
-      if ((window as any).mockRaceData) {
-        (window as any).mockRaceData(raceData);
-      }
-    });
+    await TestSetupHelper.mockRaceData(page, raceData);
 
     await page.waitForTimeout(500);
 
@@ -64,8 +60,7 @@ test.describe('Driver Station Visuals', () => {
   test('should display fuel thermometer layout if fuel race', async ({ page }) => {
     await TestSetupHelper.waitForLocalization(page, 'en', page.goto('/driver-station/0'));
 
-    await page.evaluate(() => {
-      const raceData = {
+    const raceData = {
         race: {
           race: {
             model: { entityId: 'r1' },
@@ -90,10 +85,7 @@ test.describe('Driver Station Visuals', () => {
         }
       };
       
-      if ((window as any).mockRaceData) {
-        (window as any).mockRaceData(raceData);
-      }
-    });
+    await TestSetupHelper.mockRaceData(page, raceData);
 
     await page.waitForTimeout(500);
 

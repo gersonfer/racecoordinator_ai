@@ -790,6 +790,25 @@ export class TestSetupHelper {
     }, dataArray);
   }
 
+  static async mockRaceData(page: Page, data: any) {
+    const buffer = com.antigravity.RaceData.encode(data).finish();
+    const dataArray = Array.from(buffer);
+    await page.evaluate((bufferArray) => {
+      const buffer = new Uint8Array(bufferArray).buffer;
+      // Broadcast to mock sockets
+      // @ts-ignore
+      if (window.allMockSockets) {
+        // @ts-ignore
+        const raceSockets = window.allMockSockets.filter((s: any) => s.url.includes('race-data'));
+        raceSockets.forEach((s: any) => {
+          const event = new MessageEvent('message', { data: buffer });
+          s.dispatchEvent(event);
+          if (s.onmessage) s.onmessage(event);
+        });
+      }
+    }, dataArray);
+  }
+
 
   static async setupLocalStorage(page: Page, settings: { recentRaceIds?: string[], selectedDriverIds?: string[], racedaySetupWalkthroughSeen?: boolean, language?: string } = {}) {
     await page.addInitScript((s) => {

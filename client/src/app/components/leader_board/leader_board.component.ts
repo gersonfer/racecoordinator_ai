@@ -1,14 +1,12 @@
 import { Component, OnInit, OnDestroy, HostListener } from '@angular/core';
 import { RaceService } from 'src/app/services/race.service';
 import { RaceParticipant } from 'src/app/models/race_participant';
-import { RaceParticipantConverter } from 'src/app/converters/race_participant.converter';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
-import { DataService } from 'src/app/data.service';
 import { Heat } from 'src/app/race/heat';
-import { RaceConverter } from 'src/app/converters/race.converter';
-
 import { OverallRanking } from 'src/app/models/overall_scoring';
+import { RaceConnectionService } from 'src/app/services/race-connection.service';
+
 
 @Component({
   selector: 'app-leader-board',
@@ -24,7 +22,7 @@ export class LeaderBoardComponent implements OnInit, OnDestroy {
   others$: Observable<RaceParticipant[]>;
   isTimeBased$: Observable<boolean>;
 
-  constructor(public raceService: RaceService, private dataService: DataService) {
+  constructor(public raceService: RaceService, private raceConnectionService: RaceConnectionService) {
     this.participants$ = this.raceService.participants$;
     this.currentHeat$ = this.raceService.currentHeat$;
 
@@ -48,32 +46,11 @@ export class LeaderBoardComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
-    // Subscribe to race data
-    this.dataService.updateRaceSubscription(true);
-
-    this.dataService.getOverallStandingsUpdate().subscribe(update => {
-      console.log('LeaderBoardComponent: Received Overall Standings Update:', update);
-      if (update.participants) {
-        const participants = update.participants.map(p => RaceParticipantConverter.fromProto(p));
-        this.raceService.setParticipants(participants);
-      }
-    });
-
-    this.dataService.getRaceUpdate().subscribe(update => {
-      console.log('LeaderBoardComponent: Received Race Update:', update);
-      if (update.race) {
-        this.raceService.setRace(RaceConverter.fromProto(update.race));
-      }
-      if (update.drivers && update.drivers.length > 0) {
-        const participants = update.drivers.map(d => RaceParticipantConverter.fromProto(d));
-        this.raceService.setParticipants(participants);
-      }
-    });
+    this.raceConnectionService.connect();
   }
 
   @HostListener('window:beforeunload')
   ngOnDestroy(): void {
-    console.log('LeaderBoardComponent: Unsubscribing from race data');
-    this.dataService.updateRaceSubscription(false);
+    this.raceConnectionService.disconnect();
   }
 }

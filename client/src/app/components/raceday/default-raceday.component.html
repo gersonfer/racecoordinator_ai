@@ -156,7 +156,7 @@
           [attr.transform]="'translate(0, ' + (310 + i * getRowHeight()) + ')'">
           <g class="row-scaler" [class.highlighted]="highlightedDrivers.has(hd.objectId)">
             <rect x="0" y="0" width="1600" [attr.height]="getRowHeight()"
-              [attr.fill]="track.lanes[hd.laneIndex].background_color" rx="4" />
+              [attr.fill]="track.lanes[hd.laneIndex]?.background_color" rx="4" />
 
             <!-- Columns -->
             <ng-container *ngFor="let column of columns; let colIndex = index">

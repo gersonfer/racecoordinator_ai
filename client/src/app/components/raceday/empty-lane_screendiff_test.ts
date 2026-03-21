@@ -68,8 +68,7 @@ test.describe('Raceday Visuals for Empty Lanes', () => {
 
     await expect(page.locator('.scalable-content')).toBeVisible();
 
-    await page.evaluate(() => {
-      const raceData = {
+    const raceData = {
         race: {
           race: {
             model: { entityId: 'r1' },
@@ -130,9 +129,8 @@ test.describe('Raceday Visuals for Empty Lanes', () => {
           }
         }
       };
-      // @ts-ignore
-      window.mockRaceData(raceData);
-    });
+      
+    await TestSetupHelper.mockRaceData(page, raceData);
 
     await page.waitForTimeout(1000);
 
@@ -157,8 +155,7 @@ test.describe('Raceday Visuals for Empty Lanes', () => {
 
     await expect(page.locator('.scalable-content')).toBeVisible();
 
-    await page.evaluate(() => {
-      const raceData = {
+    const raceData = {
         race: {
           race: {
             model: { entityId: 'r1' },
@@ -203,9 +200,8 @@ test.describe('Raceday Visuals for Empty Lanes', () => {
           }
         }
       };
-      // @ts-ignore
-      window.mockRaceData(raceData);
-    });
+      
+    await TestSetupHelper.mockRaceData(page, raceData);
 
     await page.waitForTimeout(1000);
 

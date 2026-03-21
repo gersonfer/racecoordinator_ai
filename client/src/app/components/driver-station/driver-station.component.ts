@@ -9,13 +9,9 @@ import { Track } from 'src/app/models/track';
 import { Heat } from 'src/app/race/heat';
 import { FinishMethod } from 'src/app/models/heat_scoring';
 import { com } from 'src/app/proto/message';
-import { RaceConverter } from 'src/app/converters/race.converter';
-import { DriverConverter } from 'src/app/converters/driver.converter';
-import { HeatConverter } from 'src/app/converters/heat.converter';
-import { TrackConverter } from 'src/app/converters/track.converter';
-import { LaneConverter } from 'src/app/converters/lane.converter';
-import { RaceParticipantConverter } from 'src/app/converters/race_participant.converter';
 import { playSound, createTTSContext } from 'src/app/utils/audio';
+import { RaceConnectionService } from 'src/app/services/race-connection.service';
+
 
 @Component({
   selector: 'app-driver-station',
@@ -38,6 +34,7 @@ export class DriverStationComponent implements OnInit, OnDestroy {
     private route: ActivatedRoute,
     private dataService: DataService,
     private raceService: RaceService,
+    private raceConnectionService: RaceConnectionService,
     private cdr: ChangeDetectorRef
   ) { }
 
@@ -47,119 +44,56 @@ export class DriverStationComponent implements OnInit, OnDestroy {
       this.loadRaceData();
     });
 
-    // Subscriptions similar to DefaultRacedayComponent
-    this.dataService.updateRaceSubscription(true);
+    this.raceConnectionService.connect();
 
-    this.subscriptions.push(this.dataService.getRaceUpdate().subscribe(update => {
-      this.processRaceUpdate(update);
+    this.subscriptions.push(this.raceService.currentHeat$.subscribe(() => {
+      this.loadRaceData();
+      this.cdr.detectChanges();
     }));
 
-    this.subscriptions.push(this.dataService.getRaceTime().subscribe(time => {
+    this.subscriptions.push(this.raceConnectionService.raceTime$.subscribe(time => {
       this.time = time;
       this.cdr.detectChanges();
     }));
 
-    this.subscriptions.push(this.dataService.getLaps().subscribe(lap => {
+    this.subscriptions.push(this.raceConnectionService.laps$.subscribe(lap => {
       if (this.heat && lap && lap.objectId) {
         const driverData = this.heat.heatDrivers.find(d => d.objectId === lap.objectId);
-        if (driverData) {
-          driverData.addLapTime(lap.lapNumber!, lap.lapTime!, lap.averageLapTime!, lap.medianLapTime!, lap.bestLapTime!);
-          this.cdr.detectChanges();
+        if (driverData && this.driverData && this.driverData.objectId === lap.objectId) {
+          const driver = driverData.driver;
+          const isBestLap = lap.lapTime === lap.bestLapTime;
+          const ttsContext = createTTSContext(driver, driverData);
 
-          // Audio Feedback (Only for this driver station's lane)
-          if (this.driverData && this.driverData.objectId === lap.objectId) {
-            const driver = driverData.driver;
-            const isBestLap = lap.lapTime === lap.bestLapTime;
-            const ttsContext = createTTSContext(driver, driverData);
-
-            if (isBestLap && (driver.bestLapAudio.url || (driver.bestLapAudio.type === 'tts' && driver.bestLapAudio.text))) {
-              playSound(driver.bestLapAudio.type, driver.bestLapAudio.url, driver.bestLapAudio.text, this.dataService.serverUrl, ttsContext);
-            } else if (driver.lapAudio.url || (driver.lapAudio.type === 'tts' && driver.lapAudio.text)) {
-              playSound(driver.lapAudio.type, driver.lapAudio.url, driver.lapAudio.text, this.dataService.serverUrl, ttsContext);
-            }
+          if (isBestLap && (driver.bestLapAudio.url || (driver.bestLapAudio.type === 'tts' && driver.bestLapAudio.text))) {
+            playSound(driver.bestLapAudio.type, driver.bestLapAudio.url, driver.bestLapAudio.text, this.dataService.serverUrl, ttsContext);
+          } else if (driver.lapAudio.url || (driver.lapAudio.type === 'tts' && driver.lapAudio.text)) {
+            playSound(driver.lapAudio.type, driver.lapAudio.url, driver.lapAudio.text, this.dataService.serverUrl, ttsContext);
           }
         }
       }
+      this.cdr.detectChanges();
     }));
 
-
-    this.subscriptions.push(this.dataService.getCarData().subscribe(carData => {
-      if (this.heat && this.heat.heatDrivers && carData && carData.lane != null) {
-        const driverData = this.heat.heatDrivers[carData.lane];
-        if (driverData && carData.fuelLevel != null) {
-          driverData.participant.fuelLevel = carData.fuelLevel as number;
-          this.cdr.detectChanges();
-        }
-      }
+    this.subscriptions.push(this.raceConnectionService.carData$.subscribe(carData => {
+      this.cdr.detectChanges();
     }));
 
-    this.subscriptions.push(this.dataService.getStandingsUpdate().subscribe(update => {
+    this.subscriptions.push(this.raceConnectionService.standingsUpdate$.subscribe(update => {
       if (this.heat && update && update.updates) {
         update.updates.forEach(u => {
-          if (u.objectId) {
-            const driverData = this.heat!.heatDrivers.find(d => d.objectId === u.objectId);
-            if (driverData) {
-              driverData.gapLeader = u.gapLeader || 0;
-              driverData.gapPosition = u.gapPosition || 0;
-              
-              if (u.objectId === this.driverData?.objectId) {
-                this.standingsPosition = u.rank || 0;
-              }
-            }
+          if (u.objectId === this.driverData?.objectId) {
+            this.standingsPosition = u.rank || 0;
           }
         });
         this.cdr.detectChanges();
       }
     }));
 
-    // Test hook for screendiff tests
-    (window as any).mockRaceData = (data: any) => {
-      if (data && data.race) {
-        this.processRaceUpdate(data.race);
-      }
-    };
-
-    this.dataService.connectToInterfaceDataSocket();
-
   }
 
   ngOnDestroy() {
-    this.dataService.updateRaceSubscription(false);
-    this.dataService.disconnectFromInterfaceDataSocket();
+    this.raceConnectionService.disconnect();
     this.subscriptions.forEach(sub => sub.unsubscribe());
-  }
-
-  private processRaceUpdate(update: com.antigravity.IRace) {
-    let raceDataChanged = false;
-
-    if (update.race) {
-      const race = RaceConverter.fromProto(update.race);
-      this.raceService.setRace(race);
-      raceDataChanged = true;
-    }
-
-    if (update.drivers && update.drivers.length > 0) {
-      const participants = update.drivers.map(d => RaceParticipantConverter.fromProto(d));
-      this.raceService.setParticipants(participants);
-      raceDataChanged = true;
-    }
-
-    if (update.heats && update.heats.length > 0) {
-      const heats = update.heats.map((h, index) => HeatConverter.fromProto(h, index + 1));
-      this.raceService.setHeats(heats);
-      raceDataChanged = true;
-    }
-
-    if (update.currentHeat) {
-      const currentHeat = HeatConverter.fromProto(update.currentHeat);
-      this.raceService.setCurrentHeat(currentHeat);
-      raceDataChanged = true;
-    }
-
-    if (raceDataChanged) {
-      this.loadRaceData();
-      this.cdr.detectChanges();
-    }
   }
 
   private loadRaceData() {
@@ -169,13 +103,13 @@ export class DriverStationComponent implements OnInit, OnDestroy {
       this.heat = this.raceService.getCurrentHeat();
       if (this.heat) {
         this.driverData = this.heat.heatDrivers[this.laneIndex];
-        
+
         // Update standings position from heat standings if available
         if (this.driverData && this.heat.standings) {
-             const index = this.heat.standings.indexOf(this.driverData.objectId);
-             if (index >= 0) {
-                 this.standingsPosition = index + 1;
-             }
+          const index = this.heat.standings.indexOf(this.driverData.objectId);
+          if (index >= 0) {
+            this.standingsPosition = index + 1;
+          }
         }
       }
     }
@@ -195,7 +129,7 @@ export class DriverStationComponent implements OnInit, OnDestroy {
 
   get progressPercentage(): number {
     if (!this.finishValue) return 0;
-    
+
     if (this.finishMethod === FinishMethod.Timed) {
       // For Timed, how much time is left / total time
       // Wait, prompt says "indicates how much time is left"
