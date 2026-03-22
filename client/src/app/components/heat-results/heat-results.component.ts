@@ -35,14 +35,21 @@ export class HeatResultsComponent implements OnInit, OnDestroy {
   protected driverLines: DriverLine[] = [];
 
   // SVG Dimensions
-  protected width = 1600;
-  protected height = 900;
+  protected width = 1400;
+  protected height = 750;
 
   // Padding for graph area
-  protected padding = { top: 80, right: 100, bottom: 80, left: 100 };
+  protected padding = { top: 80, right: 100, bottom: 150, left: 100 };
 
   protected maxX = 10; // Min scale
   protected maxY = 5;  // Min scale
+
+  protected legendItemWidth = 180;
+
+  get legendStartX(): number {
+    const totalWidth = this.driverLines.length * this.legendItemWidth;
+    return (this.width - totalWidth) / 2;
+  }
 
   constructor(
     private raceConnectionService: RaceConnectionService,
@@ -75,18 +82,14 @@ export class HeatResultsComponent implements OnInit, OnDestroy {
     this.race = this.raceService.getRace();
     this.heat = this.raceService.getCurrentHeat();
 
-    // TODO(aufderheide):  Remove this garbage.  The mock data needs to be setup in the
-    // test helpers and has no business in production code.
-    if (!this.heat || !this.heat.heatDrivers || this.heat.heatDrivers.length === 0) {
-      this.createMockData();
-    }
+
   }
 
   protected updateGraph() {
     if (!this.heat || !this.heat.heatDrivers) return;
 
     this.driverLines = this.heat.heatDrivers
-      .filter(hd => hd.driver && hd.driver.name !== 'Empty')
+      .filter(hd => hd.driver && hd.driver.name && hd.driver.name.trim().toLowerCase() !== 'empty' && hd.driver.name.trim() !== '')
       .map(hd => {
         const driverName = hd.driver.nickname || hd.driver.name;
         const lane = this.race?.track?.lanes[hd.laneIndex];
@@ -271,38 +274,5 @@ export class HeatResultsComponent implements OnInit, OnDestroy {
     return ticks;
   }
 
-  private createMockData() {
-    const fakeDriver1 = { name: 'Alice', nickname: 'Ally' };
-    const fakeDriver2 = { name: 'Bob', nickname: 'Bobby' };
-    const fakeDriver3 = { name: 'Charlie', nickname: 'Chuck' };
 
-    const hd1 = new DriverHeatData('m1', { driver: fakeDriver1 } as any, 0, fakeDriver1 as any);
-    const hd2 = new DriverHeatData('m2', { driver: fakeDriver2 } as any, 1, fakeDriver2 as any);
-    const hd3 = new DriverHeatData('m3', { driver: fakeDriver3 } as any, 2, fakeDriver3 as any);
-
-    hd1.addLapTime(1, 10.5, 10.5, 10.5, 10.5);
-    hd1.addLapTime(2, 10.2, 10.35, 10.35, 10.2);
-    hd1.addLapTime(3, 10.4, 10.37, 10.37, 10.2);
-
-    hd2.addLapTime(1, 11.1, 11.1, 11.1, 11.1);
-    hd2.addLapTime(2, 10.8, 10.95, 10.95, 10.8);
-    hd2.addLapTime(3, 10.7, 10.87, 10.87, 10.7);
-
-    hd3.addLapTime(1, 12.0, 12.0, 12.0, 12.0);
-    hd3.addLapTime(2, 11.2, 11.6, 11.6, 11.2);
-    hd3.addLapTime(3, 11.5, 11.57, 11.57, 11.2);
-
-    this.heat = new Heat('mHeat', 1, [hd1, hd2, hd3]);
-
-    this.race = {
-      name: 'Mock Race',
-      track: {
-        lanes: [
-          { background_color: '#ef4444', foreground_color: '#ffffff' },
-          { background_color: '#3b82f6', foreground_color: '#ffffff' },
-          { background_color: '#10b981', foreground_color: '#ffffff' }
-        ]
-      }
-    } as any;
-  }
 }

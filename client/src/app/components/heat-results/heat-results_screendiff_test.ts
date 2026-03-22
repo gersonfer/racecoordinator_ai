@@ -1,5 +1,6 @@
 import { test, expect } from '@playwright/test';
 import { TestSetupHelper } from '../../testing/test-setup_helper';
+import { com } from '../../proto/message';
 
 test.describe('Heat Results Visuals', () => {
   test.beforeEach(async ({ page }) => {
@@ -8,12 +9,52 @@ test.describe('Heat Results Visuals', () => {
   });
 
   test('should display dual charts for heat results', async ({ page }) => {
-    // Setup Mock Race and Heat data with Laps populated in state triggers
-    await page.evaluate(() => {
-       // We can mock window.mockRaceData if existing helper supports it or mock API endpoints triggers.
-       // TestSetupHelper typically hooks into service providers setups.
-       // Assuming setupStandardMocks creates a running race context framing accurately.
-    });
+    // Setup Mock Race and Heat data with Laps populated
+    const mockData = {
+      race: {
+        race: {
+          name: 'Mock Race',
+          track: {
+            lanes: [
+              { backgroundColor: '#ef4444', foregroundColor: '#ffffff' },
+              { backgroundColor: '#3b82f6', foregroundColor: '#ffffff' },
+              { backgroundColor: '#10b981', foregroundColor: '#ffffff' }
+            ]
+          }
+        },
+        currentHeat: {
+          heatNumber: 1,
+          heatDrivers: [
+            {
+              objectId: 'hd1',
+              driver: { objectId: 'rp1', driver: { name: 'Alice', nickname: 'Ally' } },
+              actualDriver: { name: 'Alice', nickname: 'Ally' },
+              laps: [10.5, 10.2, 10.4]
+            },
+            {
+              objectId: 'hd2',
+              driver: { objectId: 'rp2', driver: { name: 'Bob', nickname: 'Bobby' } },
+              actualDriver: { name: 'Bob', nickname: 'Bobby' },
+              laps: [11.1, 10.8, 10.7]
+            },
+            {
+              objectId: 'hd3',
+              driver: { objectId: 'rp3', driver: { name: 'Charlie', nickname: 'Chuck' } },
+              actualDriver: { name: 'Charlie', nickname: 'Chuck' },
+              laps: [12.0, 11.2, 11.5]
+            }
+          ]
+        }
+      }
+    };
+
+    // Encode and inject over init-state buffer delivery
+    const buffer = com.antigravity.RaceData.encode(mockData).finish();
+    const dataArray = Array.from(buffer);
+    await page.addInitScript((data) => {
+      // @ts-ignore
+      window.mockRaceDataBuffer = new Uint8Array(data).buffer;
+    }, dataArray);
 
     await TestSetupHelper.waitForLocalization(page, 'en', page.goto('/heat-results'));
 
