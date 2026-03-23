@@ -40,12 +40,35 @@ export class RaceEditorComponent implements OnInit, OnDestroy {
   sectionsExpanded = {
     general: true,
     scoring: true,
-    fuel: true,
-    team: false
+    fuel_analog: true,
+    fuel_digital: true,
+    team: true
   };
 
   toggleSection(section: keyof typeof this.sectionsExpanded) {
     this.sectionsExpanded[section] = !this.sectionsExpanded[section];
+    try {
+      localStorage.setItem('race_editor_expanders', JSON.stringify(this.sectionsExpanded));
+    } catch (e) {
+      console.error('Error saving expander state', e);
+    }
+  }
+
+  loadExpanderState() {
+    try {
+      const saved = localStorage.getItem('race_editor_expanders');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (parsed.fuel !== undefined) {
+          parsed.fuel_analog = parsed.fuel;
+          parsed.fuel_digital = parsed.fuel;
+          delete parsed.fuel;
+        }
+        this.sectionsExpanded = { ...this.sectionsExpanded, ...parsed };
+      }
+    } catch (e) {
+      console.error('Error loading expander state', e);
+    }
   }
 
   get isNameInvalid(): boolean {
@@ -79,6 +102,7 @@ export class RaceEditorComponent implements OnInit, OnDestroy {
 
   ngOnInit() {
     this.updateScale();
+    this.loadExpanderState();
 
     // Get driver count from query param (from race day setup) or default to 10
     const driverCountParam = this.route.snapshot.queryParamMap.get('driverCount');

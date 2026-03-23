@@ -180,32 +180,31 @@
           </div>
         </div>
 
-        <!-- Fuel Section -->
+        <!-- Analog Fuel Section -->
         <div class="config-section">
-          <div class="section-header" (click)="toggleSection('fuel')">
-            <span class="expander-icon" [class.collapsed]="!sectionsExpanded.fuel">▼</span>
-            <h1>{{ hasDigitalFuel ? ('RE_DIGITAL_FUEL_HEADER' | translate) : ('RE_ANALOG_FUEL_HEADER' | translate) }}</h1>
+          <div class="section-header" (click)="toggleSection('fuel_analog')">
+            <span class="expander-icon" [class.collapsed]="!sectionsExpanded.fuel_analog">▼</span>
+            <h1>{{ 'RE_ANALOG_FUEL_HEADER' | translate }}</h1>
           </div>
 
-          <div class="section-content" *ngIf="sectionsExpanded.fuel">
-            <!-- Analog Fuel Section -->
-            <div class="fuel-config-section" *ngIf="!hasDigitalFuel">
+          <div class="section-content" *ngIf="sectionsExpanded.fuel_analog">
+            <div class="fuel-config-section">
               <div class="config-row fuel-enabled-row">
                 <div class="config-section checkbox-section">
-                  <label class="checkbox-container">
-                    <input type="checkbox" [(ngModel)]="editingRace.fuel_options.enabled" (ngModelChange)="captureState()">
+                  <label class="checkbox-container" [class.disabled]="hasDigitalFuel">
+                    <input type="checkbox" [(ngModel)]="editingRace.fuel_options.enabled" (ngModelChange)="captureState()" [disabled]="hasDigitalFuel">
                     <span class="checkmark"></span>
                     <span class="checkbox-label">{{ 'RE_FUEL_ENABLED' | translate }}</span>
                   </label>
                 </div>
               </div>
 
-              <div class="fuel-options-grid" [class.options-disabled]="!editingRace.fuel_options.enabled">
+              <div class="fuel-options-grid" [class.options-disabled]="hasDigitalFuel || !editingRace.fuel_options.enabled">
                 <div class="config-row">
                   <div class="config-section">
                     <label>{{ 'RE_FUEL_USAGE_TYPE' | translate }}</label>
                     <select [(ngModel)]="editingRace.fuel_options.usage_type" (ngModelChange)="captureState()"
-                      [disabled]="!editingRace.fuel_options.enabled">
+                      [disabled]="hasDigitalFuel || !editingRace.fuel_options.enabled">
                       <option value="LINEAR">{{ 'RE_FUEL_USAGE_LINEAR' | translate }}</option>
                       <option value="QUADRATIC">{{ 'RE_FUEL_USAGE_QUADRATIC' | translate }}</option>
                       <option value="CUBIC">{{ 'RE_FUEL_USAGE_CUBIC' | translate }}</option>
@@ -214,51 +213,54 @@
                   <div class="config-section">
                     <label>{{ 'RE_FUEL_USAGE_RATE' | translate }}</label>
                     <input type="number" [(ngModel)]="editingRace.fuel_options.usage_rate" (ngModelChange)="captureState()"
-                      min="0" step="0.1" [disabled]="!editingRace.fuel_options.enabled">
+                      min="0" step="0.1" [disabled]="hasDigitalFuel || !editingRace.fuel_options.enabled">
                   </div>
                   <div class="config-section">
                     <label>{{ 'RE_FUEL_REFERENCE_TIME' | translate }}</label>
                     <input type="number" [(ngModel)]="editingRace.fuel_options.reference_time"
-                      (ngModelChange)="captureState()" step="1" min="1" [disabled]="!editingRace.fuel_options.enabled">
+                      (ngModelChange)="captureState()" step="1" min="1" [disabled]="hasDigitalFuel || !editingRace.fuel_options.enabled">
                   </div>
                 </div>
 
                 <div class="config-row">
-                  <div class="config-section flex-2">
+                  <div class="config-section">
                     <label>{{ 'RE_FUEL_CAPACITY' | translate }}</label>
                     <input type="number" [(ngModel)]="editingRace.fuel_options.capacity" (ngModelChange)="captureState()"
-                      min="0" step="1" [disabled]="!editingRace.fuel_options.enabled">
+                      min="0" step="1" [disabled]="hasDigitalFuel || !editingRace.fuel_options.enabled">
                   </div>
-                  <div class="config-section flex-2">
+                  <div class="config-section">
                     <label>{{ 'RE_FUEL_START_LEVEL' | translate }}</label>
                     <input type="number" [(ngModel)]="editingRace.fuel_options.start_level" (ngModelChange)="captureState()"
-                      min="0" max="100" step="1" [disabled]="!editingRace.fuel_options.enabled">
+                      min="0" max="100" step="1" [disabled]="hasDigitalFuel || !editingRace.fuel_options.enabled">
                   </div>
+                </div>
+
+                <div class="config-row">
                   <div class="config-section">
                     <label>{{ 'RE_FUEL_REFUEL_RATE' | translate }}</label>
                     <input type="number" [(ngModel)]="editingRace.fuel_options.refuel_rate" (ngModelChange)="captureState()"
-                      min="0" step="1" [disabled]="!editingRace.fuel_options.enabled">
+                      min="0" step="1" [disabled]="hasDigitalFuel || !editingRace.fuel_options.enabled">
                   </div>
                   <div class="config-section">
                     <label>{{ 'RE_FUEL_PIT_DELAY' | translate }}</label>
                     <input type="number" [(ngModel)]="editingRace.fuel_options.pit_stop_delay"
-                      (ngModelChange)="captureState()" min="0" step="0.1" [disabled]="!editingRace.fuel_options.enabled">
+                      (ngModelChange)="captureState()" min="0" step="0.1" [disabled]="hasDigitalFuel || !editingRace.fuel_options.enabled">
                   </div>
                 </div>
 
                 <div class="config-row">
                   <div class="config-section checkbox-section">
-                    <label class="checkbox-container" [class.disabled]="!editingRace.fuel_options.enabled">
+                    <label class="checkbox-container" [class.disabled]="hasDigitalFuel || !editingRace.fuel_options.enabled">
                       <input type="checkbox" [(ngModel)]="editingRace.fuel_options.reset_fuel_at_heat_start"
-                        (ngModelChange)="captureState()" [disabled]="!editingRace.fuel_options.enabled">
+                        (ngModelChange)="captureState()" [disabled]="hasDigitalFuel || !editingRace.fuel_options.enabled">
                       <span class="checkmark"></span>
                       <span class="checkbox-label">{{ 'RE_RESET_FUEL_AT_START' | translate }}</span>
                     </label>
                   </div>
                   <div class="config-section checkbox-section">
-                    <label class="checkbox-container" [class.disabled]="!editingRace.fuel_options.enabled">
+                    <label class="checkbox-container" [class.disabled]="hasDigitalFuel || !editingRace.fuel_options.enabled">
                       <input type="checkbox" [(ngModel)]="editingRace.fuel_options.end_heat_on_out_of_fuel"
-                        (ngModelChange)="captureState()" [disabled]="!editingRace.fuel_options.enabled">
+                        (ngModelChange)="captureState()" [disabled]="hasDigitalFuel || !editingRace.fuel_options.enabled">
                       <span class="checkmark"></span>
                       <span class="checkbox-label">{{ 'RE_END_HEAT_ON_OUT_OF_FUEL' | translate }}</span>
                     </label>
@@ -329,26 +331,35 @@
                 </div>
               </div>
             </div>
+          </div>
+        </div>
 
-            <!-- Digital Fuel Section -->
-            <div class="fuel-config-section" *ngIf="hasDigitalFuel" id="digital-fuel-section">
+        <!-- Digital Fuel Section -->
+        <div class="config-section">
+          <div class="section-header" (click)="toggleSection('fuel_digital')">
+            <span class="expander-icon" [class.collapsed]="!sectionsExpanded.fuel_digital">▼</span>
+            <h1>{{ 'RE_DIGITAL_FUEL_HEADER' | translate }}</h1>
+          </div>
+
+          <div class="section-content" *ngIf="sectionsExpanded.fuel_digital">
+            <div class="fuel-config-section" id="digital-fuel-section">
               <div class="config-row fuel-enabled-row">
                 <div class="config-section checkbox-section">
-                  <label class="checkbox-container">
+                  <label class="checkbox-container" [class.disabled]="!hasDigitalFuel">
                     <input type="checkbox" [(ngModel)]="editingRace.digital_fuel_options.enabled"
-                      (ngModelChange)="captureState()" id="digital-fuel-enabled-checkbox">
+                      (ngModelChange)="captureState()" id="digital-fuel-enabled-checkbox" [disabled]="!hasDigitalFuel">
                     <span class="checkmark"></span>
                     <span class="checkbox-label" id="digital-fuel-enabled-label">{{ 'RE_DIGITAL_FUEL_ENABLED' | translate }}</span>
                   </label>
                 </div>
               </div>
 
-              <div class="fuel-options-grid" [class.options-disabled]="!editingRace.digital_fuel_options.enabled">
+              <div class="fuel-options-grid" [class.options-disabled]="!hasDigitalFuel || !editingRace.digital_fuel_options.enabled">
                 <div class="config-row">
                   <div class="config-section">
                     <label>{{ 'RE_FUEL_USAGE_TYPE' | translate }}</label>
                     <select [(ngModel)]="editingRace.digital_fuel_options.usage_type" (ngModelChange)="captureState()"
-                      [disabled]="!editingRace.digital_fuel_options.enabled">
+                      [disabled]="!hasDigitalFuel || !editingRace.digital_fuel_options.enabled">
                       <option value="LINEAR">{{ 'RE_FUEL_USAGE_LINEAR' | translate }}</option>
                       <option value="QUADRATIC">{{ 'RE_FUEL_USAGE_QUADRATIC' | translate }}</option>
                       <option value="CUBIC">{{ 'RE_FUEL_USAGE_CUBIC' | translate }}</option>
@@ -358,13 +369,13 @@
                     <label>{{ 'RE_FUEL_USAGE_RATE' | translate }}</label>
                     <input type="number" [(ngModel)]="editingRace.digital_fuel_options.usage_rate"
                       (ngModelChange)="captureState()" min="0" step="0.1"
-                      [disabled]="!editingRace.digital_fuel_options.enabled">
+                      [disabled]="!hasDigitalFuel || !editingRace.digital_fuel_options.enabled">
                   </div>
                   <div class="config-section">
                     <label>{{ 'RE_FUEL_CAPACITY' | translate }}</label>
                     <input type="number" [(ngModel)]="editingRace.digital_fuel_options.capacity"
                       (ngModelChange)="captureState()" min="0" step="1"
-                      [disabled]="!editingRace.digital_fuel_options.enabled">
+                      [disabled]="!hasDigitalFuel || !editingRace.digital_fuel_options.enabled">
                   </div>
                 </div>
 
@@ -373,35 +384,35 @@
                     <label>{{ 'RE_FUEL_START_LEVEL' | translate }}</label>
                     <input type="number" [(ngModel)]="editingRace.digital_fuel_options.start_level"
                       (ngModelChange)="captureState()" min="0" max="100" step="1"
-                      [disabled]="!editingRace.digital_fuel_options.enabled">
+                      [disabled]="!hasDigitalFuel || !editingRace.digital_fuel_options.enabled">
                   </div>
                   <div class="config-section">
                     <label>{{ 'RE_FUEL_REFUEL_RATE' | translate }}</label>
                     <input type="number" [(ngModel)]="editingRace.digital_fuel_options.refuel_rate"
                       (ngModelChange)="captureState()" min="0" step="1"
-                      [disabled]="!editingRace.digital_fuel_options.enabled">
+                      [disabled]="!hasDigitalFuel || !editingRace.digital_fuel_options.enabled">
                   </div>
                   <div class="config-section">
                     <label>{{ 'RE_FUEL_PIT_DELAY' | translate }}</label>
                     <input type="number" [(ngModel)]="editingRace.digital_fuel_options.pit_stop_delay"
                       (ngModelChange)="captureState()" min="0" step="0.1"
-                      [disabled]="!editingRace.digital_fuel_options.enabled">
+                      [disabled]="!hasDigitalFuel || !editingRace.digital_fuel_options.enabled">
                   </div>
                 </div>
 
                 <div class="config-row">
                   <div class="config-section checkbox-section">
-                    <label class="checkbox-container" [class.disabled]="!editingRace.digital_fuel_options.enabled">
+                    <label class="checkbox-container" [class.disabled]="!hasDigitalFuel || !editingRace.digital_fuel_options.enabled">
                       <input type="checkbox" [(ngModel)]="editingRace.digital_fuel_options.reset_fuel_at_heat_start"
-                        (ngModelChange)="captureState()" [disabled]="!editingRace.digital_fuel_options.enabled">
+                        (ngModelChange)="captureState()" [disabled]="!hasDigitalFuel || !editingRace.digital_fuel_options.enabled">
                       <span class="checkmark"></span>
                       <span class="checkbox-label">{{ 'RE_RESET_FUEL_AT_START' | translate }}</span>
                     </label>
                   </div>
                   <div class="config-section checkbox-section">
-                    <label class="checkbox-container" [class.disabled]="!editingRace.digital_fuel_options.enabled">
+                    <label class="checkbox-container" [class.disabled]="!hasDigitalFuel || !editingRace.digital_fuel_options.enabled">
                       <input type="checkbox" [(ngModel)]="editingRace.digital_fuel_options.end_heat_on_out_of_fuel"
-                        (ngModelChange)="captureState()" [disabled]="!editingRace.digital_fuel_options.enabled">
+                        (ngModelChange)="captureState()" [disabled]="!hasDigitalFuel || !editingRace.digital_fuel_options.enabled">
                       <span class="checkmark"></span>
                       <span class="checkbox-label">{{ 'RE_END_HEAT_ON_OUT_OF_FUEL' | translate }}</span>
                     </label>

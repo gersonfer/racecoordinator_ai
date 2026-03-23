@@ -393,7 +393,7 @@
   "RE_AF_NONE": "Do not allow finish",
   "RE_AF_SINGLE_LAP": "Allow Finish (single lap)",
   "RE_ALLOW_FINISH": "Allow Finish",
-  "RE_ANALOG_FUEL_HEADER": "ANALOG FUEL",
+  "RE_ANALOG_FUEL_HEADER": "Analog Fuel Configuration",
   "RE_BTN_BACK": "BACK",
   "RE_BTN_REDO": "Redo",
   "RE_BTN_SAVE_AS_NEW": "DUPLICATE",

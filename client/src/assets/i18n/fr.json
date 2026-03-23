@@ -393,7 +393,7 @@
   "RE_AF_NONE": "Ne pas autoriser l'arrivée",
   "RE_AF_SINGLE_LAP": "Autoriser l'arrivée (un tour)",
   "RE_ALLOW_FINISH": "Autoriser l'arrivée",
-  "RE_ANALOG_FUEL_HEADER": "CARBURANT ANALOGIQUE",
+  "RE_ANALOG_FUEL_HEADER": "Configuration du carburant analogique",
   "RE_BTN_BACK": "RETOUR",
   "RE_BTN_REDO": "Rétablir",
   "RE_BTN_SAVE_AS_NEW": "SAUVEGARDER COMME NOUVELLE",

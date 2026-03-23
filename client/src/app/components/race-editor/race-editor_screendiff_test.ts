@@ -198,9 +198,11 @@ test.describe('Race Editor Visuals', () => {
     await page.waitForTimeout(2000);
     await expect(page.locator('.editor-panel')).toBeAttached({ timeout: 10000 });
 
-    // Collapse General and Fuel to isolate Scoring
+    // Collapse sections to isolate Scoring
     await page.locator('.section-header:has-text("General")').click();
-    await page.locator('.section-header', { hasText: /Fuel/i }).first().click();
+    await page.locator('.section-header:has-text("Analog Fuel Configuration")').click();
+    await page.locator('.section-header:has-text("Digital Fuel Configuration")').click();
+    await page.locator('.section-header:has-text("Team Options")').click();
     await page.waitForTimeout(500);
 
     await TestSetupHelper.disableAnimations(page);
@@ -212,9 +214,11 @@ test.describe('Race Editor Visuals', () => {
     await page.waitForTimeout(2000);
     await expect(page.locator('.editor-panel')).toBeAttached({ timeout: 10000 });
 
-    // Collapse General and Scoring to isolate Fuel
+    // Collapse sections to isolate Analog Fuel
     await page.locator('.section-header:has-text("General")').click();
     await page.locator('.section-header:has-text("Scoring")').click();
+    await page.locator('.section-header:has-text("Digital Fuel Configuration")').click();
+    await page.locator('.section-header:has-text("Team Options")').click();
     await page.waitForTimeout(500);
 
     await TestSetupHelper.disableAnimations(page);
@@ -226,13 +230,11 @@ test.describe('Race Editor Visuals', () => {
     await page.waitForTimeout(2000);
     await expect(page.locator('.editor-panel')).toBeAttached({ timeout: 10000 });
 
-    // Collapse General, Scoring, and Fuel
+    // Collapse sections to isolate Team Options
     await page.locator('.section-header:has-text("General")').click();
     await page.locator('.section-header:has-text("Scoring")').click();
-    await page.locator('.section-header', { hasText: /Fuel/i }).first().click();
-    
-    // Expand Team Options (closed by default)
-    await page.locator('.section-header:has-text("Team Options")').click();
+    await page.locator('.section-header:has-text("Analog Fuel Configuration")').click();
+    await page.locator('.section-header:has-text("Digital Fuel Configuration")').click();
     await page.waitForTimeout(500);
 
     await TestSetupHelper.disableAnimations(page);

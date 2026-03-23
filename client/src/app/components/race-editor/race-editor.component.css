@@ -538,11 +538,13 @@
   gap: 40px;
 }
 
-.config-row .editor-section {
+.config-row .editor-section,
+.config-row .config-section {
   flex: 1;
 }
 
-.config-row .editor-section.flex-2 {
+.config-row .editor-section.flex-2,
+.config-row .config-section.flex-2 {
   flex: 2;
 }
 

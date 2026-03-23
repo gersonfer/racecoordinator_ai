@@ -724,4 +724,46 @@ describe('RaceEditorComponent', () => {
 
     expect(mockDataService.updateRace).toHaveBeenCalled();
   }));
+
+  describe('Expander State Save/Load', () => {
+    beforeEach(() => {
+      localStorage.clear();
+    });
+
+    it('should save expander state on toggleSection', () => {
+      const setItemSpy = spyOn(localStorage, 'setItem');
+      component.sectionsExpanded.general = true;
+      
+      component.toggleSection('general');
+      
+      expect(component.sectionsExpanded.general).toBeFalse();
+      expect(setItemSpy).toHaveBeenCalledWith(
+        'race_editor_expanders',
+        jasmine.stringMatching('"general":false')
+      );
+    });
+
+    it('should load expander state on loadExpanderState', () => {
+      spyOn(localStorage, 'getItem').and.returnValue(
+        JSON.stringify({ general: false, scoring: false })
+      );
+      
+      component.loadExpanderState();
+      
+      expect(component.sectionsExpanded.general).toBeFalse();
+      expect(component.sectionsExpanded.scoring).toBeFalse();
+      expect(component.sectionsExpanded.fuel_analog).toBeTrue(); // Default
+    });
+
+    it('should migrate old fuel state on loadExpanderState', () => {
+      spyOn(localStorage, 'getItem').and.returnValue(
+        JSON.stringify({ fuel: false })
+      );
+      
+      component.loadExpanderState();
+      
+      expect(component.sectionsExpanded.fuel_analog).toBeFalse();
+      expect(component.sectionsExpanded.fuel_digital).toBeFalse();
+    });
+  });
 });
