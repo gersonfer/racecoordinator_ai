@@ -26,6 +26,9 @@ public class DriverHeatData extends ServerToClientObject {
       }
     }
 
+    public LapData() {
+    }
+
     public double getLapTime() { return lapTime; }
     public String getDriverId() { return driverId; }
     public java.util.List<Double> getSegments() { return java.util.Collections.unmodifiableList(segments); }

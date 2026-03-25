@@ -57,6 +57,9 @@ export class DefaultRacedaySetupComponent implements OnInit, AfterViewInit {
   isDropdownOpen: boolean = false;
   isOptionsDropdownOpen: boolean = false;
   isFileDropdownOpen: boolean = false;
+  showLoadRaceModal: boolean = false;
+  savedRaces: string[] = [];
+  selectedSavedRace: string | null = null;
   isRefreshingList: boolean = false;
   isLocalizationDropdownOpen: boolean = false;
   isConfigDropdownOpen: boolean = false;
@@ -737,5 +740,54 @@ export class DefaultRacedaySetupComponent implements OnInit, AfterViewInit {
         position: 'top'
       }
     ]);
+  }
+
+  loadSavedRaces() {
+    this.isFileDropdownOpen = false;
+    this.dataService.getSavedRaces().subscribe({
+      next: (races) => {
+        this.savedRaces = races;
+        this.showLoadRaceModal = true;
+        this.selectedSavedRace = null;
+        this.cdr.detectChanges();
+      },
+      error: (err) => console.error('Failed to get saved races:', err)
+    });
+  }
+
+  selectSavedRace(file: string) {
+    this.selectedSavedRace = file;
+  }
+
+  closeLoadRaceModal() {
+    this.showLoadRaceModal = false;
+  }
+
+  confirmLoadRace() {
+    if (!this.selectedSavedRace) return;
+
+    this.dataService.loadRace(this.selectedSavedRace).subscribe({
+      next: () => {
+        this.closeLoadRaceModal();
+        this.router.navigate(['/raceday']);
+      },
+      error: (err) => console.error('Failed to load race:', err)
+    });
+  }
+
+  deleteSavedRace(event: MouseEvent, file: string) {
+    event.stopPropagation(); // Prevent selection
+    if (confirm(`Are you sure you want to delete "${file}"?`)) {
+      this.dataService.deleteSavedRace(file).subscribe({
+        next: () => {
+          this.savedRaces = this.savedRaces.filter(r => r !== file);
+          if (this.selectedSavedRace === file) {
+            this.selectedSavedRace = null;
+          }
+          this.cdr.detectChanges();
+        },
+        error: (err) => console.error('Failed to delete race:', err)
+      });
+    }
   }
 }

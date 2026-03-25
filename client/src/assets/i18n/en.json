@@ -681,5 +681,14 @@
   "UI_EDITOR_COL_GAP_LEADER": "GAP TO LEADER",
   "UI_EDITOR_COL_GAP_POSITION": "GAP TO POSITION",
   "UI_EDITOR_COL_REACTION_TIME": "REACTION TIME",
-  "UI_EDITOR_COL_TEAM": "TEAM NAME"
+  "UI_EDITOR_COL_TEAM": "TEAM NAME",
+  "RD_MENU_SAVE": "Save",
+  "RDS_MENU_LOAD_RACE": "Load Race",
+  "RDS_LOAD_RACE_TITLE": "Load Race",
+  "RDS_SELECT_RACE_TO_LOAD": "Select a race to load",
+  "RDS_LOAD": "Load",
+  "RD_SAVE_SUCCESS": "Race saved successfully",
+  "RD_SAVE_ERROR": "Failed to save race",
+  "RD_LOAD_SUCCESS": "Race loaded successfully",
+  "RD_LOAD_ERROR": "Failed to load race"
 }

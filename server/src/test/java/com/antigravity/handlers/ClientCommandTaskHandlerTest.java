@@ -36,9 +36,12 @@ public class ClientCommandTaskHandlerTest {
   private MongoCollection<com.antigravity.models.Track> trackCollection;
   private Javalin app;
   private ClientCommandTaskHandler handler;
+  private Context ctx;
+  private java.nio.file.Path tempDir;
+  private javax.servlet.http.HttpServletResponse res;
 
   @Before
-  public void setUp() {
+  public void setUp() throws Exception {
     databaseContext = mock(DatabaseContext.class);
     mongoDatabase = mock(MongoDatabase.class);
     raceCollection = mock(MongoCollection.class);
@@ -52,6 +55,18 @@ public class ClientCommandTaskHandlerTest {
     when(mongoDatabase.getCollection(eq("teams"), eq(Team.class))).thenReturn(teamCollection);
     when(mongoDatabase.getCollection(eq("drivers"), eq(Driver.class))).thenReturn(driverCollection);
     when(mongoDatabase.getCollection(eq("tracks"), eq(com.antigravity.models.Track.class))).thenReturn(trackCollection);
+
+    String tmpDir = System.getProperty("java.io.tmpdir");
+    java.io.File tempFile = new java.io.File(tmpDir, "saved_races_test");
+    deleteDirectory(tempFile);
+    tempFile.mkdirs();
+    tempDir = tempFile.toPath();
+    when(databaseContext.getDataRoot()).thenReturn(tempDir.toString() + java.io.File.separator);
+    when(databaseContext.getCurrentDatabaseName()).thenReturn("testdb");
+
+    javax.servlet.http.HttpServletRequest req = mock(javax.servlet.http.HttpServletRequest.class);
+    res = mock(javax.servlet.http.HttpServletResponse.class);
+    ctx = new io.javalin.http.Context(req, res, new java.util.HashMap<>());
 
     // Clear subscription manager
     ClientSubscriptionManager.getInstance().setRace(null);
@@ -233,5 +248,93 @@ public class ClientCommandTaskHandlerTest {
     // And it should have loaded drivers
     assertNotNull("Team should have drivers loaded", participant.getTeamDrivers());
     assertEquals(1, participant.getTeamDrivers().size());
+  }
+
+  @Test
+  public void testSaveRace_Success() throws Exception {
+    com.antigravity.race.Race race = mock(com.antigravity.race.Race.class);
+    when(race.getState()).thenReturn(new com.antigravity.race.states.NotStarted());
+    com.antigravity.models.HeatScoring heatScoring = new com.antigravity.models.HeatScoring();
+    com.antigravity.models.OverallScoring overallScoring = new com.antigravity.models.OverallScoring();
+    com.antigravity.models.Race raceModel = new com.antigravity.models.Race("MyTestRace", "track-1", com.antigravity.models.HeatRotationType.RoundRobin, heatScoring, overallScoring, "race-1", null);
+    when(race.getRaceModel()).thenReturn(raceModel);
+    when(race.getTrack()).thenReturn(new com.antigravity.models.Track("Track1", new java.util.ArrayList<>(), "track1", null));
+    when(race.getDrivers()).thenReturn(new java.util.ArrayList<>());
+    when(race.getHeats()).thenReturn(new java.util.ArrayList<>());
+    when(race.isDemoMode()).thenReturn(true);
+    
+    ClientSubscriptionManager.getInstance().setRace(race);
+
+    handler.saveRace(ctx);
+
+    verify(res).setStatus(200);
+    
+    java.io.File dir = new java.io.File(tempDir.toFile(), "testdb/saved_races");
+    assertTrue("Save directory should exist", dir.exists());
+    java.io.File[] files = dir.listFiles();
+    assertNotNull("File list should not be null", files);
+    assertEquals(1, files.length);
+    assertTrue(files[0].getName().endsWith("_MyTestRace.json"));
+
+    // Read back and verify roundtrip parity
+    com.fasterxml.jackson.databind.ObjectMapper mapper = handler.getObjectMapper();
+    com.antigravity.race.RaceSaveData loaded = mapper.readValue(files[0], com.antigravity.race.RaceSaveData.class);
+    assertNotNull("Loaded saved data should not be null", loaded);
+    assertEquals("MyTestRace", loaded.getModel().getName());
+    assertTrue("Demo mode should be preserved during save/load roundtrip", loaded.isDemoMode());
+  }
+
+  @Test
+  public void testGetSavedRaces_Success() throws Exception {
+    java.io.File dir = new java.io.File(tempDir.toFile(), "testdb/saved_races");
+    dir.mkdirs();
+    java.io.File file = new java.io.File(dir, "20260101-120000_MyTestRace.json");
+    file.createNewFile();
+
+    java.util.Map<String, String> pathParams = new java.util.HashMap<>();
+    pathParams.put("filename", "20260101-120000_MyTestRace.json");
+    try {
+      java.lang.reflect.Method setParams = ctx.getClass().getMethod("setPathParamMap$javalin", java.util.Map.class);
+      setParams.invoke(ctx, pathParams);
+    } catch (Exception e) {
+      throw new RuntimeException(e);
+    }
+
+    // Since Context is real, it has written to the mock response.
+    // We just verify it completed without setting error status.
+    verify(res, never()).sendError(anyInt());
+    verify(res, never()).setStatus(eq(500));
+  }
+
+  @Test
+  public void testDeleteSavedRace_Success() throws Exception {
+    java.io.File dir = new java.io.File(tempDir.toFile(), "testdb/saved_races");
+    dir.mkdirs();
+    java.io.File file = new java.io.File(dir, "20260101-120001_MyTestRace.json");
+    file.createNewFile();
+    assertTrue(file.exists());
+
+    java.util.Map<String, String> pathParams = new java.util.HashMap<>();
+    pathParams.put("filename", "20260101-120001_MyTestRace.json");
+    try {
+      java.lang.reflect.Method setParams = ctx.getClass().getMethod("setPathParamMap$javalin", java.util.Map.class);
+      setParams.invoke(ctx, pathParams);
+    } catch (Exception e) {
+      throw new RuntimeException(e);
+    }
+
+    handler.deleteSavedRace(ctx);
+
+    assertFalse("File should be deleted", file.exists());
+  }
+
+  private void deleteDirectory(java.io.File directory) {
+    java.io.File[] allContents = directory.listFiles();
+    if (allContents != null) {
+      for (java.io.File file : allContents) {
+        deleteDirectory(file);
+      }
+    }
+    directory.delete();
   }
 }

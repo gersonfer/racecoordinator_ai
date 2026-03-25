@@ -16,6 +16,16 @@ public class Heat extends ServerToClientObject {
     this.heatStandings = new HeatStandings(drivers, safeScoring);
   }
 
+  public Heat() {
+    super();
+  }
+
+  public void initializeStandings(com.antigravity.models.HeatScoring scoring) {
+    com.antigravity.models.HeatScoring safeScoring = scoring != null ? scoring
+        : new com.antigravity.models.HeatScoring();
+    this.heatStandings = new HeatStandings(this.drivers, safeScoring);
+  }
+
   public int getHeatNumber() {
     return heatNumber;
   }
@@ -24,10 +34,12 @@ public class Heat extends ServerToClientObject {
     return drivers;
   }
 
+  @com.fasterxml.jackson.annotation.JsonIgnore
   public List<String> getStandings() {
-    return heatStandings.getStandings();
+    return heatStandings != null ? heatStandings.getStandings() : new java.util.ArrayList<>();
   }
 
+  @com.fasterxml.jackson.annotation.JsonIgnore
   public HeatStandings getHeatStandings() {
     return heatStandings;
   }

@@ -740,4 +740,20 @@ export class DataService {
       driverId
     }, { responseType: 'text' });
   }
+
+  saveRace(): Observable<string> {
+    return this.http.post(`${this.baseUrl}/api/save-race`, {}, { responseType: 'text' });
+  }
+
+  getSavedRaces(): Observable<string[]> {
+    return this.http.get<string[]>(`${this.baseUrl}/api/saved-races`);
+  }
+
+  loadRace(filename: string): Observable<string> {
+    return this.http.post(`${this.baseUrl}/api/load-race`, { filename }, { responseType: 'text' });
+  }
+
+  deleteSavedRace(filename: string): Observable<string> {
+    return this.http.delete(`${this.baseUrl}/api/saved-races/${filename}`, { responseType: 'text' });
+  }
 }

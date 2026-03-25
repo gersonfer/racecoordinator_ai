@@ -681,5 +681,14 @@
   "UI_EDITOR_COL_GAP_LEADER": "DISTACCO DAL LEADER",
   "UI_EDITOR_COL_GAP_POSITION": "DISTACCO DALLA POSIZIONE",
   "UI_EDITOR_COL_REACTION_TIME": "TEMPO DI REAZIONE",
-  "UI_EDITOR_COL_TEAM": "NOME DELLA SQUADRA"
+  "UI_EDITOR_COL_TEAM": "NOME DELLA SQUADRA",
+  "RD_MENU_SAVE": "Salva",
+  "RDS_MENU_LOAD_RACE": "Carica gara",
+  "RDS_LOAD_RACE_TITLE": "Carica gara",
+  "RDS_SELECT_RACE_TO_LOAD": "Seleziona una gara da caricare",
+  "RDS_LOAD": "Carica",
+  "RD_SAVE_SUCCESS": "Gara salvata con successo",
+  "RD_SAVE_ERROR": "Impossibile salvare la gara",
+  "RD_LOAD_SUCCESS": "Gara caricata con successo",
+  "RD_LOAD_ERROR": "Impossibile caricare la gara"
 }

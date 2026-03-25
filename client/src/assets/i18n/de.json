@@ -681,5 +681,14 @@
   "UI_EDITOR_COL_GAP_LEADER": "ABSTAND ZUM ERSTEN",
   "UI_EDITOR_COL_GAP_POSITION": "ABSTAND ZUR POSITION",
   "UI_EDITOR_COL_REACTION_TIME": "REAKTIONSZEIT",
-  "UI_EDITOR_COL_TEAM": "TEAMNAME"
+  "UI_EDITOR_COL_TEAM": "TEAMNAME",
+  "RD_MENU_SAVE": "Speichern",
+  "RDS_MENU_LOAD_RACE": "Rennen laden",
+  "RDS_LOAD_RACE_TITLE": "Rennen laden",
+  "RDS_SELECT_RACE_TO_LOAD": "Wählen Sie ein Rennen zum Laden",
+  "RDS_LOAD": "Laden",
+  "RD_SAVE_SUCCESS": "Rennen erfolgreich gespeichert",
+  "RD_SAVE_ERROR": "Fehler beim Speichern des Rennens",
+  "RD_LOAD_SUCCESS": "Rennen erfolgreich geladen",
+  "RD_LOAD_ERROR": "Fehler beim Laden des Rennens"
 }

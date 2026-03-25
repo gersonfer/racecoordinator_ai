@@ -703,8 +703,27 @@ export class DefaultRacedayComponent implements OnInit, OnDestroy {
     } else if (action === 'EXPORT_CSV') {
       this.exportToCsv();
     } else if (action === 'SAVE') {
-      // Save logic here
+      this.saveRace();
     }
+  }
+
+  saveRace() {
+    if (this.isSaveDisabled) return;
+
+    this.dataService.saveRace().subscribe({
+      next: (response) => {
+        this.ackModalTitle = this.translationService.translate('RD_SAVE_SUCCESS');
+        this.ackModalMessage = response;
+        this.showAckModal = true;
+        this.cdr.detectChanges();
+      },
+      error: (err) => {
+        this.ackModalTitle = this.translationService.translate('RD_SAVE_ERROR');
+        this.ackModalMessage = err.error || err.message;
+        this.showAckModal = true;
+        this.cdr.detectChanges();
+      }
+    });
   }
 
   async exportToCsv() {
@@ -856,6 +875,10 @@ export class DefaultRacedayComponent implements OnInit, OnDestroy {
       event.preventDefault();
       this.onMenuSelect('DEFER_HEAT');
     }
+  }
+
+  public get isSaveDisabled(): boolean {
+    return this.raceState === com.antigravity.RaceState.RACING;
   }
 
   // Menu State Helpers

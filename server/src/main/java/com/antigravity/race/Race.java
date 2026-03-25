@@ -31,6 +31,7 @@ public class Race implements ProtocolListener {
   }
 
   private ProtocolDelegate protocols;
+  private boolean isDemoMode;
 
   // Dynamic race data
   private IRaceState state;
@@ -78,10 +79,48 @@ public class Race implements ProtocolListener {
     initializeFuelLevels();
   }
 
+  public Race(com.antigravity.models.Race model,
+      List<RaceParticipant> drivers,
+      Track track,
+      List<Heat> heats,
+      int currentHeatIndex,
+      float accumulatedRaceTime,
+      boolean hasRacedInCurrentHeat,
+      String stateClassName,
+      boolean isDemoMode) {
+    this.model = model;
+    this.drivers = drivers;
+    this.track = track;
+    this.heats = heats;
+    if (heats != null && currentHeatIndex >= 0 && currentHeatIndex < heats.size()) {
+      this.currentHeat = heats.get(currentHeatIndex);
+    } else if (heats != null && !heats.isEmpty()) {
+      this.currentHeat = heats.get(0);
+    }
+    this.accumulatedRaceTime = accumulatedRaceTime;
+    this.hasRacedInCurrentHeat = hasRacedInCurrentHeat;
+
+    this.overallStandings = new OverallStandings(model.getHeatScoring(), model.getOverallScoring());
+    this.createProtocols(isDemoMode);
+
+    try {
+      Class<?> clazz = Class.forName(stateClassName);
+      this.state = (IRaceState) clazz.getDeclaredConstructor().newInstance();
+    } catch (Exception e) {
+      System.err.println("Failed to restore race state: " + stateClassName + ", falling back to NotStarted");
+      this.state = new NotStarted();
+    }
+    this.state.enter(this);
+  }
+
   public void init() {
     if (this.protocols != null) {
       this.protocols.open();
     }
+  }
+
+  public boolean isDemoMode() {
+    return isDemoMode;
   }
 
   private void initializeFuelLevels() {
@@ -101,6 +140,7 @@ public class Race implements ProtocolListener {
   }
 
   private void createProtocols(boolean isDemoMode) {
+    this.isDemoMode = isDemoMode;
     List<IProtocol> protocols = new ArrayList<>();
     if (isDemoMode) {
       com.antigravity.models.AnalogFuelOptions fuelOptions = this.model.getFuelOptions();

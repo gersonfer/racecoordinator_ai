@@ -681,5 +681,14 @@
   "UI_EDITOR_COL_GAP_LEADER": "DIFERENCIA CON EL LÍDER",
   "UI_EDITOR_COL_GAP_POSITION": "DIFERENCIA CON LA POSICIÓN",
   "UI_EDITOR_COL_REACTION_TIME": "TIEMPO DE REACCIÓN",
-  "UI_EDITOR_COL_TEAM": "NOMBRE DEL EQUIPO"
+  "UI_EDITOR_COL_TEAM": "NOMBRE DEL EQUIPO",
+  "RD_MENU_SAVE": "Guardar",
+  "RDS_MENU_LOAD_RACE": "Cargar carrera",
+  "RDS_LOAD_RACE_TITLE": "Cargar carrera",
+  "RDS_SELECT_RACE_TO_LOAD": "Selecciona una carrera para cargar",
+  "RDS_LOAD": "Cargar",
+  "RD_SAVE_SUCCESS": "Carrera guardada con éxito",
+  "RD_SAVE_ERROR": "Error al guardar la carrera",
+  "RD_LOAD_SUCCESS": "Carrera cargada con éxito",
+  "RD_LOAD_ERROR": "Error al cargar la carrera"
 }

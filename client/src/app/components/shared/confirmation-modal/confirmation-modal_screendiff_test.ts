@@ -17,7 +17,7 @@ test.describe('Confirmation Modal Visuals', () => {
 
     // Wait for the menu bar to ensure page loaded
     const menuBar = page.locator('.menu-bar');
-    await expect(menuBar).toBeVisible();
+    await menuBar.waitFor({ state: 'visible' });
 
     // Click File menu (first top button)
     const fileMenu = page.locator('.menu-button-top').first();
@@ -25,19 +25,17 @@ test.describe('Confirmation Modal Visuals', () => {
 
     // Wait for dropdown
     const fileDropdown = page.locator('.menu-dropdown').first();
-    await expect(fileDropdown).toBeVisible();
+    await fileDropdown.waitFor({ state: 'visible' });
 
-    // Click Exit (second item in the dropdown, after Export to CSV)
-    await fileDropdown.locator('.menu-item').nth(1).click();
+    // Click Exit (third item in the dropdown, after Save and Export to CSV)
+    await fileDropdown.locator('.menu-item').nth(2).click();
 
     // Wait for confirmation modal
     const modal = page.locator('app-confirmation-modal');
     const harness = new ConfirmationModalHarnessE2e(modal);
     
-    // The visual test checks if modal is visible, we can just wait for modalContent via locator or harness
-    await expect(async () => {
-      expect(await harness.isVisible()).toBe(true);
-    }).toPass({ timeout: 10000 });
+    // Wait for confirmation modal
+    await modal.locator('.modal-content').waitFor({ state: 'visible' });
 
     // Screenshot the modal
     await expect(modal.locator('.modal-content')).toHaveScreenshot('confirmation-modal.png');

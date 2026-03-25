@@ -15,6 +15,13 @@ import com.antigravity.race.ClientSubscriptionManager;
 import com.antigravity.race.RaceParticipant;
 
 import java.util.List;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.io.File;
+import java.io.FileWriter;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.antigravity.race.RaceSaveData;
+import com.antigravity.race.Heat;
 
 public class ClientCommandTaskHandler {
 
@@ -36,6 +43,10 @@ public class ClientCommandTaskHandler {
     app.post("/api/races/current-heat/drivers/{lane}/actual-driver", this::changeActualDriver);
     app.get("/api/serial-ports", this::getSerialPorts);
     app.get("/api/races/current/export-csv", this::exportRaceCsv);
+    app.post("/api/save-race", this::saveRace);
+    app.get("/api/saved-races", this::getSavedRaces);
+    app.post("/api/load-race", this::loadRace);
+    app.delete("/api/saved-races/{filename}", this::deleteSavedRace);
   }
 
   private void initializeRace(Context ctx) {
@@ -547,5 +558,190 @@ public class ClientCommandTaskHandler {
       e.printStackTrace();
       ctx.status(500).result("Internal Server Error: " + e.getMessage());
     }
+  }
+
+  void saveRace(Context ctx) {
+    try {
+      com.antigravity.race.Race race = ClientSubscriptionManager.getInstance().getRace();
+      if (race == null) {
+        ctx.status(404).result("No active race found");
+        return;
+      }
+
+      if (race.getState() instanceof com.antigravity.race.states.Racing) {
+        ctx.status(400).result("Cannot save race while in racing state");
+        return;
+      }
+
+      RaceSaveData saveData = new RaceSaveData();
+      saveData.setModel(race.getRaceModel());
+      saveData.setTrack(race.getTrack());
+      saveData.setDrivers(race.getDrivers());
+      saveData.setHeats(race.getHeats());
+      saveData.setStateClassName(race.getState().getClass().getName());
+      saveData.setAccumulatedRaceTime(race.getRaceTime());
+      saveData.setHasRacedInCurrentHeat(race.hasRacedInCurrentHeat());
+      saveData.setCurrentHeatIndex(race.getHeats().indexOf(race.getCurrentHeat()));
+      
+      // We need to know if it's demo mode.
+      // Protocols list isn't exposed directly with its type, but createProtocols takes isDemoMode.
+      // We can check if protocols has Demo protocol or check the parameter passed on init.
+      // Currently, it's not saved on the Race object.
+      // Let's assume for now, or check if any protocol is Demo.
+      saveData.setDemoMode(race.isDemoMode());
+
+      ObjectMapper mapper = getObjectMapper();
+      String json = mapper.writeValueAsString(saveData);
+
+      String dbName = databaseContext.getCurrentDatabaseName();
+      String saveDir = databaseContext.getDataRoot() + dbName + File.separator + "saved_races";
+      File dir = new File(saveDir);
+      if (!dir.exists() && !dir.mkdirs()) {
+          ctx.status(500).result("Failed to create save directory");
+          return;
+      }
+
+      java.time.LocalDateTime now = java.time.LocalDateTime.now();
+      java.time.format.DateTimeFormatter formatter = java.time.format.DateTimeFormatter.ofPattern("yyyyMMdd-HHmmss");
+      String timestamp = now.format(formatter);
+      String raceName = race.getRaceModel() != null ? race.getRaceModel().getName() : "Race";
+      raceName = raceName.replaceAll("[^a-zA-Z0-9_-]", "_");
+      String filename = timestamp + "_" + raceName + ".json";
+      File file = new File(dir, filename);
+      try (FileWriter writer = new FileWriter(file)) {
+          writer.write(json);
+      }
+
+      ctx.status(200).result("Race saved successfully: " + filename);
+    } catch (Exception e) {
+      System.err.println("Error saving race: " + e.getMessage());
+      e.printStackTrace();
+      ctx.status(500).result("Internal Server Error: " + e.getMessage());
+    }
+  }
+
+  void getSavedRaces(Context ctx) {
+    try {
+      String dbName = databaseContext.getCurrentDatabaseName();
+      String saveDir = databaseContext.getDataRoot() + dbName + File.separator + "saved_races";
+      File dir = new File(saveDir);
+      if (!dir.exists()) {
+        ctx.json(new ArrayList<String>());
+        return;
+      }
+      String[] files = dir.list((d, name) -> name.endsWith(".json"));
+      ctx.json(files != null ? Arrays.asList(files) : new ArrayList<String>());
+    } catch (Exception e) {
+      System.err.println("Error getting saved races: " + e.getMessage());
+      ctx.status(500).result("Error: " + e.getMessage());
+    }
+  }
+
+  void deleteSavedRace(Context ctx) {
+    try {
+      String filename = ctx.pathParam("filename");
+      String dbName = databaseContext.getCurrentDatabaseName();
+      String saveDir = databaseContext.getDataRoot() + dbName + File.separator + "saved_races";
+      File saveFile = new File(saveDir, filename);
+      if (saveFile.exists() && saveFile.delete()) {
+        ctx.status(200).result("File deleted: " + filename);
+      } else {
+        ctx.status(404).result("File not found or failed to delete: " + filename);
+      }
+    } catch (Exception e) {
+      System.err.println("Error deleting saved race: " + e.getMessage());
+      ctx.status(500).result("Error: " + e.getMessage());
+    }
+  }
+
+  private void loadRace(Context ctx) {
+    try {
+      java.util.Map<String, String> body = ctx.bodyAsClass(java.util.Map.class);
+      String filename = body.get("filename");
+      if (filename == null) {
+          ctx.status(400).result("Filename is required");
+          return;
+      }
+
+      String dbName = databaseContext.getCurrentDatabaseName();
+      String saveDir = databaseContext.getDataRoot() + dbName + File.separator + "saved_races";
+      File saveFile = new File(saveDir, filename);
+
+      if (!saveFile.exists()) {
+        ctx.status(404).result("Save file not found");
+        return;
+      }
+
+      ObjectMapper mapper = getObjectMapper();
+      RaceSaveData saveData = mapper.readValue(saveFile, RaceSaveData.class);
+
+      // Compare Track
+      com.antigravity.models.Track savedTrack = saveData.getTrack();
+      com.antigravity.models.Track dbTrack = new DatabaseService().getTrack(databaseContext.getDatabase(), saveData.getModel().getTrackEntityId());
+
+      com.antigravity.models.Track trackToUse = savedTrack;
+      if (dbTrack != null && dbTrack.getLanes().size() == savedTrack.getLanes().size()) {
+        trackToUse = dbTrack;
+      }
+
+      // Re-initialize Standings
+      if (saveData.getHeats() != null) {
+        for (Heat heat : saveData.getHeats()) {
+          heat.initializeStandings(saveData.getModel().getHeatScoring());
+        }
+      }
+
+      // Recreate Race
+      com.antigravity.race.Race race = new com.antigravity.race.Race(
+          saveData.getModel(),
+          saveData.getDrivers(),
+          trackToUse,
+          saveData.getHeats(),
+          saveData.getCurrentHeatIndex(),
+          saveData.getAccumulatedRaceTime(),
+          saveData.isHasRacedInCurrentHeat(),
+          saveData.getStateClassName(),
+          saveData.isDemoMode()
+      );
+
+      ClientSubscriptionManager.getInstance().setRace(race);
+      race.init(); // Open protocols
+
+      ctx.status(200).result("Race loaded successfully");
+    } catch (Exception e) {
+      System.err.println("Error loading race: " + e.getMessage());
+      e.printStackTrace();
+      ctx.status(500).result("Internal Server Error: " + e.getMessage());
+    }
+  }
+
+  com.fasterxml.jackson.databind.ObjectMapper getObjectMapper() {
+    com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();
+    mapper.enable(com.fasterxml.jackson.databind.SerializationFeature.INDENT_OUTPUT);
+    mapper.configure(com.fasterxml.jackson.databind.DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+    
+    com.fasterxml.jackson.databind.module.SimpleModule module = new com.fasterxml.jackson.databind.module.SimpleModule();
+    module.addSerializer(org.bson.types.ObjectId.class, new com.fasterxml.jackson.databind.JsonSerializer<org.bson.types.ObjectId>() {
+      @Override
+      public void serialize(org.bson.types.ObjectId value, com.fasterxml.jackson.core.JsonGenerator gen, com.fasterxml.jackson.databind.SerializerProvider serializers) throws java.io.IOException {
+        gen.writeString(value.toHexString());
+      }
+    });
+    module.addDeserializer(org.bson.types.ObjectId.class, new com.fasterxml.jackson.databind.JsonDeserializer<org.bson.types.ObjectId>() {
+      @Override
+      public org.bson.types.ObjectId deserialize(com.fasterxml.jackson.core.JsonParser p, com.fasterxml.jackson.databind.DeserializationContext ctxt) throws java.io.IOException {
+        String value = p.getValueAsString();
+        if (value == null || value.isEmpty()) {
+            return null;
+        }
+        try {
+            return new org.bson.types.ObjectId(value);
+        } catch (IllegalArgumentException e) {
+            return null;
+        }
+      }
+    });
+    mapper.registerModule(module);
+    return mapper;
   }
 }

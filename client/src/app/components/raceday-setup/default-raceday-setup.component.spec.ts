@@ -31,7 +31,7 @@ describe('DefaultRacedaySetupComponent', () => {
   let mockHelpService: any;
 
   beforeEach(() => {
-    mockDataService = jasmine.createSpyObj('DataService', ['getDrivers', 'getTeams', 'getRaces', 'initializeRace']);
+    mockDataService = jasmine.createSpyObj('DataService', ['getDrivers', 'getTeams', 'getRaces', 'initializeRace', 'getSavedRaces', 'loadRace', 'deleteSavedRace']);
     mockRaceService = jasmine.createSpyObj('RaceService', ['startRace']);
     mockTranslationService = jasmine.createSpyObj('TranslationService', ['getTranslationsLoaded', 'translate', 'setLanguage', 'getSupportedLanguages', 'getBrowserLanguage']);
     mockSettingsService = jasmine.createSpyObj('SettingsService', ['getSettings', 'saveSettings']);
@@ -56,6 +56,9 @@ describe('DefaultRacedaySetupComponent', () => {
       { entity_id: 'r1', name: 'Grand Prix' },
       { entity_id: 'r2', name: 'Time Trial' }
     ]));
+    mockDataService.getSavedRaces.and.returnValue(of(['race1.json', 'race2.json']));
+    mockDataService.loadRace.and.returnValue(of('OK'));
+    mockDataService.deleteSavedRace.and.returnValue(of('OK'));
     mockTranslationService.getTranslationsLoaded.and.returnValue(of(true));
     mockTranslationService.translate.and.callFake((key) => key);
     mockTranslationService.getBrowserLanguage.and.returnValue('en');
@@ -357,5 +360,29 @@ describe('DefaultRacedaySetupComponent', () => {
     component.openAbout();
     expect(component.requestAbout.emit).toHaveBeenCalled();
     expect(component.isHelpDropdownOpen).toBeFalse();
+  });
+
+  it('should load saved races and open modal', () => {
+    component.loadSavedRaces();
+    expect(mockDataService.getSavedRaces).toHaveBeenCalled();
+    expect(component.showLoadRaceModal).toBeTrue();
+    expect(component.savedRaces.length).toBe(2);
+  });
+
+  it('should delete saved race after confirmation', () => {
+    spyOn(window, 'confirm').and.returnValue(true);
+    component.savedRaces = ['race1.json', 'race2.json'];
+    component.selectedSavedRace = 'race1.json';
+
+    const event = new MouseEvent('click');
+    spyOn(event, 'stopPropagation');
+
+    component.deleteSavedRace(event, 'race1.json');
+
+    expect(event.stopPropagation).toHaveBeenCalled();
+    expect(window.confirm).toHaveBeenCalled();
+    expect(mockDataService.deleteSavedRace).toHaveBeenCalledWith('race1.json');
+    expect(component.savedRaces).not.toContain('race1.json');
+    expect(component.selectedSavedRace).toBeNull();
   });
 });
