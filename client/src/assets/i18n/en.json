@@ -332,6 +332,7 @@
   "RDS_SELECTED_COUNT": "{{count}} Selected",
   "RDS_SERVER_CONFIG_TITLE": "Server Configuration",
   "RDS_START_RACE_TOOLTIP": "Add at least one driver before starting the race.",
+  "RDS_PROMPT_LOAD_AUTOSAVE": "An auto-save exists for this race. Do you want to load it?",
   "RDS_TEAM_DRIVERS": "Drivers",
   "RD_COL_AVATAR": "AVATAR",
   "RD_COL_AVG_LAP": "AVG LAP",

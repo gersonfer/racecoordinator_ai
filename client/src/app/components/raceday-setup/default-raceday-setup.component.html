@@ -296,3 +296,14 @@
     </div>
   </div>
 </div>
+
+<!-- Auto Save Prompt Modal -->
+<app-confirmation-modal
+  [visible]="showAutoSavePrompt"
+  title="RDS_LOAD_RACE_TITLE"
+  message="RDS_PROMPT_LOAD_AUTOSAVE"
+  confirmText="GEN_YES"
+  cancelText="GEN_NO"
+  (confirm)="onConfirmAutoSave()"
+  (cancel)="onCancelAutoSave()">
+</app-confirmation-modal>

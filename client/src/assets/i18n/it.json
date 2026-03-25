@@ -332,6 +332,7 @@
   "RDS_SELECTED_COUNT": "{{count}} Selezionati",
   "RDS_SERVER_CONFIG_TITLE": "Configurazione Server",
   "RDS_START_RACE_TOOLTIP": "Aggiungi almeno un pilota.",
+  "RDS_PROMPT_LOAD_AUTOSAVE": "Esiste un salvataggio automatico per questa gara. Vuoi caricarlo?",
   "RDS_TEAM_DRIVERS": "Piloti",
   "RD_COL_AVATAR": "AVATAR",
   "RD_COL_AVG_LAP": "MEDIA",

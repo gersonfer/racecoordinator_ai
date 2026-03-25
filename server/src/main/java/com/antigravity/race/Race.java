@@ -222,6 +222,10 @@ public class Race implements ProtocolListener {
     state = newState;
     state.enter(this);
 
+    if (state instanceof com.antigravity.race.states.RaceOver) {
+      ClientSubscriptionManager.getInstance().deleteAutoSave(model.getEntityId());
+    }
+
     com.antigravity.proto.RaceState protoState = getProtoState(state);
 
     com.antigravity.proto.RaceData raceData = com.antigravity.proto.RaceData.newBuilder()

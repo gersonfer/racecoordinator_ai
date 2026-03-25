@@ -268,6 +268,7 @@ public class ClientCommandTaskHandler {
 
       try {
         race.moveToNextHeat();
+        ClientSubscriptionManager.getInstance().autoSave(race);
 
         com.antigravity.proto.NextHeatResponse response = com.antigravity.proto.NextHeatResponse.newBuilder()
             .setSuccess(true).setMessage("Moved to next heat successfully").build();
@@ -294,6 +295,7 @@ public class ClientCommandTaskHandler {
 
       try {
         race.restartHeat();
+        ClientSubscriptionManager.getInstance().autoSave(race);
 
         com.antigravity.proto.RestartHeatResponse response = com.antigravity.proto.RestartHeatResponse
             .newBuilder().setSuccess(true).setMessage("Heat restarted successfully").build();
@@ -320,6 +322,7 @@ public class ClientCommandTaskHandler {
 
       try {
         race.skipHeat();
+        ClientSubscriptionManager.getInstance().autoSave(race);
 
         com.antigravity.proto.SkipHeatResponse response = com.antigravity.proto.SkipHeatResponse.newBuilder()
             .setSuccess(true).setMessage("Heat skipped successfully").build();
@@ -346,6 +349,7 @@ public class ClientCommandTaskHandler {
 
       try {
         race.deferHeat();
+        ClientSubscriptionManager.getInstance().autoSave(race);
 
         com.antigravity.proto.DeferHeatResponse response = com.antigravity.proto.DeferHeatResponse.newBuilder()
             .setSuccess(true).build();

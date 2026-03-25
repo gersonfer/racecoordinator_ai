@@ -58,6 +58,9 @@ export class DefaultRacedaySetupComponent implements OnInit, AfterViewInit {
   isOptionsDropdownOpen: boolean = false;
   isFileDropdownOpen: boolean = false;
   showLoadRaceModal: boolean = false;
+  showAutoSavePrompt: boolean = false;
+  autoSaveFileToLoad: string | null = null;
+  pendingIsDemo: boolean = false;
   savedRaces: string[] = [];
   selectedSavedRace: string | null = null;
   isRefreshingList: boolean = false;
@@ -444,20 +447,60 @@ export class DefaultRacedaySetupComponent implements OnInit, AfterViewInit {
     if (this.selectedRace && this.selectedParticipants.length > 0) {
       console.log(`Starting race: ${this.selectedRace.name} with ${this.selectedParticipants.length} participants`);
 
-      // Update recent races list and save other settings
-      this.saveSettings(true);
+      const raceId = this.selectedRace.entity_id;
 
-      const settings = this.settingsService.getSettings();
-
-      this.dataService.initializeRace(this.selectedRace.entity_id, settings.selectedDriverIds, isDemo).subscribe({
-        next: (response) => {
-          if (response.success) {
-            this.router.navigate(['/raceday']);
+      this.dataService.getSavedRaces().subscribe({
+        next: (races) => {
+          const autoSaveFile = races.find(f => f === `autosave_${raceId}.json`);
+          if (autoSaveFile) {
+            this.autoSaveFileToLoad = autoSaveFile;
+            this.pendingIsDemo = isDemo;
+            this.showAutoSavePrompt = true;
+            this.cdr.detectChanges();
+            return;
           }
+          this.proceedWithStart(isDemo);
         },
-        error: (err) => console.error(err)
+        error: (err) => {
+          console.error('Failed to check for auto-save:', err);
+          this.proceedWithStart(isDemo);
+        }
       });
     }
+  }
+
+  onConfirmAutoSave() {
+    this.showAutoSavePrompt = false;
+    if (this.autoSaveFileToLoad) {
+      this.dataService.loadRace(this.autoSaveFileToLoad).subscribe({
+        next: () => this.router.navigate(['/raceday']),
+        error: (err) => console.error('Failed to load auto-save:', err)
+      });
+    }
+  }
+
+  onCancelAutoSave() {
+    this.showAutoSavePrompt = false;
+    if (this.autoSaveFileToLoad) {
+      this.dataService.deleteSavedRace(this.autoSaveFileToLoad).subscribe({
+        error: (err) => console.error('Failed to delete auto-save:', err)
+      });
+    }
+    this.proceedWithStart(this.pendingIsDemo);
+  }
+
+  private proceedWithStart(isDemo: boolean) {
+    this.saveSettings(true);
+    const settings = this.settingsService.getSettings();
+
+    this.dataService.initializeRace(this.selectedRace!.entity_id, settings.selectedDriverIds, isDemo).subscribe({
+      next: (response) => {
+        if (response.success) {
+          this.router.navigate(['/raceday']);
+        }
+      },
+      error: (err) => console.error(err)
+    });
   }
 
   updateQuickStartRaces(recentRaceIds: string[] = []) {

@@ -92,6 +92,7 @@ public class App {
     // Add a shutdown hook to stop the embedded MongoDB server
     Runtime.getRuntime().addShutdownHook(new Thread(() -> {
       logger.info("Shutting down server...");
+      com.antigravity.race.ClientSubscriptionManager.getInstance().setShuttingDown(true);
       if (app != null) {
         try {
           app.stop();
@@ -254,6 +255,8 @@ public class App {
 
     com.antigravity.context.DatabaseContext databaseContext = new com.antigravity.context.DatabaseContext(
         mongoClient, initialDbName, configService, appDataDir);
+    
+    com.antigravity.race.ClientSubscriptionManager.getInstance().setDatabaseContext(databaseContext);
 
     if (needsFactoryReset) {
       MongoDatabase db = databaseContext.getDatabase();

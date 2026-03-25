@@ -1,4 +1,5 @@
 import { ComponentFixture, TestBed, fakeAsync, tick, flush } from '@angular/core/testing';
+import { CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
 import { TestbedHarnessEnvironment } from '@angular/cdk/testing/testbed';
 import { DefaultRacedaySetupComponent } from './default-raceday-setup.component';
 import { DataService } from 'src/app/data.service';
@@ -87,7 +88,8 @@ describe('DefaultRacedaySetupComponent', () => {
         { provide: Router, useValue: mockRouter },
         { provide: FileSystemService, useValue: mockFileSystemService },
         { provide: HelpService, useValue: mockHelpService }
-      ]
+      ],
+      schemas: [CUSTOM_ELEMENTS_SCHEMA]
     }).compileComponents();
 
     fixture = TestBed.createComponent(DefaultRacedaySetupComponent);
@@ -192,17 +194,64 @@ describe('DefaultRacedaySetupComponent', () => {
     expect(savedSettings.recentRaceIds[0]).toBe('r2');
   });
 
-  it('should start race', () => {
+  it('should start race normally without autosave file', () => {
     component.selectedRace = component.races[0];
     component.selectedParticipants = [component.unselectedParticipants[0]];
     const response = com.antigravity.InitializeRaceResponse.fromObject({ success: true });
     mockDataService.initializeRace.and.returnValue(of(response));
+    mockDataService.getSavedRaces.and.returnValue(of([])); // no autosave
 
     component.startRace(false);
 
     expect(mockDataService.initializeRace).toHaveBeenCalled();
     expect(mockRouter.navigate).toHaveBeenCalledWith(['/raceday']);
   });
+
+  it('should prompt to load autosave and load it if confirmed', fakeAsync(() => {
+    component.selectedRace = component.races[0]; // entity_id: 'r1'
+    component.selectedParticipants = [component.unselectedParticipants[0]];
+    
+    mockDataService.getSavedRaces.and.returnValue(of(['autosave_r1.json']));
+    mockDataService.loadRace.and.returnValue(of('OK'));
+    
+    component.startRace(false);
+    flush();
+    
+    expect(component.showAutoSavePrompt).toBeTrue();
+    expect(component.autoSaveFileToLoad).toBe('autosave_r1.json');
+    
+    component.onConfirmAutoSave();
+    flush();
+    
+    expect(component.showAutoSavePrompt).toBeFalse();
+    expect(mockDataService.loadRace).toHaveBeenCalledWith('autosave_r1.json');
+    expect(mockRouter.navigate).toHaveBeenCalledWith(['/raceday']);
+    expect(mockDataService.initializeRace).not.toHaveBeenCalled();
+  }));
+
+  it('should prompt to load autosave and delete it if canceled', fakeAsync(() => {
+    component.selectedRace = component.races[0]; // entity_id: 'r1'
+    component.selectedParticipants = [component.unselectedParticipants[0]];
+    
+    mockDataService.getSavedRaces.and.returnValue(of(['autosave_r1.json']));
+    mockDataService.deleteSavedRace.and.returnValue(of('OK'));
+    const response = com.antigravity.InitializeRaceResponse.fromObject({ success: true });
+    mockDataService.initializeRace.and.returnValue(of(response));
+    
+    component.startRace(false);
+    flush();
+    
+    expect(component.showAutoSavePrompt).toBeTrue();
+    expect(component.autoSaveFileToLoad).toBe('autosave_r1.json');
+    
+    component.onCancelAutoSave();
+    flush();
+    
+    expect(component.showAutoSavePrompt).toBeFalse();
+    expect(mockDataService.deleteSavedRace).toHaveBeenCalledWith('autosave_r1.json');
+    expect(mockDataService.initializeRace).toHaveBeenCalled();
+    expect(mockRouter.navigate).toHaveBeenCalledWith(['/raceday']);
+  }));
 
   it('should start demo race', () => {
     component.selectedRace = component.races[0];

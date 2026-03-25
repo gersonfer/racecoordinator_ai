@@ -2,12 +2,19 @@ package com.antigravity.race;
 
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.assertFalse;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
+import java.io.File;
+import java.util.Collections;
 
 import org.junit.Before;
 import org.junit.Test;
 
+import com.antigravity.context.DatabaseContext;
 import com.antigravity.protocols.IProtocol;
 
 import io.javalin.websocket.WsContext;
@@ -15,9 +22,12 @@ import io.javalin.websocket.WsContext;
 public class ClientSubscriptionManagerTest {
 
   private ClientSubscriptionManager manager;
+  private File tempFolder;
 
   @Before
   public void setUp() {
+    tempFolder = new File(System.getProperty("java.io.tmpdir"), "testDB_autosave_" + System.currentTimeMillis());
+    tempFolder.mkdirs();
     manager = ClientSubscriptionManager.getInstance();
     // Reset state
     manager.setRace(null);
@@ -98,5 +108,90 @@ public class ClientSubscriptionManagerTest {
     verify(mockRace).setMainPower(true);
     verify(mockRace).setLanePower(true, -1);
     verify(mockRace).stop();
+  }
+
+  @Test
+  public void testAutoSaveCreatesFile() throws Exception {
+    Race mockRace = mock(Race.class);
+    com.antigravity.models.Race realModel = new com.antigravity.models.Race("Race", "track1",
+        null, null, null, "testRaceId", null);
+
+    when(mockRace.getRaceModel()).thenReturn(realModel);
+    when(mockRace.getTrack())
+        .thenReturn(new com.antigravity.models.Track("Track", Collections.emptyList(), "track1", null));
+    when(mockRace.getDrivers()).thenReturn(Collections.emptyList());
+    when(mockRace.getHeats()).thenReturn(Collections.emptyList());
+    com.antigravity.race.states.IRaceState mockState = mock(com.antigravity.race.states.IRaceState.class);
+    when(mockRace.getState()).thenReturn(mockState);
+
+    DatabaseContext mockDbCtx = mock(DatabaseContext.class);
+    when(mockDbCtx.getCurrentDatabaseName()).thenReturn("testDB");
+    when(mockDbCtx.getDataRoot()).thenReturn(tempFolder.getAbsolutePath() + File.separator);
+
+    manager.setDatabaseContext(mockDbCtx);
+    manager.setShuttingDown(false);
+    manager.autoSave(mockRace);
+
+    File saveDir = new File(tempFolder.getAbsolutePath() + File.separator + "testDB" + File.separator + "saved_races");
+    File expectedFile = new File(saveDir, "autosave_testRaceId.json");
+    assertTrue("Auto-save file should be created", expectedFile.exists());
+  }
+
+  @Test
+  public void testDeleteAutoSaveRemovesFile() throws Exception {
+    DatabaseContext mockDbCtx = mock(DatabaseContext.class);
+    when(mockDbCtx.getCurrentDatabaseName()).thenReturn("testDB");
+    when(mockDbCtx.getDataRoot()).thenReturn(tempFolder.getAbsolutePath() + File.separator);
+
+    manager.setDatabaseContext(mockDbCtx);
+
+    File saveDir = new File(tempFolder.getAbsolutePath() + File.separator + "testDB" + File.separator + "saved_races");
+    saveDir.mkdirs();
+    File expectedFile = new File(saveDir, "autosave_testRaceId.json");
+    expectedFile.createNewFile();
+    assertTrue(expectedFile.exists());
+
+    manager.deleteAutoSave("testRaceId");
+
+    assertFalse("Auto-save file should be deleted", expectedFile.exists());
+  }
+
+  @Test
+  public void testClientDisconnectDeletesAutoSave() throws Exception {
+    Race mockRace = mock(Race.class);
+    com.antigravity.models.Race realModel = new com.antigravity.models.Race("Race", "track1",
+        null, null, null, "testRaceId", null);
+    when(mockRace.getRaceModel()).thenReturn(realModel);
+    when(mockRace.createSnapshot()).thenReturn(com.antigravity.proto.RaceData.getDefaultInstance());
+    when(mockRace.getHeats()).thenReturn(Collections.emptyList());
+    com.antigravity.race.states.IRaceState mockState = mock(com.antigravity.race.states.IRaceState.class);
+    when(mockRace.getState()).thenReturn(mockState);
+
+    DatabaseContext mockDbCtx = mock(DatabaseContext.class);
+    when(mockDbCtx.getCurrentDatabaseName()).thenReturn("testDB");
+    when(mockDbCtx.getDataRoot()).thenReturn(tempFolder.getAbsolutePath() + File.separator);
+    manager.setDatabaseContext(mockDbCtx);
+    manager.setShuttingDown(false);
+
+    File saveDir = new File(tempFolder.getAbsolutePath() + File.separator + "testDB" + File.separator + "saved_races");
+    saveDir.mkdirs();
+    File expectedFile = new File(saveDir, "autosave_testRaceId.json");
+    expectedFile.createNewFile();
+    assertTrue(expectedFile.exists());
+
+    manager.setRace(mockRace);
+
+    WsContext mockContext = mock(WsContext.class);
+    com.antigravity.proto.RaceSubscriptionRequest unsubscribeReq = com.antigravity.proto.RaceSubscriptionRequest
+        .newBuilder().setSubscribe(false).build();
+
+    java.lang.reflect.Field rdsField = ClientSubscriptionManager.class.getDeclaredField("raceDataSubscribers");
+    rdsField.setAccessible(true);
+    ((java.util.Set<?>) rdsField.get(manager)).clear();
+
+    manager.handleRaceSubscription(mockContext, unsubscribeReq); // Triggers checkAndStopRace()
+
+    assertFalse("Auto-save file should be deleted upon last client disconnect", expectedFile.exists());
+    assertNull("Race should be cleared", manager.getRace());
   }
 }

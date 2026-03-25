@@ -332,6 +332,7 @@
   "RDS_SELECTED_COUNT": "{{count}} Geselecteerd",
   "RDS_SERVER_CONFIG_TITLE": "Server Configuratie",
   "RDS_START_RACE_TOOLTIP": "Voeg ten minste één coureur toe voordat u de race start.",
+  "RDS_PROMPT_LOAD_AUTOSAVE": "Er bestaat een automatische opslag voor deze race. Wilt u deze laden?",
   "RDS_TEAM_DRIVERS": "Coureurs",
   "RD_COL_AVATAR": "AVATAR",
   "RD_COL_AVG_LAP": "GEM. RONDE",

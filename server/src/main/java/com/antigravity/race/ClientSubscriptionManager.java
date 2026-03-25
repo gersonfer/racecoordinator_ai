@@ -6,11 +6,17 @@ import io.javalin.websocket.WsContext;
 import java.util.Collections;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import com.antigravity.context.DatabaseContext;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import java.io.File;
+import java.io.FileWriter;
 
 public class ClientSubscriptionManager {
   private static ClientSubscriptionManager instance;
   private Race currentRace;
   private IProtocol currentProtocol;
+  private DatabaseContext databaseContext;
+  private volatile boolean isShuttingDown = false;
   private final Set<WsContext> sessions = Collections.newSetFromMap(new ConcurrentHashMap<>());
   private final Set<WsContext> raceDataSubscribers = Collections.newSetFromMap(new ConcurrentHashMap<>());
   private final Set<WsContext> interfaceSubscribers = Collections.newSetFromMap(new ConcurrentHashMap<>());
@@ -23,6 +29,14 @@ public class ClientSubscriptionManager {
       instance = new ClientSubscriptionManager();
     }
     return instance;
+  }
+
+  public synchronized void setDatabaseContext(DatabaseContext databaseContext) {
+    this.databaseContext = databaseContext;
+  }
+
+  public void setShuttingDown(boolean shuttingDown) {
+    this.isShuttingDown = shuttingDown;
   }
 
   public synchronized void setRace(Race race) {
@@ -136,9 +150,95 @@ public class ClientSubscriptionManager {
 
   private void checkAndStopRace() {
     if (raceDataSubscribers.isEmpty() && currentRace != null) {
-      System.out.println("Last interested client disconnected/unsubscribed. Stopping and clearing current race.");
-      setRace(null);
+      if (!isShuttingDown) {
+        System.out.println("Last interested client disconnected/unsubscribed. Stopping and clearing current race.");
+        deleteAutoSave(currentRace.getRaceModel().getEntityId());
+        setRace(null);
+      } else {
+        System.out.println("Server is shutting down, preserving race state and auto-save.");
+      }
     }
+  }
+
+  public synchronized void autoSave(Race race) {
+    if (race == null || databaseContext == null) return;
+    try {
+      RaceSaveData saveData = new RaceSaveData();
+      saveData.setModel(race.getRaceModel());
+      saveData.setTrack(race.getTrack());
+      saveData.setDrivers(race.getDrivers());
+      saveData.setHeats(race.getHeats());
+      saveData.setStateClassName(race.getState().getClass().getName());
+      saveData.setAccumulatedRaceTime(race.getRaceTime());
+      saveData.setHasRacedInCurrentHeat(race.hasRacedInCurrentHeat());
+      saveData.setCurrentHeatIndex(race.getHeats().indexOf(race.getCurrentHeat()));
+      saveData.setDemoMode(race.isDemoMode());
+
+      ObjectMapper mapper = getObjectMapper();
+      String json = mapper.writeValueAsString(saveData);
+
+      String dbName = databaseContext.getCurrentDatabaseName();
+      String saveDir = databaseContext.getDataRoot() + dbName + File.separator + "saved_races";
+      File dir = new File(saveDir);
+      if (!dir.exists() && !dir.mkdirs()) {
+          System.err.println("Failed to create save directory for auto-save");
+          return;
+      }
+
+      String filename = "autosave_" + race.getRaceModel().getEntityId() + ".json";
+      File file = new File(dir, filename);
+      try (FileWriter writer = new FileWriter(file)) {
+          writer.write(json);
+      }
+      System.out.println("Auto-saved race: " + filename);
+    } catch (Exception e) {
+      System.err.println("Error during auto-save: " + e.getMessage());
+    }
+  }
+
+  public synchronized void deleteAutoSave(String raceId) {
+    if (databaseContext == null || raceId == null) return;
+    try {
+      String dbName = databaseContext.getCurrentDatabaseName();
+      String saveDir = databaseContext.getDataRoot() + dbName + File.separator + "saved_races";
+      String filename = "autosave_" + raceId + ".json";
+      File file = new File(saveDir, filename);
+      if (file.exists() && file.delete()) {
+        System.out.println("Deleted auto-save: " + filename);
+      }
+    } catch (Exception e) {
+      System.err.println("Error deleting auto-save: " + e.getMessage());
+    }
+  }
+
+  private ObjectMapper getObjectMapper() {
+    ObjectMapper mapper = new ObjectMapper();
+    mapper.enable(com.fasterxml.jackson.databind.SerializationFeature.INDENT_OUTPUT);
+    mapper.configure(com.fasterxml.jackson.databind.DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+    
+    com.fasterxml.jackson.databind.module.SimpleModule module = new com.fasterxml.jackson.databind.module.SimpleModule();
+    module.addSerializer(org.bson.types.ObjectId.class, new com.fasterxml.jackson.databind.JsonSerializer<org.bson.types.ObjectId>() {
+      @Override
+      public void serialize(org.bson.types.ObjectId value, com.fasterxml.jackson.core.JsonGenerator gen, com.fasterxml.jackson.databind.SerializerProvider serializers) throws java.io.IOException {
+        gen.writeString(value.toHexString());
+      }
+    });
+    module.addDeserializer(org.bson.types.ObjectId.class, new com.fasterxml.jackson.databind.JsonDeserializer<org.bson.types.ObjectId>() {
+      @Override
+      public org.bson.types.ObjectId deserialize(com.fasterxml.jackson.core.JsonParser p, com.fasterxml.jackson.databind.DeserializationContext ctxt) throws java.io.IOException {
+        String value = p.getValueAsString();
+        if (value == null || value.isEmpty()) {
+            return null;
+        }
+        try {
+            return new org.bson.types.ObjectId(value);
+        } catch (IllegalArgumentException e) {
+            return null;
+        }
+      }
+    });
+    mapper.registerModule(module);
+    return mapper;
   }
 
   public boolean hasSubscribers() {

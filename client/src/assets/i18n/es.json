@@ -332,6 +332,7 @@
   "RDS_SELECTED_COUNT": "{{count}} Seleccionado",
   "RDS_SERVER_CONFIG_TITLE": "Configuración del Servidor",
   "RDS_START_RACE_TOOLTIP": "Añada al menos un piloto antes de iniciar.",
+  "RDS_PROMPT_LOAD_AUTOSAVE": "Existe un guardado automático para esta carrera. ¿Quieres cargarlo?",
   "RDS_TEAM_DRIVERS": "Pilotos",
   "RD_COL_AVATAR": "AVATAR",
   "RD_COL_AVG_LAP": "PROMEDIO",

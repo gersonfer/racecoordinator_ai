@@ -332,6 +332,7 @@
   "RDS_SELECTED_COUNT": "{{count}} Ausgewählt",
   "RDS_SERVER_CONFIG_TITLE": "Serverkonfiguration",
   "RDS_START_RACE_TOOLTIP": "Fügen Sie mindestens einen Fahrer hinzu.",
+  "RDS_PROMPT_LOAD_AUTOSAVE": "Es existiert eine automatische Speicherung für dieses Rennen. Möchten Sie sie laden?",
   "RDS_TEAM_DRIVERS": "Fahrer",
   "RD_COL_AVATAR": "AVATAR",
   "RD_COL_AVG_LAP": "DURCHSCHNITT",
