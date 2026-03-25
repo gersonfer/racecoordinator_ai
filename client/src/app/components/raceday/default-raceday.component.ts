@@ -909,12 +909,7 @@ export class DefaultRacedayComponent implements OnInit, OnDestroy {
   }
 
   public get isNextHeatDisabled(): boolean {
-    const s = this.raceState;
-    const RS = com.antigravity.RaceState;
-    return s === RS.STARTING ||
-      s === RS.RACING ||
-      s === RS.PAUSED ||
-      s === RS.RACE_OVER;
+    return this.raceState !== com.antigravity.RaceState.HEAT_OVER;
   }
 
   getCurrentFlagUrl(): string {
@@ -1056,21 +1051,15 @@ export class DefaultRacedayComponent implements OnInit, OnDestroy {
   }
 
   public get isAddLapDisabled(): boolean {
-    // User said "except edit laps/add secions". Assuming ADD_LAP is "add secions" or similar allowed action?
-    // Let's assume enabled.
-    return false;
+    return true;
   }
 
   public get isModifyDisabled(): boolean {
-    // "Heat Over: Everything... disabled".
-    const s = this.raceState;
-    const RS = com.antigravity.RaceState;
-    return s === RS.RACE_OVER;
+    return true;
   }
 
   public get isEditLapsDisabled(): boolean {
-    // Always enabled.
-    return false;
+    return true;
   }
 
   private loadColumns() {

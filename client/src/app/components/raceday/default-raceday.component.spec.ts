@@ -271,10 +271,10 @@ describe('DefaultRacedayComponent', () => {
       expect(component.isNextHeatDisabled).toBeTrue();
     });
 
-    it('should be enabled when state is NOT_STARTED', () => {
+    it('should be disabled when state is NOT_STARTED', () => {
       fixture.detectChanges();
       component['raceState'] = com.antigravity.RaceState.NOT_STARTED;
-      expect(component.isNextHeatDisabled).toBeFalse();
+      expect(component.isNextHeatDisabled).toBeTrue();
     });
   });
 

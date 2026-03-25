@@ -49,7 +49,8 @@ public class NotStarted implements IRaceState {
 
 	@Override
 	public void skipHeat(com.antigravity.race.Race race) {
-		throw new IllegalStateException("Cannot skip heat from state: " + this.getClass().getSimpleName());
+		System.out.println("NotStarted.skipHeat() called. Advancing to HeatOver.");
+		race.changeState(new com.antigravity.race.states.HeatOver());
 	}
 
 	@Override

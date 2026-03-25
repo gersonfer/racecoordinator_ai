@@ -75,8 +75,8 @@ public class Paused implements IRaceState {
 
   @Override
   public void skipHeat(Race race) {
-    System.out.println("Paused.skipHeat() called. Advancing to next heat.");
-    Common.advanceToNextHeat(race);
+    System.out.println("Paused.skipHeat() called. Advancing to HeatOver.");
+    race.changeState(new com.antigravity.race.states.HeatOver());
   }
 
   @Override

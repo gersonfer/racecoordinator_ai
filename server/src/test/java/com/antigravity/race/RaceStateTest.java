@@ -222,6 +222,30 @@ public class RaceStateTest {
   }
 
   @Test
+  public void testSkipHeatFromNotStarted() throws Exception {
+    assertTrue(race.getState() instanceof com.antigravity.race.states.NotStarted);
+
+    refreshSession();
+    race.skipHeat();
+    verifyBroadcast(RaceState.HEAT_OVER);
+    assertTrue(race.getState() instanceof com.antigravity.race.states.HeatOver);
+  }
+
+  @Test
+  public void testSkipHeatFromPaused() throws Exception {
+    // 1. Start -> Starting -> Racing -> Paused
+    race.startRace();
+    race.changeState(new Racing());
+    race.pauseRace();
+    assertTrue(race.getState() instanceof com.antigravity.race.states.Paused);
+
+    refreshSession();
+    race.skipHeat();
+    verifyBroadcast(RaceState.HEAT_OVER);
+    assertTrue(race.getState() instanceof com.antigravity.race.states.HeatOver);
+  }
+
+  @Test
   public void testOnCallbuttonTransitions() throws Exception {
     // Initial State: NotStarted
     assertTrue(race.getState() instanceof com.antigravity.race.states.NotStarted);
