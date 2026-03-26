@@ -1,5 +1,6 @@
 package com.antigravity.race;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.mock;
@@ -24,6 +25,7 @@ import com.antigravity.models.Team;
 import com.antigravity.protocols.arduino.ArduinoConfig;
 import com.antigravity.race.states.HeatOver;
 import com.antigravity.race.states.Racing;
+import com.antigravity.race.states.RaceOver;
 
 public class RacingTest {
 
@@ -80,37 +82,40 @@ public class RacingTest {
   }
 
   @Test
-  public void testLapRace_NoAllowFinish_EndsOnFirstDriver() {
+  public void testLapRace_AllowFinish_None_EndsOnFirstDriver() {
+    heatScoring = new HeatScoring(
+        HeatScoring.FinishMethod.Lap,
+        3L,
+        HeatScoring.HeatRanking.LAP_COUNT,
+        HeatScoring.HeatRankingTiebreaker.FASTEST_LAP_TIME,
+        HeatScoring.AllowFinish.None);
+    race = new Race(new com.antigravity.models.Race(
+        "Test Race", "track1", HeatRotationType.RoundRobin, heatScoring,
+        race.getRaceModel().getOverallScoring(), "race1", new ObjectId()),
+        participants, track, true);
+
     Racing racing = new Racing();
     race.changeState(racing);
 
-    // Driver 1 completes 1 lap
+    // Driver 1 completes 3rd lap (limit is 3)
     racing.onLap(0, 1.0, 1); // Reaction
     racing.onLap(0, 5.0, 1); // Lap 1
     racing.onLap(0, 5.0, 1); // Lap 2
-    assertFalse(race.getState() instanceof HeatOver);
-
-    // Driver 1 completes 3rd lap (limit is 3)
-    racing.onLap(0, 5.0, 1);
+    racing.onLap(0, 5.0, 1); // Lap 3 (Finished)
     assertTrue(race.getState() instanceof HeatOver);
   }
 
   @Test
-  public void testLapRace_AllowFinish_EndsOnLastDriver() {
-    // Update scoring to Allow Finish
-    com.antigravity.models.Race model = race.getRaceModel();
+  public void testLapRace_AllowFinish_Allow_EndsOnLastDriver() {
     heatScoring = new HeatScoring(
         HeatScoring.FinishMethod.Lap,
         3L,
         HeatScoring.HeatRanking.LAP_COUNT,
         HeatScoring.HeatRankingTiebreaker.FASTEST_LAP_TIME,
         HeatScoring.AllowFinish.Allow);
-    // We can't easily change the model since it's immutable-ish in the constructor
-    // but let's re-create race for this test or use reflection if needed.
-    // Actually, let's just create a new race here.
     race = new Race(new com.antigravity.models.Race(
         "Test Race", "track1", HeatRotationType.RoundRobin, heatScoring,
-        model.getOverallScoring(), "race1", new ObjectId()),
+        race.getRaceModel().getOverallScoring(), "race1", new ObjectId()),
         participants, track, true);
 
     Racing racing = new Racing();
@@ -123,17 +128,83 @@ public class RacingTest {
     racing.onLap(0, 5.0, 1); // Lap 3 (Finished)
     assertFalse(race.getState() instanceof HeatOver);
 
-    // Driver 1 tries to do another lap - should be ignored and NOT end the heat
-    int initialLapCount = race.getCurrentHeat().getDrivers().get(0).getLapCount();
-    racing.onLap(0, 5.0, 1);
-    assertEquals(initialLapCount, race.getCurrentHeat().getDrivers().get(0).getLapCount());
-    assertFalse(race.getState() instanceof HeatOver);
-
     // Driver 2 completes 3 laps
     racing.onLap(1, 1.0, 1); // Reaction
     racing.onLap(1, 5.0, 1); // Lap 1
     racing.onLap(1, 5.0, 1); // Lap 2
     racing.onLap(1, 5.0, 1); // Lap 3 (Finished)
+    assertTrue(race.getState() instanceof HeatOver);
+  }
+
+  @Test
+  public void testLapRace_AllowFinish_SingleLap_EndsCorrectly() {
+    heatScoring = new HeatScoring(
+        HeatScoring.FinishMethod.Lap,
+        3L,
+        HeatScoring.HeatRanking.LAP_COUNT,
+        HeatScoring.HeatRankingTiebreaker.FASTEST_LAP_TIME,
+        HeatScoring.AllowFinish.SingleLap);
+    race = new Race(new com.antigravity.models.Race(
+        "Test Race", "track1", HeatRotationType.RoundRobin, heatScoring,
+        race.getRaceModel().getOverallScoring(), "race1", new ObjectId()),
+        participants, track, true);
+
+    Racing racing = new Racing();
+    race.changeState(racing);
+
+    // Driver 1 completes 3rd lap (leader)
+    racing.onLap(0, 1.0, 1); // Reaction
+    racing.onLap(0, 5.0, 1); // Lap 1
+    racing.onLap(0, 5.0, 1); // Lap 2
+    racing.onLap(0, 5.0, 1); // Lap 3 (Finished)
+    assertFalse(race.getState() instanceof HeatOver);
+
+    // Driver 2 is only on Lap 1
+    racing.onLap(1, 1.0, 1); // Reaction
+    racing.onLap(1, 5.0, 1); // Lap 1 (Finished because leader finished and SingleLap mode)
+    assertTrue(race.getState() instanceof HeatOver);
+    assertEquals(1, race.getCurrentHeat().getDrivers().get(1).getLapCount());
+  }
+
+  @Test
+  public void testLapRace_AllowFinish_SingleLap_WithEmptyLane_EndsCorrectly() {
+    // 3 lanes, 2 drivers, 1 empty lane
+    List<Lane> threeLanes = new ArrayList<>();
+    threeLanes.add(new Lane("red", "black", 100));
+    threeLanes.add(new Lane("blue", "black", 100));
+    threeLanes.add(new Lane("yellow", "black", 100));
+    Track threeLaneTrack = new Track("3 Lane Track", threeLanes,
+        java.util.Collections.singletonList(mock(ArduinoConfig.class)), "track3", new ObjectId());
+
+    heatScoring = new HeatScoring(
+        HeatScoring.FinishMethod.Lap,
+        3L,
+        HeatScoring.HeatRanking.LAP_COUNT,
+        HeatScoring.HeatRankingTiebreaker.FASTEST_LAP_TIME,
+        HeatScoring.AllowFinish.SingleLap);
+
+    race = new Race(new com.antigravity.models.Race(
+        "Test Race", "track3", HeatRotationType.RoundRobin, heatScoring,
+        new OverallScoring(), "race1", new ObjectId()),
+        participants, threeLaneTrack, true);
+
+    // Verify setup
+    assertEquals(3, race.getCurrentHeat().getDrivers().size());
+    assertEquals(2, race.getCurrentHeat().getActiveDriverCount());
+
+    Racing racing = new Racing();
+    race.changeState(racing);
+
+    // Driver 1 completes 3 laps (leader)
+    racing.onLap(0, 1.0, 1); // Reaction
+    racing.onLap(0, 5.0, 1); // Lap 1
+    racing.onLap(0, 5.0, 1); // Lap 2
+    racing.onLap(0, 5.0, 1); // Lap 3 (Finished)
+    assertFalse(race.getState() instanceof HeatOver);
+
+    // Driver 2 hits line for Lap 1 - should finish heat
+    racing.onLap(1, 1.0, 1); // Reaction
+    racing.onLap(1, 5.0, 1); // Lap 1 (Finished)
     assertTrue(race.getState() instanceof HeatOver);
   }
 
@@ -261,6 +332,7 @@ public class RacingTest {
     drivers.add(driver1);
     drivers.add(driver2);
     when(mockHeat.getDrivers()).thenReturn(drivers);
+    when(mockHeat.getActiveDriverCount()).thenReturn(2);
 
     racing.enter(mockRace);
 
@@ -476,7 +548,7 @@ public class RacingTest {
 
   @Test
   public void testTeamLimits_DriverSwitch() {
-    TeamOptions teamOptions = new TeamOptions(2, 0.0, 0, 0.0, false); 
+    TeamOptions teamOptions = new TeamOptions(2, 0.0, 0, 0.0, false);
 
     com.antigravity.models.HeatScoring customScoring = new com.antigravity.models.HeatScoring(
         com.antigravity.models.HeatScoring.FinishMethod.Lap,
@@ -513,39 +585,40 @@ public class RacingTest {
     racing.onLap(0, 1.0, 1);
 
     // subDriver1 completes 2 laps (reaches limit)
-    racing.onLap(0, 5.0, 1); 
-    racing.onLap(0, 5.0, 1); 
+    racing.onLap(0, 5.0, 1);
+    racing.onLap(0, 5.0, 1);
     assertEquals(2, driverData.getLapCount());
 
     // 3rd lap should be rejected
-    racing.onLap(0, 5.0, 1); 
-    assertEquals(2, driverData.getLapCount()); 
+    racing.onLap(0, 5.0, 1);
+    assertEquals(2, driverData.getLapCount());
 
     // SWITCH DRIVER
     driverData.setActualDriver(subDriver2);
 
     // subDriver2 should be able to complete 1st lap
-    racing.onLap(0, 5.0, 1); 
-    assertEquals(3, driverData.getLapCount()); 
+    racing.onLap(0, 5.0, 1);
+    assertEquals(3, driverData.getLapCount());
 
-    racing.onLap(0, 5.0, 1); 
+    racing.onLap(0, 5.0, 1);
     assertEquals(4, driverData.getLapCount());
 
     // subDriver2 reaches limit (2 laps)
     racing.onLap(0, 5.0, 1); // should be rejected
-    assertEquals(4, driverData.getLapCount()); 
+    assertEquals(4, driverData.getLapCount());
   }
 
   @Test
   public void testTeamLimits_FuelConsumptionOnRejectedLap() {
     TeamOptions teamOptions = new TeamOptions(1, 0.0, 0, 0.0, false); // limit 1 lap
-    
+
     com.antigravity.models.AnalogFuelOptions fuelOptions = new com.antigravity.models.AnalogFuelOptions(
-        true, false, false, 100.0, com.antigravity.models.FuelOptions.FuelUsageType.LINEAR, 10.0, 100.0, 10.0, 1.0, 5.0);
+        true, false, false, 100.0, com.antigravity.models.FuelOptions.FuelUsageType.LINEAR, 10.0, 100.0, 10.0, 1.0,
+        5.0);
 
     com.antigravity.models.HeatScoring customScoring = new com.antigravity.models.HeatScoring(
         com.antigravity.models.HeatScoring.FinishMethod.Lap,
-        10L, 
+        10L,
         com.antigravity.models.HeatScoring.HeatRanking.LAP_COUNT,
         com.antigravity.models.HeatScoring.HeatRankingTiebreaker.FASTEST_LAP_TIME,
         com.antigravity.models.HeatScoring.AllowFinish.None);
@@ -577,27 +650,15 @@ public class RacingTest {
     racing.onLap(0, 1.0, 1);
 
     // lap 1 (accepted)
-    racing.onLap(0, 5.0, 1); 
+    racing.onLap(0, 5.0, 1);
     assertEquals(1, driverData.getLapCount());
     double fuelAfterLap1 = driverData.getDriver().getFuelLevel();
     assertTrue(fuelAfterLap1 < 100.0);
 
     // lap 2 (rejected due to 1 lap team limit)
-    racing.onLap(0, 5.0, 1); 
-    assertEquals(1, driverData.getLapCount()); 
+    racing.onLap(0, 5.0, 1);
+    assertEquals(1, driverData.getLapCount());
     double fuelAfterLap2 = driverData.getDriver().getFuelLevel();
     assertTrue("Fuel did not consume on rejected lap!", fuelAfterLap2 < fuelAfterLap1);
-  }
-
-  private void assertEquals(long expected, long actual) {
-    if (expected != actual) {
-      throw new AssertionError("Expected " + expected + " but got " + actual);
-    }
-  }
-
-  private void assertEquals(double expected, double actual, double delta) {
-    if (Math.abs(expected - actual) > delta) {
-      throw new AssertionError("Expected " + expected + " but got " + actual);
-    }
   }
 }

@@ -269,11 +269,13 @@ export class RaceEditorComponent implements OnInit, OnDestroy {
       digital_fuel_options: {
         enabled: false,
         reset_fuel_at_heat_start: false,
+        end_heat_on_out_of_fuel: false,
         usage_type: FuelUsageType.LINEAR,
         usage_rate: 4.0,
         start_level: 100,
         refuel_rate: 10,
-        pit_stop_delay: 2.0
+        pit_stop_delay: 2.0,
+        capacity: 100
       },
       min_lap_time: 0,
       team_options: {
@@ -395,54 +397,7 @@ export class RaceEditorComponent implements OnInit, OnDestroy {
 
     this.isSaving = true;
     this.isAutoSaving = isAutoSave;
-    const payload = {
-      name: this.editingRace.name,
-      track_entity_id: this.editingRace.track_entity_id,
-      heat_rotation_type: this.editingRace.heat_rotation_type,
-      heat_scoring: {
-        finish_method: this.editingRace.heat_scoring.finish_method,
-        finish_value: this.editingRace.heat_scoring.finish_value,
-        heat_ranking: this.editingRace.heat_scoring.heat_ranking,
-        heat_ranking_tiebreaker: this.editingRace.heat_scoring.heat_ranking_tiebreaker,
-        allow_finish: this.editingRace.heat_scoring.allow_finish
-      },
-      overall_scoring: {
-        dropped_heats: this.editingRace.overall_scoring.dropped_heats,
-        ranking_method: this.editingRace.overall_scoring.ranking_method,
-        tiebreaker: this.editingRace.overall_scoring.tiebreaker
-      },
-      fuel_options: this.editingRace.fuel_options ? {
-        enabled: this.editingRace.fuel_options.enabled,
-        reset_fuel_at_heat_start: this.editingRace.fuel_options.reset_fuel_at_heat_start,
-        end_heat_on_out_of_fuel: this.editingRace.fuel_options.end_heat_on_out_of_fuel,
-        capacity: this.editingRace.fuel_options.capacity,
-        usage_type: this.editingRace.fuel_options.usage_type,
-        usage_rate: this.editingRace.fuel_options.usage_rate,
-        start_level: this.editingRace.fuel_options.start_level,
-        refuel_rate: this.editingRace.fuel_options.refuel_rate,
-        pit_stop_delay: this.editingRace.fuel_options.pit_stop_delay,
-        reference_time: this.editingRace.fuel_options.reference_time
-      } : undefined,
-      digital_fuel_options: this.editingRace.digital_fuel_options ? {
-        enabled: this.editingRace.digital_fuel_options.enabled,
-        reset_fuel_at_heat_start: this.editingRace.digital_fuel_options.reset_fuel_at_heat_start,
-        end_heat_on_out_of_fuel: this.editingRace.digital_fuel_options.end_heat_on_out_of_fuel,
-        capacity: this.editingRace.digital_fuel_options.capacity,
-        usage_type: this.editingRace.digital_fuel_options.usage_type,
-        usage_rate: this.editingRace.digital_fuel_options.usage_rate,
-        start_level: this.editingRace.digital_fuel_options.start_level,
-        refuel_rate: this.editingRace.digital_fuel_options.refuel_rate,
-        pit_stop_delay: this.editingRace.digital_fuel_options.pit_stop_delay
-      } : undefined,
-      min_lap_time: this.editingRace.min_lap_time,
-      team_options: this.editingRace.team_options ? {
-        heat_lap_limit: this.editingRace.team_options.heat_lap_limit,
-        heat_time_limit: this.editingRace.team_options.heat_time_limit,
-        overall_lap_limit: this.editingRace.team_options.overall_lap_limit,
-        overall_time_limit: this.editingRace.team_options.overall_time_limit,
-        require_pit_stop_change_driver: this.editingRace.team_options.require_pit_stop_change_driver
-      } : undefined
-    };
+    const payload = this.buildRacePayload(this.editingRace);
 
     if (this.editingRace.entity_id === 'new') {
       this.dataService.createRace(payload).subscribe({
@@ -506,53 +461,7 @@ export class RaceEditorComponent implements OnInit, OnDestroy {
 
     this.isSaving = true;
     this.editingRace.name = this.generateUniqueName(this.editingRace.name);
-    const payload = {
-      name: this.editingRace.name,  // Use the actual name from the editor
-      track_entity_id: this.editingRace.track_entity_id,
-      heat_rotation_type: this.editingRace.heat_rotation_type,
-      heat_scoring: {
-        finish_method: this.editingRace.heat_scoring.finish_method,
-        finish_value: this.editingRace.heat_scoring.finish_value,
-        heat_ranking: this.editingRace.heat_scoring.heat_ranking,
-        heat_ranking_tiebreaker: this.editingRace.heat_scoring.heat_ranking_tiebreaker,
-        allow_finish: this.editingRace.heat_scoring.allow_finish
-      },
-      overall_scoring: {
-        dropped_heats: this.editingRace.overall_scoring.dropped_heats,
-        ranking_method: this.editingRace.overall_scoring.ranking_method,
-        tiebreaker: this.editingRace.overall_scoring.tiebreaker
-      },
-      fuel_options: this.editingRace.fuel_options ? {
-        enabled: this.editingRace.fuel_options.enabled,
-        reset_fuel_at_heat_start: this.editingRace.fuel_options.reset_fuel_at_heat_start,
-        end_heat_on_out_of_fuel: this.editingRace.fuel_options.end_heat_on_out_of_fuel,
-        capacity: this.editingRace.fuel_options.capacity,
-        usage_type: this.editingRace.fuel_options.usage_type,
-        usage_rate: this.editingRace.fuel_options.usage_rate,
-        start_level: this.editingRace.fuel_options.start_level,
-        refuel_rate: this.editingRace.fuel_options.refuel_rate,
-        pit_stop_delay: this.editingRace.fuel_options.pit_stop_delay
-      } : undefined,
-      digital_fuel_options: this.editingRace.digital_fuel_options ? {
-        enabled: this.editingRace.digital_fuel_options.enabled,
-        reset_fuel_at_heat_start: this.editingRace.digital_fuel_options.reset_fuel_at_heat_start,
-        end_heat_on_out_of_fuel: this.editingRace.digital_fuel_options.end_heat_on_out_of_fuel,
-        capacity: this.editingRace.digital_fuel_options.capacity,
-        usage_type: this.editingRace.digital_fuel_options.usage_type,
-        usage_rate: this.editingRace.digital_fuel_options.usage_rate,
-        start_level: this.editingRace.digital_fuel_options.start_level,
-        refuel_rate: this.editingRace.digital_fuel_options.refuel_rate,
-        pit_stop_delay: this.editingRace.digital_fuel_options.pit_stop_delay
-      } : undefined,
-      min_lap_time: this.editingRace.min_lap_time,
-      team_options: this.editingRace.team_options ? {
-        heat_lap_limit: this.editingRace.team_options.heat_lap_limit,
-        heat_time_limit: this.editingRace.team_options.heat_time_limit,
-        overall_lap_limit: this.editingRace.team_options.overall_lap_limit,
-        overall_time_limit: this.editingRace.team_options.overall_time_limit,
-        require_pit_stop_change_driver: this.editingRace.team_options.require_pit_stop_change_driver
-      } : undefined
-    };
+    const payload = this.buildRacePayload(this.editingRace);
 
     this.dataService.createRace(payload).subscribe({
       next: (created) => {
@@ -1098,6 +1007,58 @@ export class RaceEditorComponent implements OnInit, OnDestroy {
 
   onGraphMouseLeave() {
     this.hoveredPoint = null;
+  }
+
+  private buildRacePayload(race: any): any {
+    return {
+      "@id": 1,
+      name: race.name,
+      track_entity_id: race.track_entity_id,
+      heat_rotation_type: race.heat_rotation_type,
+      heat_scoring: {
+        finish_method: race.heat_scoring.finish_method,
+        finish_value: race.heat_scoring.finish_value,
+        heat_ranking: race.heat_scoring.heat_ranking,
+        heat_ranking_tiebreaker: race.heat_scoring.heat_ranking_tiebreaker,
+        allow_finish: race.heat_scoring.allow_finish
+      },
+      overall_scoring: {
+        dropped_heats: race.overall_scoring.dropped_heats,
+        ranking_method: race.overall_scoring.ranking_method,
+        tiebreaker: race.overall_scoring.tiebreaker
+      },
+      fuel_options: race.fuel_options ? {
+        enabled: race.fuel_options.enabled,
+        reset_fuel_at_heat_start: race.fuel_options.reset_fuel_at_heat_start,
+        end_heat_on_out_of_fuel: race.fuel_options.end_heat_on_out_of_fuel,
+        capacity: race.fuel_options.capacity,
+        usage_type: race.fuel_options.usage_type,
+        usage_rate: race.fuel_options.usage_rate,
+        start_level: race.fuel_options.start_level,
+        refuel_rate: race.fuel_options.refuel_rate,
+        pit_stop_delay: race.fuel_options.pit_stop_delay,
+        reference_time: race.fuel_options.reference_time
+      } : undefined,
+      digital_fuel_options: race.digital_fuel_options ? {
+        enabled: race.digital_fuel_options.enabled,
+        reset_fuel_at_heat_start: race.digital_fuel_options.reset_fuel_at_heat_start,
+        end_heat_on_out_of_fuel: race.digital_fuel_options.end_heat_on_out_of_fuel,
+        capacity: race.digital_fuel_options.capacity,
+        usage_type: race.digital_fuel_options.usage_type,
+        usage_rate: race.digital_fuel_options.usage_rate,
+        start_level: race.digital_fuel_options.start_level,
+        refuel_rate: race.digital_fuel_options.refuel_rate,
+        pit_stop_delay: race.digital_fuel_options.pit_stop_delay
+      } : undefined,
+      min_lap_time: race.min_lap_time,
+      team_options: race.team_options ? {
+        heat_lap_limit: race.team_options.heat_lap_limit,
+        heat_time_limit: race.team_options.heat_time_limit,
+        overall_lap_limit: race.team_options.overall_lap_limit,
+        overall_time_limit: race.team_options.overall_time_limit,
+        require_pit_stop_change_driver: race.team_options.require_pit_stop_change_driver
+      } : undefined
+    };
   }
 }
 

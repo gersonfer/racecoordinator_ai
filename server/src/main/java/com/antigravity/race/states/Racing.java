@@ -93,7 +93,7 @@ public class Racing implements IRaceState {
                 } else {
                   // Timed race with Allow Finish: Heat ends when everyone has crossed the line
                   // once after time expired
-                  if (finishedLanes.size() >= race.getCurrentHeat().getDrivers().size()) {
+                  if (finishedLanes.size() >= race.getCurrentHeat().getActiveDriverCount()) {
                     allFinished = true;
                   }
                 }
@@ -111,7 +111,7 @@ public class Racing implements IRaceState {
               } else {
                 // Lap based with Allow Finish: Heat ends when everyone has reached the lap
                 // limit
-                if (finishedLanes.size() >= race.getCurrentHeat().getDrivers().size()) {
+                if (finishedLanes.size() >= race.getCurrentHeat().getActiveDriverCount()) {
                   allFinished = true;
                 }
               }
@@ -437,6 +437,8 @@ public class Racing implements IRaceState {
       } else {
         if (driverData.getLapCount() >= scoring.getFinishValue()) {
           driverFinished = true;
+        } else if (scoring.getAllowFinish() == com.antigravity.models.HeatScoring.AllowFinish.SingleLap && !finishedLanes.isEmpty()) {
+          driverFinished = true;
         }
       }
 
@@ -447,7 +449,7 @@ public class Racing implements IRaceState {
                 + lane + " (" + driverData.getLapCount() + " laps)");
 
         if (allowFinish == com.antigravity.models.HeatScoring.AllowFinish.None
-            || finishedLanes.size() >= race.getCurrentHeat().getDrivers().size()) {
+            || finishedLanes.size() >= race.getCurrentHeat().getActiveDriverCount()) {
           // Heat ends
           if (race.isLastHeat()) {
             race.changeState(new RaceOver());

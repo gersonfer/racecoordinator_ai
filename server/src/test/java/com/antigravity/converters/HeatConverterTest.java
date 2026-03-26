@@ -36,7 +36,7 @@ public class HeatConverterTest {
     heatDrivers.add(heatData);
 
     HeatScoring scoring = new HeatScoring();
-    Heat heat = new Heat(1, heatDrivers, scoring);
+    com.antigravity.race.Heat heat = new com.antigravity.race.Heat(1, heatDrivers, scoring);
     Set<String> sentObjectIds = new HashSet<>();
 
     // Execute

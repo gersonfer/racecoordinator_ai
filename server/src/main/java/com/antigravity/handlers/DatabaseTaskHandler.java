@@ -8,6 +8,13 @@ import com.mongodb.client.model.Filters;
 import com.mongodb.client.result.DeleteResult;
 import com.mongodb.client.result.UpdateResult;
 import io.javalin.http.Context;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.module.SimpleModule;
+import com.fasterxml.jackson.databind.JsonDeserializer;
+import com.fasterxml.jackson.databind.DeserializationContext;
+import com.fasterxml.jackson.core.JsonParser;
+import java.io.IOException;
+import org.bson.types.ObjectId;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -246,7 +253,7 @@ public class DatabaseTaskHandler {
 
     private void createDriver(Context ctx) {
         try {
-            Driver driver = ctx.bodyAsClass(Driver.class);
+            Driver driver = bodyAsClassWithId(ctx.body(), Driver.class);
             MongoCollection<Driver> col = getDriverCollection();
 
             // Uniqueness check
@@ -282,7 +289,7 @@ public class DatabaseTaskHandler {
     private void updateDriver(Context ctx) {
         try {
             String id = ctx.pathParam("id");
-            Driver driver = ctx.bodyAsClass(Driver.class);
+            Driver driver = bodyAsClassWithId(ctx.body(), Driver.class);
             MongoCollection<Driver> col = getDriverCollection();
 
             Driver existing = col.find(Filters.and(
@@ -324,7 +331,7 @@ public class DatabaseTaskHandler {
 
     private void createTeam(Context ctx) {
         try {
-            com.antigravity.models.Team team = ctx.bodyAsClass(com.antigravity.models.Team.class);
+            com.antigravity.models.Team team = bodyAsClassWithId(ctx.body(), com.antigravity.models.Team.class);
             team = createTeam(team);
             ctx.status(201).json(team);
         } catch (IllegalArgumentException e) {
@@ -362,7 +369,7 @@ public class DatabaseTaskHandler {
     private void updateTeam(Context ctx) {
         try {
             String id = ctx.pathParam("id");
-            com.antigravity.models.Team team = ctx.bodyAsClass(com.antigravity.models.Team.class);
+            com.antigravity.models.Team team = bodyAsClassWithId(ctx.body(), com.antigravity.models.Team.class);
             updateTeam(id, team);
             ctx.json(team); // Note: updateTeam returns new object but we can return input if valid or
                             // return result
@@ -420,7 +427,7 @@ public class DatabaseTaskHandler {
 
     private void createTrack(Context ctx) {
         try {
-            com.antigravity.models.Track track = ctx.bodyAsClass(com.antigravity.models.Track.class);
+            com.antigravity.models.Track track = bodyAsClassWithId(ctx.body(), com.antigravity.models.Track.class);
             MongoCollection<com.antigravity.models.Track> col = getTrackCollection();
 
             com.antigravity.models.Track existing = col.find(Filters.eq("name", track.getName())).first();
@@ -450,7 +457,7 @@ public class DatabaseTaskHandler {
     private void updateTrack(Context ctx) {
         try {
             String id = ctx.pathParam("id");
-            com.antigravity.models.Track track = ctx.bodyAsClass(com.antigravity.models.Track.class);
+            com.antigravity.models.Track track = bodyAsClassWithId(ctx.body(), com.antigravity.models.Track.class);
             MongoCollection<com.antigravity.models.Track> col = getTrackCollection();
 
             com.antigravity.models.Track existing = col.find(Filters.and(
@@ -499,7 +506,7 @@ public class DatabaseTaskHandler {
 
     public void handleCreateRace(Context ctx) {
         try {
-            com.antigravity.models.Race race = ctx.bodyAsClass(com.antigravity.models.Race.class);
+            com.antigravity.models.Race race = bodyAsClassWithId(ctx.body(), com.antigravity.models.Race.class);
             try {
                 com.antigravity.models.Race created = createRace(race);
                 ctx.status(201).json(created);
@@ -543,7 +550,7 @@ public class DatabaseTaskHandler {
     public void handleUpdateRace(Context ctx) {
         try {
             String id = ctx.pathParam("id");
-            com.antigravity.models.Race race = ctx.bodyAsClass(com.antigravity.models.Race.class);
+            com.antigravity.models.Race race = bodyAsClassWithId(ctx.body(), com.antigravity.models.Race.class);
             try {
                 com.antigravity.models.Race updated = updateRace(id, race);
                 ctx.json(updated);
@@ -856,5 +863,29 @@ public class DatabaseTaskHandler {
 
         // Clean up the temporary race object
         tempRace.stop();
+    }
+
+    private <T> T bodyAsClassWithId(String body, Class<T> clazz) throws Exception {
+        if (body != null && !body.contains("\"@id\"")) {
+            body = body.replaceFirst("\\{", "{\"@id\":1,");
+        }
+        ObjectMapper mapper = new ObjectMapper();
+        SimpleModule module = new SimpleModule();
+        module.addDeserializer(ObjectId.class, new JsonDeserializer<ObjectId>() {
+            @Override
+            public ObjectId deserialize(JsonParser p, DeserializationContext ctxt) throws IOException {
+                String value = p.getValueAsString();
+                if (value == null || value.isEmpty()) {
+                    return null;
+                }
+                try {
+                    return new ObjectId(value);
+                } catch (IllegalArgumentException e) {
+                    return null;
+                }
+            }
+        });
+        mapper.registerModule(module);
+        return mapper.readValue(body, clazz);
     }
 }

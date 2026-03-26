@@ -47,4 +47,15 @@ public class Heat extends ServerToClientObject {
   public void setHeatNumber(int heatNumber) {
     this.heatNumber = heatNumber;
   }
+
+  public int getActiveDriverCount() {
+    int count = 0;
+    for (DriverHeatData driverData : drivers) {
+      if (driverData != null && driverData.getDriver() != null && driverData.getDriver().getDriver() != null
+          && driverData.getDriver().getDriver().getEntityId() != null) {
+        count++;
+      }
+    }
+    return count;
+  }
 }

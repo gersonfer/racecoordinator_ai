@@ -58,6 +58,7 @@ import { RaceService } from 'src/app/services/race.service';
 import { Router } from '@angular/router';
 import { SettingsService } from 'src/app/services/settings.service';
 import { Settings, ColumnVisibility } from 'src/app/models/settings';
+import { FinishMethod, AllowFinish } from 'src/app/models/heat_scoring';
 import { ChangeDetectorRef } from '@angular/core';
 
 describe('DefaultRacedayComponent', () => {
@@ -801,5 +802,150 @@ describe('DefaultRacedayComponent', () => {
       expect(mockDataService.exportRaceToCsv).toHaveBeenCalled();
       expect((window as any).showSaveFilePicker).toHaveBeenCalled();
     }));
+  });
+
+  describe('getCurrentFlagUrl', () => {
+    let mockRace: any;
+    let mockScoring: any;
+
+    beforeEach(() => {
+      mockScoring = {
+        finishMethod: FinishMethod.Lap,
+        finishValue: 10,
+        allowFinish: AllowFinish.AF_NONE
+      };
+      mockRace = {
+        heat_scoring: mockScoring
+      };
+      mockRaceService.getRace.and.returnValue(mockRace);
+      component['race'] = mockRace;
+      
+      // Setup default setttings for flag lookups
+      const settings = (component as any).settingsService.getSettings();
+      settings.flagRed = 'red.png';
+      settings.flagGreen = 'green.png';
+      settings.flagYellow = 'yellow.png';
+      settings.flagWhite = 'white.png';
+      settings.flagCheckered = 'checkered.png';
+      
+      // Mock assets for resolution
+      (component as any).assets = [
+        { url: 'red.png', name: 'Red Flag' },
+        { url: 'green.png', name: 'Green Flag' },
+        { url: 'yellow.png', name: 'Yellow Flag' },
+        { url: 'white.png', name: 'White Flag' },
+        { url: 'checkered.png', name: 'Checkered Flag' }
+      ];
+    });
+
+    it('should return red flag when state is NOT_STARTED', () => {
+      component['raceState'] = com.antigravity.RaceState.NOT_STARTED;
+      expect(component.getCurrentFlagUrl()).toContain('red.png');
+    });
+
+    it('should return red flag when state is HEAT_OVER', () => {
+      component['raceState'] = com.antigravity.RaceState.HEAT_OVER;
+      expect(component.getCurrentFlagUrl()).toContain('red.png');
+    });
+
+    it('should return red flag when state is RACE_OVER', () => {
+      component['raceState'] = com.antigravity.RaceState.RACE_OVER;
+      expect(component.getCurrentFlagUrl()).toContain('red.png');
+    });
+
+    it('should return green flag when state is RACING and no one has finished', () => {
+      component['raceState'] = com.antigravity.RaceState.RACING;
+      mockScoring.allowFinish = AllowFinish.AF_ALLOW;
+      component['heat'] = {
+        heatDrivers: [
+          { lapCount: 5, totalTime: 30 } as any
+        ]
+      } as any;
+      
+      expect(component.getCurrentFlagUrl()).toContain('green.png');
+    });
+
+    it('should return checkered flag when state is RACING and at least one driver finished (Lap race)', () => {
+      component['raceState'] = com.antigravity.RaceState.RACING;
+      mockScoring.allowFinish = AllowFinish.AF_ALLOW;
+      mockScoring.finishMethod = FinishMethod.Lap;
+      mockScoring.finishValue = 10;
+      
+      component['heat'] = {
+        heatDrivers: [
+          { lapCount: 10, totalTime: 100 } as any, // Finished
+          { lapCount: 5, totalTime: 50 } as any    // Not finished
+        ]
+      } as any;
+      
+      expect(component.getCurrentFlagUrl()).toContain('checkered.png');
+    });
+
+    it('should return checkered flag when state is RACING and at least one driver finished (Timed race)', () => {
+      component['raceState'] = com.antigravity.RaceState.RACING;
+      mockScoring.allowFinish = AllowFinish.AF_ALLOW;
+      mockScoring.finishMethod = FinishMethod.Timed;
+      mockScoring.finishValue = 60;
+      
+      component['heat'] = {
+        heatDrivers: [
+          { lapCount: 6, totalTime: 66 } as any, // Finished
+          { lapCount: 5, totalTime: 55 } as any   // Not finished
+        ]
+      } as any;
+      
+      expect(component.getCurrentFlagUrl()).toContain('checkered.png');
+    });
+
+    it('should NOT return checkered flag if allowFinish is None even if someone finished', () => {
+      component['raceState'] = com.antigravity.RaceState.RACING;
+      mockScoring.allowFinish = AllowFinish.AF_NONE;
+      mockScoring.finishMethod = FinishMethod.Lap;
+      mockScoring.finishValue = 10;
+      
+      component['heat'] = {
+        heatDrivers: [
+          { lapCount: 10, totalTime: 100 } as any
+        ]
+      } as any;
+      
+      expect(component.getCurrentFlagUrl()).toContain('green.png');
+    });
+
+    it('should return yellow flag when state is PAUSED', () => {
+      component['raceState'] = com.antigravity.RaceState.PAUSED;
+      expect(component.getCurrentFlagUrl()).toContain('yellow.png');
+    });
+
+    it('should return white flag when state is RACING and any driver has 1 lap to go', () => {
+      component['raceState'] = com.antigravity.RaceState.RACING;
+      mockScoring.finishMethod = FinishMethod.Lap;
+      mockScoring.finishValue = 10;
+      component['heat'] = {
+        heatDrivers: [
+          { lapCount: 9 } as any, // 1 to go
+          { lapCount: 5 } as any
+        ]
+      } as any;
+      
+      expect(component.getCurrentFlagUrl()).toContain('white.png');
+    });
+
+    it('should return red flag when state is STARTING and heat hasn\'t started yet', () => {
+      component['raceState'] = com.antigravity.RaceState.STARTING;
+      component['hasRacedInCurrentHeat'] = false;
+      expect(component.getCurrentFlagUrl()).toContain('red.png');
+    });
+
+    it('should return yellow flag when state is STARTING and heat is being resumed (hasRaced=true)', () => {
+      component['raceState'] = com.antigravity.RaceState.STARTING;
+      component['hasRacedInCurrentHeat'] = true;
+      expect(component.getCurrentFlagUrl()).toContain('yellow.png');
+    });
+
+    it('should return red flag for default/unknown state', () => {
+      (component as any).raceState = 999; // Unknown state
+      expect(component.getCurrentFlagUrl()).toContain('red.png');
+    });
   });
 });

@@ -18,7 +18,7 @@ import { com } from 'src/app/proto/message';
 import { SettingsService } from 'src/app/services/settings.service';
 import { AnchorPoint } from './column_definition';
 import { Settings, ColumnVisibility } from 'src/app/models/settings';
-import { FinishMethod } from 'src/app/models/heat_scoring';
+import { FinishMethod, AllowFinish, HeatScoring } from 'src/app/models/heat_scoring';
 import InterfaceStatus = com.antigravity.InterfaceStatus;
 import { RaceConnectionService } from 'src/app/services/race-connection.service';
 
@@ -912,6 +912,18 @@ export class DefaultRacedayComponent implements OnInit, OnDestroy {
     return this.raceState !== com.antigravity.RaceState.HEAT_OVER;
   }
 
+  isDriverFinished(hd: DriverHeatData, scoring: HeatScoring | null | undefined): boolean {
+    if (!scoring || !hd) return false;
+
+    if (scoring.finishMethod === FinishMethod.Lap) {
+      return hd.lapCount >= scoring.finishValue;
+    } else if (scoring.finishMethod === FinishMethod.Timed) {
+      // In a timed race, a driver is finished if their total time is at or beyond the finish value.
+      return hd.totalTime >= scoring.finishValue;
+    }
+    return false;
+  }
+
   getCurrentFlagUrl(): string {
     const RS = com.antigravity.RaceState;
     const settings = this.settingsService.getSettings();
@@ -923,6 +935,7 @@ export class DefaultRacedayComponent implements OnInit, OnDestroy {
     switch (this.raceState) {
       case RS.NOT_STARTED:
       case RS.HEAT_OVER:
+      case RS.RACE_OVER:
         flagType = 'red';
         break;
       case RS.STARTING:
@@ -939,12 +952,17 @@ export class DefaultRacedayComponent implements OnInit, OnDestroy {
             flagType = 'white';
           }
         }
+
+        // Feature: Checkered flag if any driver has finished (and race allows finishing)
+        if (scoring?.allowFinish !== AllowFinish.AF_NONE && this.heat?.heatDrivers) {
+          const atLeastOneFinished = this.heat.heatDrivers.some(d => this.isDriverFinished(d, scoring));
+          if (atLeastOneFinished) {
+            flagType = 'checkered';
+          }
+        }
         break;
       case RS.PAUSED:
         flagType = 'yellow';
-        break;
-      case RS.RACE_OVER:
-        flagType = 'checkered';
         break;
       default:
         flagType = 'red';
