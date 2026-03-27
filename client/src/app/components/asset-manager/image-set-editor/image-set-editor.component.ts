@@ -245,6 +245,9 @@ export class ImageSetEditorComponent implements OnInit, OnChanges {
         return numA - numB;
       });
 
+      // TODO(aufderheide): Support two cases here, one where the _# values are sequential
+      // and we need to calculate percentage values and one where the _# valeus are the
+      // percentage values.
       const currentNums = this.entries.map(e => extractNumber(e.name || '') as number);
       const min = Math.min(...currentNums);
       const max = Math.max(...currentNums);
