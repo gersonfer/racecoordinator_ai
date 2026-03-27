@@ -11,7 +11,8 @@ export const mockDataService = {
   updateTeam: jasmine.createSpy('updateTeam').and.returnValue(of({ entity_id: 't1' })),
   deleteTeam: jasmine.createSpy('deleteTeam').and.returnValue(of(true)),
   uploadAsset: jasmine.createSpy('uploadAsset').and.returnValue(of(true)),
-  getCurrentDatabase: jasmine.createSpy('getCurrentDatabase').and.returnValue(of({ name: 'test_db' }))
+  getCurrentDatabase: jasmine.createSpy('getCurrentDatabase').and.returnValue(of({ name: 'test_db' })),
+  serverUrl: 'http://localhost:7070'
 };
 
 export const mockTranslationService = {

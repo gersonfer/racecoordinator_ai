@@ -222,15 +222,53 @@ export class ImageSetEditorComponent implements OnInit, OnChanges {
   recalculatePercentages() {
     if (this.entries.length === 0) return;
 
-    const count = this.entries.length;
-    // Distribute percentages evenly from 0 to 100
-    this.entries.forEach((entry, index) => {
-      if (count === 1) {
-        entry.percentage = 100;
-      } else {
-        entry.percentage = Math.round((index / (count - 1)) * 100);
-      }
-    });
+    const extractNumber = (name: string): number | null => {
+      // Look for the last numeric part in the name (e.g. "fuelgage_10" -> 10)
+      // This is more robust as it avoids ID prefixes or timestamps
+      const match = name.match(/(\d+)(?!.*\d)/);
+      if (match) return parseInt(match[1], 10);
+      return null;
+    };
+
+    const entriesWithNums = this.entries.map(e => ({
+      entry: e,
+      num: extractNumber(e.name || '')
+    }));
+
+    const allHaveNums = entriesWithNums.every(e => e.num !== null);
+
+    if (allHaveNums && this.entries.length > 1) {
+      // Sort entries by their extracted number
+      this.entries.sort((a, b) => {
+        const numA = extractNumber(a.name || '') ?? -1;
+        const numB = extractNumber(b.name || '') ?? -1;
+        return numA - numB;
+      });
+
+      const currentNums = this.entries.map(e => extractNumber(e.name || '') as number);
+      const min = Math.min(...currentNums);
+      const max = Math.max(...currentNums);
+      const range = max - min;
+
+      this.entries.forEach(entry => {
+        const num = extractNumber(entry.name || '') as number;
+        if (range === 0) {
+          entry.percentage = 100;
+        } else {
+          entry.percentage = Math.round(((num - min) / range) * 100);
+        }
+      });
+    } else {
+      // Fallback to even distribution based on array order
+      const count = this.entries.length;
+      this.entries.forEach((entry, index) => {
+        if (count === 1) {
+          entry.percentage = 100;
+        } else {
+          entry.percentage = Math.round((index / (count - 1)) * 100);
+        }
+      });
+    }
     this.cdr.detectChanges();
   }
 

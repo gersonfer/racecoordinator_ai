@@ -208,4 +208,82 @@ describe('ImageSetEditorComponent', () => {
     expect(component.isSaving).toBeFalse();
     expect(window.alert).toHaveBeenCalledWith('Error: Save Failed');
   });
+
+  describe('recalculatePercentages', () => {
+    it('should sort and calculate based on _# prefix', () => {
+      component.entries = [
+        { name: 'fuel_100.png', percentage: 0, url: 'u1', data: new Uint8Array() },
+        { name: 'fuel_0.png', percentage: 0, url: 'u2', data: new Uint8Array() },
+        { name: 'fuel_50.png', percentage: 0, url: 'u3', data: new Uint8Array() }
+      ];
+
+      component.recalculatePercentages();
+
+      expect(component.entries[0].name).toBe('fuel_0.png');
+      expect(component.entries[0].percentage).toBe(0);
+      expect(component.entries[1].name).toBe('fuel_50.png');
+      expect(component.entries[1].percentage).toBe(50);
+      expect(component.entries[2].name).toBe('fuel_100.png');
+      expect(component.entries[2].percentage).toBe(100);
+    });
+
+    it('should handle _# prefix at the start of filename', () => {
+      component.entries = [
+        { name: '_10_fuel.png', percentage: 0, url: 'u1', data: new Uint8Array() },
+        { name: '_0_fuel.png', percentage: 0, url: 'u2', data: new Uint8Array() }
+      ];
+
+      component.recalculatePercentages();
+
+      expect(component.entries[0].name).toBe('_0_fuel.png');
+      expect(component.entries[0].percentage).toBe(0);
+      expect(component.entries[1].name).toBe('_10_fuel.png');
+      expect(component.entries[1].percentage).toBe(100);
+    });
+
+    it('should handle fuelgage_0 through fuelgage_10 pattern', () => {
+      // 11 files: 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10
+      component.entries = [];
+      for (let i = 0; i <= 10; i++) {
+        component.entries.push({ name: `fuelgage_${i}.png`, percentage: 0, url: `u${i}`, data: new Uint8Array() });
+      }
+      // Shuffle to test sorting
+      component.entries.reverse();
+
+      component.recalculatePercentages();
+
+      expect(component.entries[0].name).toBe('fuelgage_0.png');
+      expect(component.entries[0].percentage).toBe(0);
+      expect(component.entries[10].name).toBe('fuelgage_10.png');
+      expect(component.entries[10].percentage).toBe(100);
+    });
+
+    it('should ignore ID prefixes and find trailing numbers', () => {
+      component.entries = [
+        { name: '1711494000000_fuelgage_10.png', percentage: 0, url: 'u1', data: new Uint8Array() },
+        { name: '1711494000000_fuelgage_0.png', percentage: 0, url: 'u2', data: new Uint8Array() }
+      ];
+
+      component.recalculatePercentages();
+
+      expect(component.entries[0].name).toBe('1711494000000_fuelgage_0.png');
+      expect(component.entries[0].percentage).toBe(0);
+      expect(component.entries[1].name).toBe('1711494000000_fuelgage_10.png');
+      expect(component.entries[1].percentage).toBe(100);
+    });
+
+    it('should fallback to even distribution if no numbers found', () => {
+      component.entries = [
+        { name: 'a.png', percentage: 10, url: 'u1', data: new Uint8Array() },
+        { name: 'b.png', percentage: 10, url: 'u2', data: new Uint8Array() },
+        { name: 'c.png', percentage: 10, url: 'u3', data: new Uint8Array() }
+      ];
+
+      component.recalculatePercentages();
+
+      expect(component.entries[0].percentage).toBe(0);
+      expect(component.entries[1].percentage).toBe(50);
+      expect(component.entries[2].percentage).toBe(100);
+    });
+  });
 });

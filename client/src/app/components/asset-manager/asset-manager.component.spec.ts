@@ -113,31 +113,32 @@ describe('AssetManagerComponent', () => {
 
   it('should open delete confirmation modal', () => {
     component.onDelete('1');
-    expect(component.assetToDeleteId).toBe('1');
+    expect(component.assetsToDeleteIds).toEqual(['1']);
     expect(component.showDeleteConfirm).toBeTrue();
   });
 
   it('should delete asset on confirmation', () => {
-    component.assetToDeleteId = '1';
+    component.assetsToDeleteIds = ['1'];
     component.showDeleteConfirm = true;
+    mockDataService.deleteAsset.and.returnValue(of(true));
 
     component.onConfirmDelete();
 
     expect(mockDataService.deleteAsset).toHaveBeenCalledWith('1');
     expect(mockDataService.listAssets).toHaveBeenCalled();
     expect(component.showDeleteConfirm).toBeFalse();
-    expect(component.assetToDeleteId).toBeNull();
+    expect(component.assetsToDeleteIds).toEqual([]);
   });
 
   it('should close modal on cancel', () => {
-    component.assetToDeleteId = '1';
+    component.assetsToDeleteIds = ['1'];
     component.showDeleteConfirm = true;
 
     component.onCancelDelete();
 
     expect(mockDataService.deleteAsset).not.toHaveBeenCalled();
     expect(component.showDeleteConfirm).toBeFalse();
-    expect(component.assetToDeleteId).toBeNull();
+    expect(component.assetsToDeleteIds).toEqual([]);
   });
 
   it('should rename an asset', () => {
@@ -189,4 +190,113 @@ describe('AssetManagerComponent', () => {
 
     // Cleanup handled by ngOnDestroy if called, but fakeAsync handles the ticks
   }));
+
+  it('should toggle asset selection with Ctrl key', () => {
+    const asset: any = { id: '1', name: 'Img1', type: 'image', selected: false };
+    const event = new MouseEvent('click', { ctrlKey: true });
+    component.toggleSelection(asset, event);
+    expect(asset.selected).toBeTrue();
+    component.toggleSelection(asset, event);
+    expect(asset.selected).toBeFalse();
+  });
+
+  it('should play sound asset', () => {
+    const mockAudio = jasmine.createSpyObj('Audio', ['play']);
+    mockAudio.play.and.returnValue(Promise.resolve());
+    spyOn(window, 'Audio').and.returnValue(mockAudio);
+    
+    const asset: any = { id: 's1', name: 'Sound1', type: 'sound', url: 'sound.mp3' };
+
+    component.playAsset(asset);
+
+    expect(window.Audio).toHaveBeenCalled();
+    expect(mockAudio.play).toHaveBeenCalled();
+  });
+
+  it('should select range with Shift key', () => {
+    component.assets = [
+      { id: '1', name: 'Img1', type: 'image', size: '100 B', url: '', editMode: false, selected: false },
+      { id: '2', name: 'Img2', type: 'image', size: '100 B', url: '', editMode: false, selected: false },
+      { id: '3', name: 'Img3', type: 'image', size: '100 B', url: '', editMode: false, selected: false }
+    ];
+
+    // First click (single)
+    const event1 = new MouseEvent('click');
+    component.toggleSelection(component.assets[0], event1);
+    expect(component.assets[0].selected).toBeTrue();
+    expect(component.lastSelectedIndex).toBe(0);
+
+    // Shift click on third item
+    const event2 = new MouseEvent('click', { shiftKey: true });
+    component.toggleSelection(component.assets[2], event2);
+    
+    expect(component.assets[0].selected).toBeTrue();
+    expect(component.assets[1].selected).toBeTrue();
+    expect(component.assets[2].selected).toBeTrue();
+  });
+
+  it('should clear selection on single click', () => {
+    component.assets = [
+      { id: '1', name: 'Img1', type: 'image', size: '100 B', url: '', editMode: false, selected: true },
+      { id: '2', name: 'Img2', type: 'image', size: '100 B', url: '', editMode: false, selected: true }
+    ];
+    
+    const event = new MouseEvent('click');
+    component.toggleSelection(component.assets[0], event);
+    
+    expect(component.assets[0].selected).toBeTrue();
+    expect(component.assets[1].selected).toBeFalse();
+  });
+
+  it('should return correct selectedAssets', () => {
+    component.assets = [
+      { id: '1', name: 'Img1', type: 'image', size: '100 B', url: '', editMode: false, selected: true },
+      { id: '2', name: 'Snd1', type: 'sound', size: '100 B', url: '', editMode: false, selected: false }
+    ];
+    expect(component.selectedAssets.length).toBe(1);
+    expect(component.selectedAssets[0].id).toBe('1');
+  });
+
+  it('should open delete confirmation for multiple selected assets', () => {
+    component.assets = [
+      { id: '1', name: 'Img1', type: 'image', size: '100 B', url: '', editMode: false, selected: true },
+      { id: '2', name: 'Snd1', type: 'sound', size: '100 B', url: '', editMode: false, selected: true }
+    ];
+    component.onDeleteSelected();
+    expect(component.assetsToDeleteIds).toEqual(['1', '2']);
+    expect(component.showDeleteConfirm).toBeTrue();
+  });
+
+  it('should delete all selected assets on confirmation', () => {
+    component.assetsToDeleteIds = ['1', '2'];
+    component.showDeleteConfirm = true;
+    mockDataService.deleteAsset.and.returnValue(of(true));
+
+    component.onConfirmDelete();
+
+    expect(mockDataService.deleteAsset).toHaveBeenCalledWith('1');
+    expect(mockDataService.deleteAsset).toHaveBeenCalledWith('2');
+    expect(mockDataService.listAssets).toHaveBeenCalled();
+    expect(component.showDeleteConfirm).toBeFalse();
+    expect(component.assetsToDeleteIds).toEqual([]);
+  });
+
+  it('should handle edit for single selected asset', () => {
+    component.assets = [
+      { id: '1', name: 'Img1', type: 'image', size: '100 B', url: '', editMode: false, selected: true }
+    ];
+    spyOn(component, 'startEditing');
+    component.onEditSelected();
+    expect(component.startEditing).toHaveBeenCalledWith('1');
+  });
+
+  it('should not handle edit for multiple selected assets', () => {
+    component.assets = [
+      { id: '1', name: 'Img1', type: 'image', size: '100 B', url: '', editMode: false, selected: true },
+      { id: '2', name: 'Img2', type: 'image', size: '100 B', url: '', editMode: false, selected: true }
+    ];
+    spyOn(component, 'startEditing');
+    component.onEditSelected();
+    expect(component.startEditing).not.toHaveBeenCalled();
+  });
 });

@@ -387,6 +387,12 @@
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
 }
 
+.asset-card.selected {
+  border-color: var(--neon-blue);
+  background: rgba(0, 243, 255, 0.1);
+  box-shadow: 0 0 15px rgba(0, 243, 255, 0.3);
+}
+
 .asset-preview {
   flex: 1;
   /* Allow to fill available space */
@@ -458,6 +464,16 @@
 
 .action-icon:hover {
   opacity: 1;
+}
+
+.action-icon.disabled {
+  opacity: 0.2;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+.action-icon.play:hover {
+  filter: drop-shadow(0 0 4px #00ffff);
 }
 
 .action-icon.delete:hover {

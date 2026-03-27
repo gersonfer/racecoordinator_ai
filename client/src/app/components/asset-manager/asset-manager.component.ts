@@ -6,6 +6,7 @@ import { TranslationService } from 'src/app/services/translation.service';
 import { Router } from '@angular/router';
 import { ConnectionMonitorService, ConnectionState } from '../../services/connection-monitor.service';
 import { Subscription } from 'rxjs';
+import { playSound, mockTTSContext } from 'src/app/utils/audio';
 
 // Interface matching the mock/view needs, mapped from Protobuf
 export interface AssetView {
@@ -15,6 +16,7 @@ export interface AssetView {
   size: string;
   url: string;
   editMode?: boolean;
+  selected?: boolean;
   images?: com.antigravity.IImageSetEntry[];
   currentPreviewIndex?: number;
 }
@@ -41,10 +43,11 @@ export class AssetManagerComponent implements OnInit {
   editingAssetId?: string;
   editingAssetName: string = '';
   editingAssetEntries: com.antigravity.ISaveImageSetEntry[] = [];
+  lastSelectedIndex: number = -1;
 
   // Delete Confirmation
   showDeleteConfirm: boolean = false;
-  assetToDeleteId: string | null = null;
+  assetsToDeleteIds: string[] = [];
 
   constructor(
     private dataService: DataService,
@@ -150,6 +153,7 @@ export class AssetManagerComponent implements OnInit {
               size: a.size || '0 B',
               url: this.getAssetUrl(a),
               editMode: false,
+              selected: false,
               images: a.images || [],
               currentPreviewIndex: 0
             };
@@ -392,19 +396,81 @@ export class AssetManagerComponent implements OnInit {
   }
 
   onDelete(id: string) {
-    this.assetToDeleteId = id;
+    const asset = this.assets.find(a => a.id === id);
+    if (asset && asset.selected) {
+      this.assetsToDeleteIds = this.selectedAssets.map((a: AssetView) => a.id);
+    } else {
+      this.assetsToDeleteIds = [id];
+    }
     this.showDeleteConfirm = true;
   }
 
+  toggleSelection(asset: AssetView, event: MouseEvent) {
+    const assets = this.filteredAssets;
+    const currentIndex = assets.indexOf(asset);
+
+    if (event.ctrlKey || event.metaKey) {
+      // Toggle individual selection
+      asset.selected = !asset.selected;
+      this.lastSelectedIndex = currentIndex;
+    } else if (event.shiftKey && this.lastSelectedIndex !== -1) {
+      // Range selection
+      const start = Math.min(this.lastSelectedIndex, currentIndex);
+      const end = Math.max(this.lastSelectedIndex, currentIndex);
+      
+      const range = assets.slice(start, end + 1);
+      range.forEach(a => a.selected = true);
+    } else {
+      // Single selection (clear others)
+      this.assets.forEach(a => a.selected = false);
+      asset.selected = true;
+      this.lastSelectedIndex = currentIndex;
+    }
+    
+    this.cdr.detectChanges();
+  }
+
+  get selectedAssets(): AssetView[] {
+    return this.assets.filter(a => a.selected);
+  }
+
+  onDeleteSelected() {
+    this.assetsToDeleteIds = this.selectedAssets.map((a: AssetView) => a.id);
+    if (this.assetsToDeleteIds.length > 0) {
+      this.showDeleteConfirm = true;
+    }
+  }
+
+  onEditSelected() {
+    const selected = this.selectedAssets;
+    if (selected.length === 1) {
+      const asset = selected[0];
+      if (asset.type === 'image_set') {
+        this.openEditImageSetEditor(asset);
+      } else {
+        this.startEditing(asset.id);
+      }
+    }
+  }
+
+  playAsset(asset: AssetView) {
+    if (asset.type === 'sound') {
+      const playContext = mockTTSContext();
+      playSound('preset', asset.url, '', this.dataService.serverUrl, playContext);
+    }
+  }
+
   onConfirmDelete() {
-    if (this.assetToDeleteId) {
-      this.dataService.deleteAsset(this.assetToDeleteId).subscribe({
+    if (this.assetsToDeleteIds.length > 0) {
+      const deleteObservables = this.assetsToDeleteIds.map(id => this.dataService.deleteAsset(id));
+      forkJoin(deleteObservables).subscribe({
         next: () => {
           this.loadAssets();
           this.onCancelDelete();
         },
         error: (err) => {
-          console.error('Delete failed', err);
+          console.error('One or more deletes failed', err);
+          this.loadAssets(); // Reload to see what's left
           this.onCancelDelete();
         }
       });
@@ -413,7 +479,7 @@ export class AssetManagerComponent implements OnInit {
 
   onCancelDelete() {
     this.showDeleteConfirm = false;
-    this.assetToDeleteId = null;
+    this.assetsToDeleteIds = [];
   }
 
   startEditing(id: string) {
