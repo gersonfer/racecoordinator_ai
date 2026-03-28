@@ -25,8 +25,13 @@ export class DriverEditorComponent implements OnInit, OnDestroy {
   editingDriver?: Driver;
   isLoading: boolean = true;
   isSaving: boolean = false;
+  isAutoSaving: boolean = false;
+  isDirty: boolean = false;
   isUploading: boolean = false;
   scale: number = 1;
+
+  // Manual change tracking baseline
+  originalDriver: Driver | null = null;
 
   // Undo Manager
   undoManager!: UndoManager<Driver>;
@@ -335,6 +340,10 @@ export class DriverEditorComponent implements OnInit, OnDestroy {
 
     if (!isAutoSave) {
       this.isSaving = true;
+      this.isAutoSaving = false;
+    } else {
+      this.isSaving = true;
+      this.isAutoSaving = true;
     }
     this.saveDriverData(isSaveAsNew, isAutoSave);
   }
@@ -374,22 +383,45 @@ export class DriverEditorComponent implements OnInit, OnDestroy {
     }
 
     if (this.editingDriver) {
+      this.isDirty = false;
+      this.originalDriver = this.cloneDriver(this.editingDriver);
       this.undoManager.initialize(this.editingDriver);
     }
   }
 
   undo() { this.undoManager.undo(); }
   redo() { this.undoManager.redo(); }
-  hasChanges() { return this.undoManager.hasChanges(); }
+
+  hasChanges() {
+    if (!this.undoManager) return false;
+    const umChanges = this.undoManager.hasChanges();
+    if (!this.editingDriver || !this.originalDriver) return umChanges;
+    
+    // Explicit dirty flag or undo manager status
+    return this.isDirty || umChanges;
+  }
 
   onInputFocus() { this.undoManager.onInputFocus(); }
-  onInputChange() { this.undoManager.onInputChange(); }
-  onInputBlur() { this.undoManager.onInputBlur(); }
-  captureState() { this.undoManager.captureState(); }
+  onInputChange() {
+    this.isDirty = true;
+    this.undoManager.onInputChange();
+    this.cdr.detectChanges();
+  }
+  onInputBlur() { 
+    this.isDirty = true;
+    this.undoManager.onInputBlur();
+    this.cdr.detectChanges();
+  }
+  captureState() {
+    this.undoManager.captureState();
+    this.cdr.detectChanges();
+  }
 
   selectDriver(driver: Driver) {
     this.selectedDriver = driver;
     this.editingDriver = this.cloneDriver(driver);
+    this.originalDriver = this.cloneDriver(driver);
+    this.isDirty = false;
     this.undoManager.initialize(this.editingDriver);
   }
 
@@ -410,11 +442,16 @@ export class DriverEditorComponent implements OnInit, OnDestroy {
     obs.subscribe({
       next: (result) => {
         this.isSaving = false;
+        this.isAutoSaving = false;
 
         if (this.editingDriver) {
           this.editingDriver.entity_id = result.entity_id;
+          this.isDirty = false;
+          this.originalDriver = this.cloneDriver(this.editingDriver);
           this.undoManager.resetTracking(this.editingDriver);
         }
+
+        this.cdr.detectChanges();
 
         if (wasNew) {
           if (isAutoSave) {
@@ -437,6 +474,7 @@ export class DriverEditorComponent implements OnInit, OnDestroy {
           }
         }
         this.isSaving = false;
+        this.isAutoSaving = false;
         this.cdr.detectChanges();
       }
     });

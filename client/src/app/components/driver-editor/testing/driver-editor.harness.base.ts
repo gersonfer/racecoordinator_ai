@@ -8,7 +8,7 @@ export abstract class DriverEditorHarnessBase {
     nicknameInput: '#driver-nickname-input',
     undoBtn: 'app-editor-title .undo',
     redoBtn: 'app-editor-title .redo',
-    backBtn: 'app-editor-title app-back-button'
+    backBtn: 'app-editor-title app-back-button .back-btn'
   };
 
   abstract getName(): Promise<string>;

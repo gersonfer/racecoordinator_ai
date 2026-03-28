@@ -270,36 +270,18 @@ export class TestSetupHelper {
   }
 
   static async waitForLocalization(page: Page, lang: string = 'en', action?: Promise<any>) {
-    const backTranslations: Record<string, string> = {
-      'en': 'BACK', 'de': 'ZURÜCK', 'es': 'ATRÁS', 'fr': 'RETOUR', 'it': 'INDIETRO', 'pt': 'VOLTAR', 'nl': 'TERUG'
-    };
-    const expectedText = backTranslations[lang] || backTranslations['en'];
-
-    // 1. Setup response promise BEFORE action
-    const responsePromise = page.waitForResponse(response =>
-      response.url().includes(`/assets/i18n/${lang}.json`) && response.status() === 200,
-      { timeout: 5000 }
-    ).catch(() => null);
-
-    // 2. Perform the action
+    // 1. Perform the action (e.g. goto)
     if (action) await action;
 
-    // 3. If text is already there, we can skip waiting for the response (it was fast/cached)
-    const isAlreadyLocalized = await page.evaluate((text) => {
-      return document.body.innerText.toUpperCase().includes(text);
-    }, expectedText);
+    // 2. Wait for the Service level readiness flag
+    // This is set to true in TranslationService.ts when the JSON is loaded and applied
+    await page.waitForFunction(() => (window as any).isTranslationsLoaded === true, { timeout: 10000 });
 
-    if (isAlreadyLocalized) {
-      await page.evaluate(() => document.fonts.ready);
-      return;
-    }
-
-    // 4. Wait for response and text
-    await responsePromise;
-
-
+    // 3. Ensure fonts and layout have settled after text swap
     await page.evaluate(() => document.fonts.ready);
-    await page.waitForTimeout(100);
+    
+    // 4. Final micro-wait for Angular's digest cycle to propagate the change to all pipes
+    await page.waitForTimeout(500);
   }
 
   /**

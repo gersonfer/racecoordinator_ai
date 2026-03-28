@@ -1,4 +1,4 @@
-<div class="page-container" [style.transform]="'translate(-50%, -50%) scale(' + scale + ')'">
+<div class="page-container" [style.transform]="'translate(-50%, -50%) scale(' + scale + ')'" [attr.data-is-dirty]="hasChanges() ? 'true' : 'false'">
   <app-editor-title
     titleKey="DE_TITLE"
     backRoute="/driver-manager"
@@ -81,7 +81,7 @@
   </div>
 
   <!-- Loading Overlay -->
-  <div class="loader-overlay" *ngIf="isLoading || isSaving || isUploading">
+  <div class="loader-overlay" *ngIf="isLoading || (isSaving && !isAutoSaving) || isUploading">
     <div class="spinner"></div>
   </div>
 

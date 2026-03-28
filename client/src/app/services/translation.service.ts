@@ -45,6 +45,8 @@ export class TranslationService {
                 this.translations = data as { [key: string]: any };
                 this.currentLanguage.next(language);
                 this.translationsLoaded.next(true);
+                // TODO(aufderheide): This is not great, and it's just used screendiff tests
+                (window as any).isTranslationsLoaded = true;
             },
             error: (error: any) => {
                 console.error(`Failed to load translations for language: ${language}`, error);

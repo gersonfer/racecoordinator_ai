@@ -1,4 +1,4 @@
-import { Component, Input, Output, EventEmitter } from '@angular/core';
+import { Component, Input, Output, EventEmitter, ChangeDetectorRef } from '@angular/core';
 import { Router } from '@angular/router';
 import { ConnectionMonitorService, ConnectionState } from 'src/app/services/connection-monitor.service';
 
@@ -12,7 +12,15 @@ export class BackButtonComponent {
   @Input() label: string = 'BACK';
   @Input() route: string = '/raceday-setup';
   @Input() queryParams: any = {};
-  @Input() confirm: boolean = false;
+
+  private _confirm: boolean = false;
+  @Input() set confirm(v: boolean) {
+    this._confirm = v;
+    if (this.cdr) {
+      this.cdr.detectChanges();
+    }
+  }
+  get confirm(): boolean { return this._confirm; }
   @Input() confirmTitle: string = 'CD_CONFIRM_EXIT_TITLE'; // Default title (Exit Race) or generic
   @Input() confirmMessage: string = 'CD_CONFIRM_EXIT_MESSAGE'; // Default message
 
@@ -22,7 +30,8 @@ export class BackButtonComponent {
 
   constructor(
     private router: Router,
-    private connectionMonitor: ConnectionMonitorService
+    private connectionMonitor: ConnectionMonitorService,
+    private cdr: ChangeDetectorRef
   ) { }
 
   onBack() {

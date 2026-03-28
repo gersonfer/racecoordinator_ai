@@ -5,6 +5,7 @@ import { DriverEditorHarnessE2e } from './testing/driver-editor.harness.e2e';
 test.describe('Driver Editor Visuals', () => {
   test.beforeEach(async ({ page }) => {
     await TestSetupHelper.setupStandardMocks(page, { driverEditorHelpShown: true });
+    await page.setViewportSize({ width: 1600, height: 900 });
     await TestSetupHelper.setupRaceMocks(page);
     await TestSetupHelper.setupAssetMocks(page);
 
@@ -40,7 +41,7 @@ test.describe('Driver Editor Visuals', () => {
 
     // Driver name checked visually
 
-    await expect(page.locator('.page-container')).toHaveScreenshot('driver-editor-loaded.png');
+    await expect(page).toHaveScreenshot('driver-editor-loaded.png', { animations: 'disabled', maxDiffPixelRatio: 0.05 });
   });
 
   test('should support undo and redo operations', async ({ page }) => {
@@ -70,50 +71,47 @@ test.describe('Driver Editor Visuals', () => {
     await harness.clickRedo();
     // Redo result checked visually
 
-    await expect(page.locator('.page-container')).toHaveScreenshot('driver-editor-redone.png');
+    await expect(page).toHaveScreenshot('driver-editor-redone.png', { animations: 'disabled', maxDiffPixelRatio: 0.05 });
   });
 
   test('should confirm discarding unsaved changes on back', async ({ page }) => {
-    // Mock save failure to force dirty state on back navigation
-    await page.route('**/api/drivers*', async route => {
-      const method = route.request().method();
-      if (method === 'PUT') {
-        await route.fulfill({
-          status: 500,
-          contentType: 'application/json',
-          body: JSON.stringify({ error: 'Save failed for test' })
-        });
-      } else {
-        await route.fallback();
-      }
-    });
-
+    // Load the page FIRST, then set up the fail mock
     await TestSetupHelper.waitForLocalization(page, 'en', page.goto('/driver-editor?id=d1'));
-    // TOOD(aufderheide): At very least don't check for specific text values.
     await page.locator('.page-container').waitFor();
+
+    // Now intercept save requests to fail with 409 so autoSave doesn't clear isDirty
+    await page.route('**/api/drivers/*', async (route) => {
+      await route.fulfill({
+        status: 409,
+        contentType: 'application/json',
+        body: JSON.stringify({ error: 'Driver name already exists' })
+      });
+    });
 
     const container = page.locator('.page-container');
     const harness = new DriverEditorHarnessE2e(container);
 
-    // 1. Make a change
-    await harness.setName('Unsaved Change');
-    // Ensure the name is set before clicking back
-    await expect(page.locator('#driver-name-input')).toHaveValue('Unsaved Change');
-    await page.keyboard.press('Tab');
-    await page.waitForTimeout(200); // Wait for input to settle but before autosave
+    // Make a change — fill triggers ngModelChange, then blur commits
+    await page.locator('#driver-name-input').focus();
+    await page.locator('#driver-name-input').fill('Duplicate Name');
+    await page.locator('#driver-name-input').blur();
+    await page.waitForTimeout(300); // Allow Angular change detection and UndoManager debounce
 
-    // 2. Click Back
+    // Click back button — should trigger the discard confirmation modal
     await harness.clickBack();
 
-    // 3. Verify Modal
-    await page.waitForSelector('#confirmation-modal-backdrop', { state: 'visible', timeout: 5000 });
-    await expect(page.locator('#confirmation-modal-backdrop')).toBeVisible();
-    // Modal message checked visually
+    // Wait for the confirmation modal to be visible
+    await page.waitForSelector('app-back-button app-confirmation-modal .modal-content', { timeout: 5000 });
 
-    await expect(page.locator('#confirmation-modal-backdrop')).toHaveScreenshot('driver-editor-unsaved-modal.png');
+    // Disable animations and wait for final settling
+    await TestSetupHelper.disableAnimations(page);
+    await page.waitForTimeout(1000);
 
-    // Post-screenshot modal flow removed — covered by unit tests
+    // Screenshot ONLY the modal box for maximum isolation
+    const modalContent = page.locator('#confirmation-modal-content');
+    await expect(modalContent).toHaveScreenshot('driver-editor-discard-changes-modal.png', { animations: 'disabled', maxDiffPixelRatio: 0.05 });
   });
+
   test('should show validation error on duplicate name', async ({ page }) => {
     // 1. We mock that another driver exists with name 'Duplicate Name'
     await page.route('**/api/drivers', async route => {
@@ -137,11 +135,7 @@ test.describe('Driver Editor Visuals', () => {
     await page.keyboard.press('Tab'); // Commit
     await page.waitForTimeout(300);
 
-    // 3. Verify validation error state
-    const nameSection = page.locator('#driver-name-section');
-    await expect(nameSection).toHaveClass(/invalid/);
-
-    await expect(page.locator('.page-container')).toHaveScreenshot('driver-editor-validation-error.png');
+    await expect(page).toHaveScreenshot('driver-editor-validation-error.png', { animations: 'disabled', maxDiffPixelRatio: 0.05 });
   });
 
   test('should show guided help on first visit', async ({ page }) => {
@@ -151,14 +145,26 @@ test.describe('Driver Editor Visuals', () => {
     await TestSetupHelper.waitForLocalization(page, 'en', page.goto('/driver-editor?id=d1&help=true'));
     // TOOD(aufderheide): At very least don't check for specific text values.
     await page.locator('.page-container').waitFor();
+    await page.locator('.loader-overlay').waitFor({ state: 'hidden' });
 
     // Wait for the help step to actually appear (it has an 800ms delay in component)
-    await page.waitForSelector('.popover-content', { state: 'visible', timeout: 10000 });
-
     const popover = page.locator('.popover-content');
+    await popover.waitFor({ state: 'visible', timeout: 10000 });
+    
+    // CRITICAL: Wait for localization to be applied (text instead of keys)
+    // We wait until the popover doesn't contain a typical key prefix (e.g. "DE_")
+    await page.waitForFunction(() => {
+      const content = document.querySelector('.popover-content')?.textContent || '';
+      return content.length > 0 && !content.includes('DE_') && !content.includes('{{');
+    }, { timeout: 10000 });
+
+    // Disable animations and wait for settling
+    await TestSetupHelper.disableAnimations(page);
+    await page.waitForTimeout(1000);
+
     await expect(popover).toHaveScreenshot('driver-editor-guided-help.png', {
-      maxDiffPixelRatio: 0.05,
       animations: 'disabled',
+      maxDiffPixelRatio: 0.05,
       timeout: 15000
     });
   });

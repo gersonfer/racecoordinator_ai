@@ -29,9 +29,13 @@ export class TrackEditorComponent implements OnInit, OnDestroy {
   scale: number = 1;
   isLoading: boolean = true;
   isSaving: boolean = false;
+  isDirty: boolean = false;
 
   undoManager!: UndoManager<Track>;
   allTracks: Track[] = [];
+
+  // Manual change tracking baseline
+  originalTrack: Track | null = null;
 
   @ViewChildren(ArduinoEditorComponent) arduinoEditors!: QueryList<ArduinoEditorComponent>;
 
@@ -232,6 +236,7 @@ export class TrackEditorComponent implements OnInit, OnDestroy {
       this.trackName = this.editingTrack.name;
       this.lanes = [...this.editingTrack.lanes];
 
+      this.originalTrack = this.cloneTrack(this.editingTrack);
       // Now initialize tracking with a fully populated model
       this.undoManager.initialize(this.editingTrack);
     }
@@ -253,10 +258,6 @@ export class TrackEditorComponent implements OnInit, OnDestroy {
     return new Track(track.entity_id, track.name, lanesCopy, track.has_digital_fuel, arduinoCopy);
   }
 
-  get isDirty(): boolean {
-    if (!this.editingTrack) return false;
-    return this.undoManager.hasChanges();
-  }
 
   private createSnapshot(): Track {
     if (!this.editingTrack) {
@@ -356,7 +357,13 @@ export class TrackEditorComponent implements OnInit, OnDestroy {
     this.colorDebounceTimer = null;
     this.undoManager.redo();
   }
-  hasChanges() { return this.undoManager.hasChanges(); }
+  hasChanges() {
+    const umChanges = this.undoManager.hasChanges();
+    if (!this.editingTrack || !this.originalTrack) return umChanges;
+    
+    // Check manual dirty flag or undo manager status
+    return this.isDirty || umChanges;
+  }
 
   startHelp() {
     const steps: GuideStep[] = [
@@ -452,10 +459,18 @@ export class TrackEditorComponent implements OnInit, OnDestroy {
 
   onInputFocus() { this.undoManager.onInputFocus(); }
   onInputChange() {
+    this.isDirty = true;
     this.undoManager.onInputChange();
+    this.cdr.detectChanges();
   }
-  onInputBlur() { this.undoManager.onInputBlur(); }
-  captureState() { this.undoManager.captureState(); }
+  onInputBlur() { 
+    this.undoManager.onInputBlur(); 
+    this.cdr.detectChanges();
+  }
+  captureState() {
+    this.undoManager.captureState();
+    this.cdr.detectChanges();
+  }
 
   // Lane Management
   addLane() {
@@ -712,7 +727,11 @@ export class TrackEditorComponent implements OnInit, OnDestroy {
           });
         }
 
-        this.undoManager.resetTracking(this.editingTrack);
+          if (this.editingTrack) {
+            this.isDirty = false;
+            this.originalTrack = this.cloneTrack(this.editingTrack);
+            this.undoManager.resetTracking(this.editingTrack);
+          }
 
         // Force sync with UI and children (especially back-button confirm input)
         if (!this.isDestroyed) {

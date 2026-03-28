@@ -25,6 +25,7 @@ export class TeamEditorComponent implements OnInit, OnDestroy {
   editingTeam?: Team;
   isLoading: boolean = true;
   isSaving: boolean = false;
+  isDirty: boolean = false;
   isAutoSaving: boolean = false;
   isUploading: boolean = false;
   scale: number = 1;
@@ -32,6 +33,9 @@ export class TeamEditorComponent implements OnInit, OnDestroy {
 
   // Undo Manager
   undoManager!: UndoManager<Team>;
+
+  // Manual change tracking baseline
+  originalTeam: Team | null = null;
 
   // Data
   allDrivers: Driver[] = [];
@@ -260,6 +264,7 @@ export class TeamEditorComponent implements OnInit, OnDestroy {
     }
 
     if (this.editingTeam) {
+      this.originalTeam = this.cloneTeam(this.editingTeam);
       this.undoManager.initialize(this.editingTeam);
     }
   }
@@ -267,11 +272,27 @@ export class TeamEditorComponent implements OnInit, OnDestroy {
   // Undo/Redo Proxies
   undo() { this.undoManager.undo(); }
   redo() { this.undoManager.redo(); }
-  hasChanges() { return this.undoManager.hasChanges(); }
+  hasChanges() {
+    const umChanges = this.undoManager.hasChanges();
+    if (!this.editingTeam || !this.originalTeam) return umChanges;
+    
+    // Use manual dirty flag or undo manager status
+    return this.isDirty || umChanges;
+  }
   onInputFocus() { this.undoManager.onInputFocus(); }
-  onInputChange() { this.undoManager.onInputChange(); }
-  onInputBlur() { this.undoManager.onInputBlur(); }
-  captureState() { this.undoManager.captureState(); }
+  onInputChange() {
+    this.isDirty = true;
+    this.undoManager.onInputChange();
+    this.cdr.detectChanges();
+  }
+  onInputBlur() { 
+    this.undoManager.onInputBlur();
+    this.cdr.detectChanges();
+  }
+  captureState() {
+    this.undoManager.captureState();
+    this.cdr.detectChanges();
+  }
 
   private autoSaveTeam() {
     console.log('autoSaveTeam triggered');
@@ -326,10 +347,10 @@ export class TeamEditorComponent implements OnInit, OnDestroy {
         this.isSaving = false;
         this.isAutoSaving = false;
         if (this.editingTeam) {
-          const newId = result.entity_id || result.entityId;
-          this.editingTeam.entity_id = newId;
-          const savedTeam = this.cloneTeam(this.editingTeam);
-          this.undoManager.resetTracking(savedTeam);
+          this.editingTeam.entity_id = result.entity_id;
+          this.isDirty = false;
+          this.originalTeam = this.cloneTeam(this.editingTeam);
+          this.undoManager.resetTracking(this.editingTeam);
         }
         if (wasNew) {
           const newId = result.entity_id || result.entityId;
