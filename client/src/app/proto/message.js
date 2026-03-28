@@ -11586,6 +11586,8 @@ export const com = $root.com = (() => {
              * @property {com.antigravity.ITeamOptions|null} [teamOptions] RaceModel teamOptions
              * @property {number|null} [autoAdvanceTime] RaceModel autoAdvanceTime
              * @property {number|null} [autoStartTime] RaceModel autoStartTime
+             * @property {number|null} [autoAdvanceWarmupTime] RaceModel autoAdvanceWarmupTime
+             * @property {number|null} [autoStartWarmupTime] RaceModel autoStartWarmupTime
              */
 
             /**
@@ -11692,6 +11694,22 @@ export const com = $root.com = (() => {
             RaceModel.prototype.autoStartTime = 0;
 
             /**
+             * RaceModel autoAdvanceWarmupTime.
+             * @member {number} autoAdvanceWarmupTime
+             * @memberof com.antigravity.RaceModel
+             * @instance
+             */
+            RaceModel.prototype.autoAdvanceWarmupTime = 0;
+
+            /**
+             * RaceModel autoStartWarmupTime.
+             * @member {number} autoStartWarmupTime
+             * @memberof com.antigravity.RaceModel
+             * @instance
+             */
+            RaceModel.prototype.autoStartWarmupTime = 0;
+
+            /**
              * Creates a new RaceModel instance using the specified properties.
              * @function create
              * @memberof com.antigravity.RaceModel
@@ -11737,6 +11755,10 @@ export const com = $root.com = (() => {
                     writer.uint32(/* id 10, wireType 1 =*/81).double(message.autoAdvanceTime);
                 if (message.autoStartTime != null && Object.hasOwnProperty.call(message, "autoStartTime"))
                     writer.uint32(/* id 11, wireType 1 =*/89).double(message.autoStartTime);
+                if (message.autoAdvanceWarmupTime != null && Object.hasOwnProperty.call(message, "autoAdvanceWarmupTime"))
+                    writer.uint32(/* id 12, wireType 1 =*/97).double(message.autoAdvanceWarmupTime);
+                if (message.autoStartWarmupTime != null && Object.hasOwnProperty.call(message, "autoStartWarmupTime"))
+                    writer.uint32(/* id 13, wireType 1 =*/105).double(message.autoStartWarmupTime);
                 return writer;
             };
 
@@ -11815,6 +11837,14 @@ export const com = $root.com = (() => {
                         }
                     case 11: {
                             message.autoStartTime = reader.double();
+                            break;
+                        }
+                    case 12: {
+                            message.autoAdvanceWarmupTime = reader.double();
+                            break;
+                        }
+                    case 13: {
+                            message.autoStartWarmupTime = reader.double();
                             break;
                         }
                     default:
@@ -11899,6 +11929,12 @@ export const com = $root.com = (() => {
                 if (message.autoStartTime != null && message.hasOwnProperty("autoStartTime"))
                     if (typeof message.autoStartTime !== "number")
                         return "autoStartTime: number expected";
+                if (message.autoAdvanceWarmupTime != null && message.hasOwnProperty("autoAdvanceWarmupTime"))
+                    if (typeof message.autoAdvanceWarmupTime !== "number")
+                        return "autoAdvanceWarmupTime: number expected";
+                if (message.autoStartWarmupTime != null && message.hasOwnProperty("autoStartWarmupTime"))
+                    if (typeof message.autoStartWarmupTime !== "number")
+                        return "autoStartWarmupTime: number expected";
                 return null;
             };
 
@@ -11957,6 +11993,10 @@ export const com = $root.com = (() => {
                     message.autoAdvanceTime = Number(object.autoAdvanceTime);
                 if (object.autoStartTime != null)
                     message.autoStartTime = Number(object.autoStartTime);
+                if (object.autoAdvanceWarmupTime != null)
+                    message.autoAdvanceWarmupTime = Number(object.autoAdvanceWarmupTime);
+                if (object.autoStartWarmupTime != null)
+                    message.autoStartWarmupTime = Number(object.autoStartWarmupTime);
                 return message;
             };
 
@@ -11985,6 +12025,8 @@ export const com = $root.com = (() => {
                     object.teamOptions = null;
                     object.autoAdvanceTime = 0;
                     object.autoStartTime = 0;
+                    object.autoAdvanceWarmupTime = 0;
+                    object.autoStartWarmupTime = 0;
                 }
                 if (message.model != null && message.hasOwnProperty("model"))
                     object.model = $root.com.antigravity.Model.toObject(message.model, options);
@@ -12008,6 +12050,10 @@ export const com = $root.com = (() => {
                     object.autoAdvanceTime = options.json && !isFinite(message.autoAdvanceTime) ? String(message.autoAdvanceTime) : message.autoAdvanceTime;
                 if (message.autoStartTime != null && message.hasOwnProperty("autoStartTime"))
                     object.autoStartTime = options.json && !isFinite(message.autoStartTime) ? String(message.autoStartTime) : message.autoStartTime;
+                if (message.autoAdvanceWarmupTime != null && message.hasOwnProperty("autoAdvanceWarmupTime"))
+                    object.autoAdvanceWarmupTime = options.json && !isFinite(message.autoAdvanceWarmupTime) ? String(message.autoAdvanceWarmupTime) : message.autoAdvanceWarmupTime;
+                if (message.autoStartWarmupTime != null && message.hasOwnProperty("autoStartWarmupTime"))
+                    object.autoStartWarmupTime = options.json && !isFinite(message.autoStartWarmupTime) ? String(message.autoStartWarmupTime) : message.autoStartWarmupTime;
                 return object;
             };
 

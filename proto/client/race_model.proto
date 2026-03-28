@@ -79,6 +79,8 @@ message RaceModel {
   TeamOptions team_options = 9;
   double auto_advance_time = 10;
   double auto_start_time = 11;
+  double auto_advance_warmup_time = 12;
+  double auto_start_warmup_time = 13;
 }
 
 enum FuelUsageType {

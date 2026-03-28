@@ -53,6 +53,7 @@ public class PowerManager {
         if (state.firstMainPower || state.currentMainPower != on) {
           protocol.setMainPower(on);
           state.firstMainPower = false;
+          logger.info("Main Power set to {} for protocol {}", on ? "ON" : "OFF", i);
         }
       } else if (protocol.hasPerLaneRelays()) {
         for (int lane = 0; lane < numLanes; lane++) {
@@ -61,13 +62,12 @@ public class PowerManager {
             protocol.setLanePower(effectivePower, lane);
             state.firstLanePower[lane] = false;
             state.currentLanePower[lane] = effectivePower;
+            logger.info("Main Power (per-lane) set to {} for protocol {} lane {}", effectivePower ? "ON" : "OFF", i, lane + 1);
           }
         }
       }
-      // Nothing to do with the protocol if it doen't have any relays.
       state.currentMainPower = on;
     }
-    logger.info("Main Power set to {}", on ? "ON" : "OFF");
   }
 
   public void setLanePower(boolean on, int lane) {
@@ -85,10 +85,10 @@ public class PowerManager {
           protocol.setLanePower(effectivePower, lane);
           state.firstLanePower[lane] = false;
           state.currentLanePower[lane] = effectivePower;
+          logger.info("Lane Power set to {} for lane {}", effectivePower ? "ON" : "OFF", lane + 1);
         }
         state.desiredLanePower[lane] = on;
       }
     }
-    logger.info("Lane Power set to {} for lane {}", on ? "ON" : "OFF", lane + 1);
   }
 }

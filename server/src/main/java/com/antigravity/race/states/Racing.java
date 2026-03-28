@@ -274,7 +274,9 @@ public class Racing implements IRaceState {
 
   @Override
   public void restartHeat(com.antigravity.race.Race race) {
-    throw new IllegalStateException("Cannot restart heat from state: " + this.getClass().getSimpleName());
+    System.out.println("Racing.restartHeat() called. Resetting current heat.");
+    race.resetCurrentHeat();
+    race.changeState(new com.antigravity.race.states.NotStarted());
   }
 
   @Override

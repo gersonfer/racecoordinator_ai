@@ -389,6 +389,9 @@
   "RD_AUTO_START_COUNTDOWN": "Auto-Start in: {{time}}",
  
   "RD_AUTO_ADVANCE_COUNTDOWN": "Auto-Weiter in: {{time}}",
+  "RE_AUTO_ADVANCE_WARMUP_TIME": "Auto-Advance Aufwärmzeit (Sekunden)",
+  "RE_AUTO_START_WARMUP_TIME": "Auto-Start Aufwärmzeit (Sekunden)",
+  "RD_WARMUP": "WARMUP",
   "RD_AUTO_STARTING": "Auto-Start",
   "RD_AUTO_ADVANCING": "Auto-Weiter",
   "RD_WIN_GROUP_LEADER_BOARD": "Gruppen-Rangliste",

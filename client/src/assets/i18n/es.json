@@ -389,8 +389,11 @@
   "RD_AUTO_START_COUNTDOWN": "Auto-Inicio en: {{time}}",
  
   "RD_AUTO_ADVANCE_COUNTDOWN": "Auto-Avance en: {{time}}",
-  "RD_AUTO_STARTING": "Auto-Inicio",
-  "RD_AUTO_ADVANCING": "Auto-Avance",
+  "RD_AUTO_ADVANCE_WARMUP_TIME": "Tiempo de calentamiento de avance automático (segundos)",
+  "RD_AUTO_START_WARMUP_TIME": "Tiempo de calentamiento de inicio automático (segundos)",
+  "RD_WARMUP": "CALENTAMIENTO",
+  "RD_AUTO_STARTING": "AUTO-INICIO",
+  "RD_AUTO_ADVANCING": "AUTO-AVANCE",
   "RD_WIN_GROUP_LEADER_BOARD": "Clasificación Grupo",
   "RD_WIN_HEAT_LIST": "Lista Mangas",
   "RD_WIN_HEAT_RESULTS": "Resultados Manga",

@@ -797,10 +797,15 @@
   "RD_MENU_WINDOWS": "Windows",
  
   "RD_AUTO_START_COUNTDOWN": "Auto-Start in: {{time}}",
+  "RE_AUTO_ADVANCE_WARMUP_TIME": "Auto-Advance Warmup Time (seconds)",
+  "RE_AUTO_ADVANCE_WARMUP_TIME_HINT": "The track power will turn on for the last X seconds of the auto-advance timer.",
+  "RE_AUTO_START_WARMUP_TIME": "Auto-Start Warmup Time (seconds)",
+  "RE_AUTO_START_WARMUP_TIME_HINT": "The track power and lap recording will stay on for the first X seconds of the auto-start timer for a warmup session.",
  
   "RD_AUTO_ADVANCE_COUNTDOWN": "Auto-Advance in: {{time}}",
-  "RD_AUTO_STARTING": "Auto-Starting",
-  "RD_AUTO_ADVANCING": "Auto-Advancing",
+  "RD_WARMUP": "WARMUP",
+  "RD_AUTO_STARTING": "AUTO-STARTING",
+  "RD_AUTO_ADVANCING": "AUTO-ADVANCING",
 
   "RD_WIN_GROUP_LEADER_BOARD": "Group Leader Board",
 

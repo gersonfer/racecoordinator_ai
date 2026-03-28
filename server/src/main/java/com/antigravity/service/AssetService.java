@@ -68,6 +68,7 @@ public class AssetService {
     DEFAULT_IMAGE_ASSETS.add(new DefaultAsset("flag_green.png", "Green Flag"));
     DEFAULT_IMAGE_ASSETS.add(new DefaultAsset("flag_red.png", "Red Flag"));
     DEFAULT_IMAGE_ASSETS.add(new DefaultAsset("flag_yellow.png", "Yellow Flag"));
+    DEFAULT_IMAGE_ASSETS.add(new DefaultAsset("flag_green_yellow.png", "Yellow Green Flag"));
     DEFAULT_IMAGE_ASSETS.add(new DefaultAsset("flag_black.png", "Black Flag"));
     DEFAULT_IMAGE_ASSETS.add(new DefaultAsset("flag_white.png", "White Flag"));
     DEFAULT_IMAGE_ASSETS.add(new DefaultAsset("flag_checkered.png", "Checkered Flag"));

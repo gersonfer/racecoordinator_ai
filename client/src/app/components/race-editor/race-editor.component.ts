@@ -173,7 +173,9 @@ export class RaceEditorComponent implements OnInit, OnDestroy {
           this.editingRace = {
             ...this.deepCopy(race),
             auto_advance_time: race.auto_advance_time || 0,
-            auto_start_time: race.auto_start_time || 0
+            auto_start_time: race.auto_start_time || 0,
+            auto_advance_warmup_time: race.auto_advance_warmup_time || 0,
+            auto_start_warmup_time: race.auto_start_warmup_time || 0
           };
           if (!this.editingRace.fuel_options) {
             this.editingRace.fuel_options = {
@@ -266,6 +268,8 @@ export class RaceEditorComponent implements OnInit, OnDestroy {
       },
       auto_advance_time: 0,
       auto_start_time: 0,
+      auto_advance_warmup_time: 0,
+      auto_start_warmup_time: 0,
       fuel_options: {
         enabled: false,
         reset_fuel_at_heat_start: false,
@@ -310,11 +314,24 @@ export class RaceEditorComponent implements OnInit, OnDestroy {
   }
 
   captureState() {
+    this.validateWarmupTimes();
     this.enforceFuelRules();
     this.undoManager.captureState();
     // Regenerate heats when rotation type changes (even for new races)
     if (this.driverCount > 0) {
       this.loadHeats();
+    }
+  }
+
+  private validateWarmupTimes() {
+    if (!this.editingRace) return;
+
+    if (this.editingRace.auto_advance_warmup_time > this.editingRace.auto_advance_time) {
+      this.editingRace.auto_advance_warmup_time = this.editingRace.auto_advance_time;
+    }
+
+    if (this.editingRace.auto_start_warmup_time > this.editingRace.auto_start_time) {
+      this.editingRace.auto_start_warmup_time = this.editingRace.auto_start_time;
     }
   }
 
@@ -1065,6 +1082,8 @@ export class RaceEditorComponent implements OnInit, OnDestroy {
       } : undefined,
       auto_advance_time: race.auto_advance_time,
       auto_start_time: race.auto_start_time,
+      auto_advance_warmup_time: race.auto_advance_warmup_time,
+      auto_start_warmup_time: race.auto_start_warmup_time,
       min_lap_time: race.min_lap_time,
       team_options: race.team_options ? {
         heat_lap_limit: race.team_options.heat_lap_limit,

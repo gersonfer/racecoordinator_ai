@@ -83,7 +83,12 @@ export class RaceConverter {
                     heatScoring,
                     overallScoring,
                     fuelOptions,
-                    digitalFuelOptions
+                    digitalFuelOptions,
+                    undefined, // team_options
+                    proto.autoAdvanceTime || 0,
+                    proto.autoStartTime || 0,
+                    proto.autoAdvanceWarmupTime || 0,
+                    proto.autoStartWarmupTime || 0
                 );
             },
             () => {

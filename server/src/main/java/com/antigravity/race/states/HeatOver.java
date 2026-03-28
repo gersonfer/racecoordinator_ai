@@ -51,7 +51,9 @@ public class HeatOver implements IRaceState {
 
   @Override
   public void restartHeat(com.antigravity.race.Race race) {
-    throw new IllegalStateException("Cannot restart heat from state: " + this.getClass().getSimpleName());
+    System.out.println("HeatOver.restartHeat() called. Resetting current heat.");
+    race.resetCurrentHeat();
+    race.changeState(new com.antigravity.race.states.NotStarted());
   }
 
   @Override
@@ -97,6 +99,21 @@ public class HeatOver implements IRaceState {
             race.moveToNextHeat();
           } else {
             race.setAutoAdvanceRemaining(remaining);
+            
+            // Handle warmup time power logic
+            double warmupTime = race.getRaceModel().getAutoAdvanceWarmupTime();
+            if (warmupTime > 0) {
+              if (remaining <= warmupTime) {
+                if (!race.isMainPower()) {
+                  race.setMainPower(true);
+                }
+              } else {
+                if (race.isMainPower()) {
+                  race.setMainPower(false);
+                }
+              }
+            }
+
             broadcastTime(race);
           }
         } catch (Exception e) {

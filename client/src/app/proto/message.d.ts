@@ -4916,6 +4916,12 @@ export namespace com {
 
             /** RaceModel autoStartTime */
             autoStartTime?: (number|null);
+
+            /** RaceModel autoAdvanceWarmupTime */
+            autoAdvanceWarmupTime?: (number|null);
+
+            /** RaceModel autoStartWarmupTime */
+            autoStartWarmupTime?: (number|null);
         }
 
         /** Represents a RaceModel. */
@@ -4959,6 +4965,12 @@ export namespace com {
 
             /** RaceModel autoStartTime. */
             public autoStartTime: number;
+
+            /** RaceModel autoAdvanceWarmupTime. */
+            public autoAdvanceWarmupTime: number;
+
+            /** RaceModel autoStartWarmupTime. */
+            public autoStartWarmupTime: number;
 
             /**
              * Creates a new RaceModel instance using the specified properties.

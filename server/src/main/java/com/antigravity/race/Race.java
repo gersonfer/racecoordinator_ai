@@ -42,6 +42,7 @@ public class Race implements ProtocolListener {
   private boolean autoAdvanceFired = false;
   private double autoStartRemaining = 0;
   private double autoAdvanceRemaining = 0;
+  private boolean mainPower = false;
 
   public Race(com.antigravity.models.Race model,
       List<com.antigravity.race.RaceParticipant> drivers,
@@ -345,7 +346,15 @@ public class Race implements ProtocolListener {
   }
 
   public void setMainPower(boolean on) {
+    if (this.mainPower == on) {
+      return;
+    }
+    this.mainPower = on;
     protocols.setMainPower(on);
+  }
+
+  public boolean isMainPower() {
+    return mainPower;
   }
 
   public void setLanePower(boolean on, int lane) {
@@ -410,6 +419,42 @@ public class Race implements ProtocolListener {
 
     for (com.antigravity.race.DriverHeatData heatData : currentHeat.getDrivers()) {
       heatData.getDriver().setFuelLevel(heatData.getInitialFuelLevel());
+    }
+  }
+
+  public void resetCurrentHeat() {
+    System.out.println("Race.resetCurrentHeat() called.");
+
+    if (currentHeat != null) {
+      // Reset all drivers in the heat
+      for (com.antigravity.race.DriverHeatData driverData : currentHeat.getDrivers()) {
+        driverData.reset();
+      }
+
+      // Reset standings to initial order
+      currentHeat.getHeatStandings().reset();
+
+      // Reset race time
+      resetRaceTime();
+
+      restoreHeatFuel();
+
+      // Broadcast update to client
+      java.util.Set<String> sentObjectIds = new java.util.HashSet<>();
+      for (com.antigravity.race.RaceParticipant p : getDrivers()) {
+        sentObjectIds.add(com.antigravity.converters.HeatConverter.PARTICIPANT_PREFIX + p.getObjectId());
+      }
+
+      com.antigravity.proto.Race raceProto = com.antigravity.proto.Race.newBuilder()
+          .setCurrentHeat(com.antigravity.converters.HeatConverter.toProto(currentHeat, sentObjectIds))
+          .build();
+
+      broadcast(com.antigravity.proto.RaceData.newBuilder()
+          .setRace(raceProto)
+          .build());
+
+      // Also broadcast time reset
+      broadcastTime();
     }
   }
 

@@ -152,6 +152,8 @@ public class DatabaseService {
         .withMinLapTime(3.0)
         .withAutoAdvanceTime(0.0)
         .withAutoStartTime(0.0)
+        .withAutoAdvanceWarmupTime(0.0)
+        .withAutoStartWarmupTime(0.0)
         .withEntityId(getNextSequence(database, "races"))
         .build();
 
@@ -173,6 +175,8 @@ public class DatabaseService {
         .withMinLapTime(3.0)
         .withAutoAdvanceTime(0.0)
         .withAutoStartTime(0.0)
+        .withAutoAdvanceWarmupTime(0.0)
+        .withAutoStartWarmupTime(0.0)
         .withEntityId(getNextSequence(database, "races"))
         .build();
 

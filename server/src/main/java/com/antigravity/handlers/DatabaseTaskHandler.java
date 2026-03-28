@@ -542,6 +542,8 @@ public class DatabaseTaskHandler {
           .withTeamOptions(race.getTeamOptions())
           .withAutoAdvanceTime(race.getAutoAdvanceTime())
           .withAutoStartTime(race.getAutoStartTime())
+          .withAutoAdvanceWarmupTime(race.getAutoAdvanceWarmupTime())
+          .withAutoStartWarmupTime(race.getAutoStartWarmupTime())
           .withEntityId(nextId)
           .build();
     }
@@ -593,6 +595,8 @@ public class DatabaseTaskHandler {
         .withTeamOptions(race.getTeamOptions())
         .withAutoAdvanceTime(race.getAutoAdvanceTime())
         .withAutoStartTime(race.getAutoStartTime())
+        .withAutoAdvanceWarmupTime(race.getAutoAdvanceWarmupTime())
+        .withAutoStartWarmupTime(race.getAutoStartWarmupTime())
         .withEntityId(id)
         .withId(race.getId())
         .build();
@@ -674,6 +678,8 @@ public class DatabaseTaskHandler {
       raceMap.put("team_options", race.getTeamOptions());
       raceMap.put("auto_advance_time", race.getAutoAdvanceTime());
       raceMap.put("auto_start_time", race.getAutoStartTime());
+      raceMap.put("auto_advance_warmup_time", race.getAutoAdvanceWarmupTime());
+      raceMap.put("auto_start_warmup_time", race.getAutoStartWarmupTime());
       response.add(raceMap);
     }
     ctx.json(response);
@@ -816,6 +822,10 @@ public class DatabaseTaskHandler {
         .withHeatRotationType(rotationTypeEnum)
         .withHeatScoring(defaultHeatScoring)
         .withOverallScoring(defaultOverallScoring)
+        .withAutoAdvanceTime(0.0)
+        .withAutoStartTime(0.0)
+        .withAutoAdvanceWarmupTime(0.0)
+        .withAutoStartWarmupTime(0.0)
         .build();
 
     // Create mock RaceParticipant list

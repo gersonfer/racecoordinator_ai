@@ -251,4 +251,24 @@ test.describe('Race Editor Visuals', () => {
     await TestSetupHelper.disableAnimations(page);
     await expect(page.locator('#team-options-section')).toHaveScreenshot('race-editor-team-expanded.png', { timeout: 15000, maxDiffPixelRatio: 0.05 });
   });
+
+  test('should display Heats section expanded', async ({ page }) => {
+    await TestSetupHelper.waitForLocalization(page, 'en', page.goto('/race-editor?id=r1&driverCount=4'));
+    await page.waitForTimeout(2000);
+    await expect(page.locator('.editor-panel')).toBeAttached({ timeout: 10000 });
+
+    // Collapse other sections to isolate Heats
+    await ensureSectionState(page, 'General', false);
+    await ensureSectionState(page, 'Scoring', false);
+    await ensureSectionState(page, 'Analog Fuel Configuration', false);
+    await ensureSectionState(page, 'Digital Fuel Configuration', false);
+    await ensureSectionState(page, 'Team Options', false);
+    
+    // Expand Heats
+    await ensureSectionState(page, 'Heat Configuration', true);
+    await page.waitForTimeout(500);
+
+    await TestSetupHelper.disableAnimations(page);
+    await expect(page.locator('#heats-section')).toHaveScreenshot('race-editor-heats-expanded.png', { timeout: 15000, maxDiffPixelRatio: 0.05 });
+  });
 });

@@ -54,6 +54,9 @@ export class DefaultRacedayComponent implements OnInit, OnDestroy {
   protected sortedHeatDrivers: DriverHeatData[] = [];
   protected allDrivers: any[] = [];
   protected get autoCountdownLabel(): string {
+    if (this.isWarmup) {
+      return this.translationService.translate('RD_WARMUP');
+    }
     if (this.autoStartRemaining > 0) {
       return this.translationService.translate('RD_AUTO_STARTING');
     }
@@ -61,6 +64,27 @@ export class DefaultRacedayComponent implements OnInit, OnDestroy {
       return this.translationService.translate('RD_AUTO_ADVANCING');
     }
     return '';
+  }
+
+  protected get isWarmup(): boolean {
+    if (this.autoStartRemaining > 0 && this.race) {
+      const warmupTime = this.race.auto_start_warmup_time || 0;
+      const totalTime = this.race.auto_start_time || 0;
+      if (warmupTime > 0 && totalTime > 0) {
+        // Warmup is at the BEGINNING of auto-start
+        // elapsed = totalTime - autoStartRemaining
+        return (totalTime - this.autoStartRemaining) < warmupTime;
+      }
+    }
+    if (this.autoAdvanceRemaining > 0 && this.race) {
+      const warmupTime = this.race.auto_advance_warmup_time || 0;
+      const totalTime = this.race.auto_advance_time || 0;
+      if (warmupTime > 0 && totalTime > 0) {
+        // Warmup is at the END of auto-advance
+        return this.autoAdvanceRemaining <= warmupTime;
+      }
+    }
+    return false;
   }
 
   private previousTime: number = 0;
@@ -963,42 +987,46 @@ export class DefaultRacedayComponent implements OnInit, OnDestroy {
     const race = this.raceService.getRace();
     const scoring = race?.heat_scoring;
 
-    let flagType: 'red' | 'green' | 'yellow' | 'white' | 'checkered' = 'red';
-
-    switch (this.raceState) {
-      case RS.NOT_STARTED:
-      case RS.HEAT_OVER:
-      case RS.RACE_OVER:
-        flagType = 'red';
-        break;
-      case RS.STARTING:
-        // Use yellow if heat is in progress (resuming), red if it hasn't started yet
-        flagType = this.hasRacedInCurrentHeat ? 'yellow' : 'red';
-        break;
-      case RS.RACING:
-        flagType = 'green';
-        // Check for White Flag (1 lap to go)
-        if (scoring?.finishMethod === FinishMethod.Lap && this.heat?.heatDrivers) {
-          const lapsToFinish = scoring.finishValue;
-          const anyDriverOneLapToGo = this.heat.heatDrivers.some(d => d.lapCount === lapsToFinish - 1);
-          if (anyDriverOneLapToGo) {
-            flagType = 'white';
+    let flagType: 'red' | 'green' | 'yellow' | 'white' | 'checkered' | 'green_yellow' = 'red';
+    
+    if (this.isWarmup) {
+      flagType = 'green_yellow';
+    } else {
+      switch (this.raceState) {
+        case RS.NOT_STARTED:
+        case RS.HEAT_OVER:
+        case RS.RACE_OVER:
+          flagType = 'red';
+          break;
+        case RS.STARTING:
+          // Use yellow if heat is in progress (resuming), red if it hasn't started yet
+          flagType = this.hasRacedInCurrentHeat ? 'yellow' : 'red';
+          break;
+        case RS.RACING:
+          flagType = 'green';
+          // Check for White Flag (1 lap to go)
+          if (scoring?.finishMethod === FinishMethod.Lap && this.heat?.heatDrivers) {
+            const lapsToFinish = scoring.finishValue;
+            const anyDriverOneLapToGo = this.heat.heatDrivers.some(d => d.lapCount === lapsToFinish - 1);
+            if (anyDriverOneLapToGo) {
+              flagType = 'white';
+            }
           }
-        }
 
-        // Feature: Checkered flag if any driver has finished (and race allows finishing)
-        if (scoring?.allowFinish !== AllowFinish.AF_NONE && this.heat?.heatDrivers) {
-          const atLeastOneFinished = this.heat.heatDrivers.some(d => this.isDriverFinished(d, scoring));
-          if (atLeastOneFinished) {
-            flagType = 'checkered';
+          // Feature: Checkered flag if any driver has finished (and race allows finishing)
+          if (scoring?.allowFinish !== AllowFinish.AF_NONE && this.heat?.heatDrivers) {
+            const atLeastOneFinished = this.heat.heatDrivers.some(d => this.isDriverFinished(d, scoring));
+            if (atLeastOneFinished) {
+              flagType = 'checkered';
+            }
           }
-        }
-        break;
-      case RS.PAUSED:
-        flagType = 'yellow';
-        break;
-      default:
-        flagType = 'red';
+          break;
+        case RS.PAUSED:
+          flagType = 'yellow';
+          break;
+        default:
+          flagType = 'red';
+      }
     }
 
     // Check local settings first
@@ -1031,7 +1059,8 @@ export class DefaultRacedayComponent implements OnInit, OnDestroy {
       'yellow': 'Yellow Flag',
       'white': 'White Flag',
       'black': 'Black Flag',
-      'checkered': 'Checkered Flag'
+      'checkered': 'Checkered Flag',
+      'green_yellow': 'Yellow Green Flag'
     };
 
     const displayName = displayNames[flagType];

@@ -3,20 +3,33 @@ package com.antigravity.race.states;
 public class NotStarted implements IRaceState {
 	private java.util.concurrent.ScheduledExecutorService scheduler;
 	private java.util.concurrent.ScheduledFuture<?> timerHandle;
+	private com.antigravity.race.Race race;
 
 	@Override
 	public void enter(com.antigravity.race.Race race) {
 		System.out.println("NotStarted state entered.");
-		race.setMainPower(false);
-		race.setLanePower(true, -1);
+		this.race = race;
 		race.setHasRacedInCurrentHeat(false);
 
 		double autoStartTime = race.getRaceModel().getAutoStartTime();
+		double autoStartWarmupTime = race.getRaceModel().getAutoStartWarmupTime();
+
 		if (autoStartTime > 0 && !race.isAutoStartFired()) {
 			race.setAutoStartRemaining(autoStartTime);
+			
+			// Handle initial power state to avoid transient flicker
+			if (autoStartWarmupTime > 0) {
+				race.setMainPower(true);
+			} else {
+				race.setMainPower(false);
+			}
+			
+			race.setLanePower(true, -1);
 			startAutoStartTimer(race);
 		} else {
 			race.setAutoStartRemaining(0);
+			race.setMainPower(false);
+			race.setLanePower(true, -1);
 			broadcastTime(race);
 		}
 	}
@@ -43,14 +56,28 @@ public class NotStarted implements IRaceState {
 	@Override
 	public void pause(com.antigravity.race.Race race) {
 		System.out.println("NotStarted.pause() called. Terminating auto-start.");
+		
+		double autoStartTime = race.getRaceModel().getAutoStartTime();
+		double autoStartWarmupTime = race.getRaceModel().getAutoStartWarmupTime();
+		double elapsed = autoStartTime - race.getAutoStartRemaining();
+
+		if (autoStartWarmupTime > 0 && elapsed <= autoStartWarmupTime) {
+			System.out.println("NotStarted.pause(): Warmup was active, resetting heat.");
+			race.resetCurrentHeat();
+		}
+
 		stopTimer();
 		race.setAutoStartFired(true);
 		race.clearAutoTimers();
+		race.setMainPower(false);
 	}
 
 	@Override
 	public void restartHeat(com.antigravity.race.Race race) {
-		throw new IllegalStateException("Cannot restart heat from state: " + this.getClass().getSimpleName());
+		System.out.println("NotStarted.restartHeat() called. Resetting current heat.");
+		race.resetCurrentHeat();
+		// Re-enter NotStarted state to restart the auto-start timer if configured
+		race.changeState(new com.antigravity.race.states.NotStarted());
 	}
 
 	@Override
@@ -106,12 +133,68 @@ public class NotStarted implements IRaceState {
 
 	@Override
 	public void onLap(int lane, double lapTime, int interfaceId) {
-		// Cannot receive laps in NotStarted state
+		if (this.race == null) return;
+
+		double autoStartTime = race.getRaceModel().getAutoStartTime();
+		double autoStartWarmupTime = race.getRaceModel().getAutoStartWarmupTime();
+		double elapsed = autoStartTime - race.getAutoStartRemaining();
+
+		if (autoStartWarmupTime > 0 && elapsed <= autoStartWarmupTime) {
+			System.out.println("NotStarted.onLap(): Recording warmup lap for lane " + lane);
+			// We handle this similarly to Racing state but without finish conditions
+			com.antigravity.race.Heat currentHeat = race.getCurrentHeat();
+			if (currentHeat != null && lane >= 0 && lane < currentHeat.getDrivers().size()) {
+				com.antigravity.race.DriverHeatData driverData = currentHeat.getDrivers().get(lane);
+				if (driverData != null) {
+					// We'll just add the lap to the heat data directly
+					// The resetCurrentHeat() call later will clear these
+					driverData.addLap(lapTime);
+					
+					// Broadcast lap update
+					com.antigravity.proto.Lap lapMsg = com.antigravity.proto.Lap.newBuilder()
+						.setObjectId(driverData.getObjectId())
+						.setLapTime(lapTime)
+						.setLapNumber(driverData.getLapCount())
+						.setDriverId(driverData.getActualDriver() != null ? driverData.getActualDriver().getEntityId() : "")
+						.build();
+					
+					race.broadcast(com.antigravity.proto.RaceData.newBuilder()
+						.setLap(lapMsg)
+						.build());
+				}
+			}
+		}
 	}
 
 	@Override
 	public void onSegment(int lane, double segmentTime, int interfaceId) {
-		// Cannot receive segments in NotStarted state
+		if (this.race == null) return;
+
+		double autoStartTime = race.getRaceModel().getAutoStartTime();
+		double autoStartWarmupTime = race.getRaceModel().getAutoStartWarmupTime();
+		double elapsed = autoStartTime - race.getAutoStartRemaining();
+
+		if (autoStartWarmupTime > 0 && elapsed <= autoStartWarmupTime) {
+			System.out.println("NotStarted.onSegment(): Recording warmup segment for lane " + lane);
+			com.antigravity.race.Heat currentHeat = race.getCurrentHeat();
+			if (currentHeat != null && lane >= 0 && lane < currentHeat.getDrivers().size()) {
+				com.antigravity.race.DriverHeatData driverData = currentHeat.getDrivers().get(lane);
+				if (driverData != null) {
+					driverData.addSegment(segmentTime);
+					
+					// Broadcast segment update
+					com.antigravity.proto.Segment segmentMsg = com.antigravity.proto.Segment.newBuilder()
+						.setObjectId(driverData.getObjectId())
+						.setSegmentTime(segmentTime)
+						.setSegmentNumber(driverData.getSegments().size())
+						.build();
+					
+					race.broadcast(com.antigravity.proto.RaceData.newBuilder()
+						.setSegment(segmentMsg)
+						.build());
+				}
+			}
+		}
 	}
 
 	@Override
@@ -144,6 +227,27 @@ public class NotStarted implements IRaceState {
 						race.startRace();
 					} else {
 						race.setAutoStartRemaining(remaining);
+						
+						// Handle warmup time power logic
+						double autoStartTime = race.getRaceModel().getAutoStartTime();
+						double autoStartWarmupTime = race.getRaceModel().getAutoStartWarmupTime();
+						double elapsed = autoStartTime - remaining;
+						
+						if (autoStartWarmupTime > 0) {
+							if (elapsed <= autoStartWarmupTime) {
+								if (!race.isMainPower()) {
+									race.setMainPower(true);
+								}
+							} else {
+								if (race.isMainPower()) {
+									// Warmup just ended
+									System.out.println("NotStarted: Warmup ended. Turning off power and resetting heat.");
+									race.setMainPower(false);
+									race.resetCurrentHeat();
+								}
+							}
+						}
+						
 						broadcastTime(race);
 					}
 				} catch (Exception e) {

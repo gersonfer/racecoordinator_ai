@@ -55,37 +55,52 @@ JAVA_OUT="$TARGET_DIR/generated-sources/protobuf/java"
 # Ensure output directory exists
 mkdir -p "$JAVA_OUT"
 
-# Ensure protoc exists in local maven repository (downloaded by maven plugin)
-if [ ! -f "$PROTOC_M2" ]; then
-  echo "Protoc not found at:"
-  echo "  $PROTOC_M2"
-  echo "Attempting to download via 'mvn protobuf:compile'..."
-  mvn protobuf:compile > /dev/null 2>&1
-fi
+# Priority: 1. protoc_local.exe in server dir, 2. PROTOC_M2
+if [ -f "$SERVER_DIR/protoc_local.exe" ]; then
+  echo "Using local protoc found in server directory."
+  PROTOC_LOCAL="$SERVER_DIR/protoc_local.exe"
+else
+  # Ensure protoc exists in local maven repository (downloaded by maven plugin)
+  if [ ! -f "$PROTOC_M2" ]; then
+    echo "Protoc not found at:"
+    echo "  $PROTOC_M2"
+    echo "Attempting to download via 'mvn protobuf:compile'..."
+    mvn protobuf:compile > /dev/null 2>&1
+  fi
 
-# Final verification
-if [ ! -f "$PROTOC_M2" ]; then
-  echo "ERROR: Protoc still not found after maven download."
-  exit 1
-fi
+  # Final verification
+  if [ ! -f "$PROTOC_M2" ]; then
+    echo "ERROR: Protoc still not found after maven download."
+    exit 1
+  fi
 
-PROTOC_LOCAL="$TARGET_DIR/protoc-plugins/$PROTOC_BIN"
-mkdir -p "$(dirname "$PROTOC_LOCAL")"
+  PROTOC_LOCAL="$TARGET_DIR/protoc-plugins/$PROTOC_BIN"
+  mkdir -p "$(dirname "$PROTOC_LOCAL")"
 
-# Only copy if needed
-if [ ! -f "$PROTOC_LOCAL" ] || [ "$PROTOC_M2" -nt "$PROTOC_LOCAL" ]; then
-  cp "$PROTOC_M2" "$PROTOC_LOCAL"
-  chmod +x "$PROTOC_LOCAL"
+  # Only copy if needed
+  if [ ! -f "$PROTOC_LOCAL" ] || [ "$PROTOC_M2" -nt "$PROTOC_LOCAL" ]; then
+    cp "$PROTOC_M2" "$PROTOC_LOCAL"
+    chmod +x "$PROTOC_LOCAL"
+  fi
 fi
 
 echo "Generating protobuf files using:"
 echo "  $PROTOC_LOCAL"
 
+# Use find with null terminator to safely handle spaces in paths
+PROTO_FILES=()
+while IFS=  read -r -d $'\0'; do
+    PROTO_FILES+=("$REPLY")
+done < <(find "$PROTO_ROOT" -name "*.proto" -print0)
+
+if [ ${#PROTO_FILES[@]} -eq 0 ]; then
+    echo "ERROR: No .proto files found in $PROTO_ROOT"
+    exit 1
+fi
+
 "$PROTOC_LOCAL" \
   --proto_path="$PROTO_ROOT" \
   --java_out="$JAVA_OUT" \
-  "$PROTO_ROOT"/client/*.proto \
-  "$PROTO_ROOT"/server/*.proto \
-  "$PROTO_ROOT"/message.proto
+  "${PROTO_FILES[@]}"
 
 echo "Protobuf compilation successful."

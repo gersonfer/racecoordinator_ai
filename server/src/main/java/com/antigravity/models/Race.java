@@ -49,6 +49,12 @@ public class Race extends Model {
 	@BsonProperty("auto_start_time")
 	@JsonProperty("auto_start_time")
 	private final double autoStartTime;
+	@BsonProperty("auto_advance_warmup_time")
+	@JsonProperty("auto_advance_warmup_time")
+	private final double autoAdvanceWarmupTime;
+	@BsonProperty("auto_start_warmup_time")
+	@JsonProperty("auto_start_warmup_time")
+	private final double autoStartWarmupTime;
 
 	@BsonCreator
 	@JsonCreator
@@ -64,6 +70,8 @@ public class Race extends Model {
 			@BsonProperty("team_options") @JsonProperty("team_options") TeamOptions teamOptions,
 			@BsonProperty("auto_advance_time") @JsonProperty("auto_advance_time") Double autoAdvanceTime,
 			@BsonProperty("auto_start_time") @JsonProperty("auto_start_time") Double autoStartTime,
+			@BsonProperty("auto_advance_warmup_time") @JsonProperty("auto_advance_warmup_time") Double autoAdvanceWarmupTime,
+			@BsonProperty("auto_start_warmup_time") @JsonProperty("auto_start_warmup_time") Double autoStartWarmupTime,
 			@BsonProperty("entity_id") @JsonProperty("entity_id") String entityId,
 			@BsonId @JsonProperty("_id") ObjectId id) {
 		super(id, entityId);
@@ -79,6 +87,8 @@ public class Race extends Model {
 		this.teamOptions = teamOptions != null ? teamOptions : new TeamOptions();
 		this.autoAdvanceTime = autoAdvanceTime != null ? autoAdvanceTime : 0.0;
 		this.autoStartTime = autoStartTime != null ? autoStartTime : 0.0;
+		this.autoAdvanceWarmupTime = autoAdvanceWarmupTime != null ? autoAdvanceWarmupTime : 0.0;
+		this.autoStartWarmupTime = autoStartWarmupTime != null ? autoStartWarmupTime : 0.0;
 	}
 
 	public static class Builder {
@@ -93,6 +103,8 @@ public class Race extends Model {
 		private TeamOptions teamOptions = new TeamOptions();
 		private double autoAdvanceTime = 0.0;
 		private double autoStartTime = 0.0;
+		private double autoAdvanceWarmupTime = 0.0;
+		private double autoStartWarmupTime = 0.0;
 		private String entityId;
 		private ObjectId id;
 
@@ -151,6 +163,16 @@ public class Race extends Model {
 			return this;
 		}
 
+		public Builder withAutoAdvanceWarmupTime(double autoAdvanceWarmupTime) {
+			this.autoAdvanceWarmupTime = autoAdvanceWarmupTime;
+			return this;
+		}
+
+		public Builder withAutoStartWarmupTime(double autoStartWarmupTime) {
+			this.autoStartWarmupTime = autoStartWarmupTime;
+			return this;
+		}
+
 		public Builder withEntityId(String entityId) {
 			this.entityId = entityId;
 			return this;
@@ -163,7 +185,7 @@ public class Race extends Model {
 
 		public Race build() {
 			return new Race(name, trackEntityId, heatRotationType, heatScoring, null, overallScoring, minLapTime,
-					fuelOptions, digitalFuelOptions, teamOptions, autoAdvanceTime, autoStartTime, entityId, id);
+					fuelOptions, digitalFuelOptions, teamOptions, autoAdvanceTime, autoStartTime, autoAdvanceWarmupTime, autoStartWarmupTime, entityId, id);
 		}
 	}
 
@@ -210,5 +232,13 @@ public class Race extends Model {
 
 	public double getAutoStartTime() {
 		return autoStartTime;
+	}
+
+	public double getAutoAdvanceWarmupTime() {
+		return autoAdvanceWarmupTime;
+	}
+
+	public double getAutoStartWarmupTime() {
+		return autoStartWarmupTime;
 	}
 }

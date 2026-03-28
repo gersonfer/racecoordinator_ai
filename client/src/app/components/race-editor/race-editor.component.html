@@ -196,9 +196,27 @@
                   min="0" step="1">
               </div>
               <div class="config-section">
+                <label>
+                  {{ 'RE_AUTO_ADVANCE_WARMUP_TIME' | translate }}
+                  <span class="tooltip-icon" [attr.data-tooltip]="'RE_AUTO_ADVANCE_WARMUP_TIME_HINT' | translate">ⓘ</span>
+                </label>
+                <input type="number" [(ngModel)]="editingRace.auto_advance_warmup_time" (ngModelChange)="captureState()"
+                  min="0" [max]="editingRace.auto_advance_time || 0" step="1">
+              </div>
+            </div>
+            <div class="config-row">
+              <div class="config-section">
                 <label>{{ 'RE_AUTO_START_TIME' | translate }}</label>
                 <input type="number" [(ngModel)]="editingRace.auto_start_time" (ngModelChange)="captureState()"
                   min="0" step="1">
+              </div>
+              <div class="config-section">
+                <label>
+                  {{ 'RE_AUTO_START_WARMUP_TIME' | translate }}
+                  <span class="tooltip-icon" [attr.data-tooltip]="'RE_AUTO_START_WARMUP_TIME_HINT' | translate">ⓘ</span>
+                </label>
+                <input type="number" [(ngModel)]="editingRace.auto_start_warmup_time" (ngModelChange)="captureState()"
+                  min="0" [max]="editingRace.auto_start_time || 0" step="1">
               </div>
             </div>
           </div>
