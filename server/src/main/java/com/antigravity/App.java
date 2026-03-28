@@ -48,7 +48,7 @@ public class App {
   private static MongoClient mongoClient;
   private static final Logger logger = LoggerFactory.getLogger(App.class);
 
-  public static final String SERVER_VERSION = "0.0.0.11";
+  public static final String SERVER_VERSION = "0.0.0.12";
 
   public static void main(String[] args) {
     System.out.println("Race Coordinator AI Server " + SERVER_VERSION);
@@ -66,7 +66,7 @@ public class App {
       if (!Files.exists(tmpPath)) {
         Files.createDirectories(tmpPath);
       }
-//      System.setProperty("java.io.tmpdir", tmpDir);
+      // System.setProperty("java.io.tmpdir", tmpDir);
       System.out.println("Left java.io.tmpdir as default (commented out custom setter)");
     } catch (Exception e) {
       System.err.println("Failed to set java.io.tmpdir: " + e.getMessage());
@@ -255,7 +255,7 @@ public class App {
 
     com.antigravity.context.DatabaseContext databaseContext = new com.antigravity.context.DatabaseContext(
         mongoClient, initialDbName, configService, appDataDir);
-    
+
     com.antigravity.race.ClientSubscriptionManager.getInstance().setDatabaseContext(databaseContext);
 
     if (needsFactoryReset) {
@@ -461,12 +461,14 @@ public class App {
       String mongoTempDir = Paths.get(appDataDir, "mongo_temp").toString();
       try {
         java.nio.file.Files.createDirectories(Paths.get(mongoTempDir));
-      } catch (Exception e) {}
+      } catch (Exception e) {
+      }
 
       de.flapdoodle.embed.mongo.distribution.IFeatureAwareVersion mongoVersion = Version.Main.V4_4;
 
       ImmutableMongod mongod = Mongod.instance()
-          .withInitTempDirectory(de.flapdoodle.embed.process.transitions.InitTempDirectory.with(Paths.get(mongoTempDir)));
+          .withInitTempDirectory(
+              de.flapdoodle.embed.process.transitions.InitTempDirectory.with(Paths.get(mongoTempDir)));
       if (osName != null) {
         System.out.println("Detected OS: " + osName + " (" + osArch + ")");
         String lowerArch = (osArch != null) ? osArch.toLowerCase() : "";
