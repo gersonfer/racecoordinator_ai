@@ -85,7 +85,8 @@ export class TranslationService {
      * Set the current language
      */
     setLanguage(language: string): void {
-        this.loadTranslations(language);
+        const langToLoad = language || this.getBrowserLanguage();
+        this.loadTranslations(langToLoad);
     }
 
     /**

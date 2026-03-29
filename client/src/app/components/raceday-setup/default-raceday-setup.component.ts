@@ -71,7 +71,6 @@ export class DefaultRacedaySetupComponent implements OnInit, AfterViewInit {
 
   supportedLanguages: { code: string, nameKey: string }[] = [];
   currentLanguage: string = '';
-  browserLanguage: string = '';
   menuItems = [
     { label: 'RDS_MENU_FILE', action: (event: MouseEvent) => this.toggleFileDropdown(event) },
     { label: 'RDS_MENU_CONFIG', action: (event: MouseEvent) => this.toggleConfigDropdown(event) },
@@ -182,7 +181,6 @@ export class DefaultRacedaySetupComponent implements OnInit, AfterViewInit {
       return nameA.localeCompare(nameB);
     });
     this.currentLanguage = this.settingsService.getSettings().language;
-    this.browserLanguage = this.translationService.getBrowserLanguage().toUpperCase();
   }
 
   @HostListener('window:resize')
@@ -607,7 +605,10 @@ export class DefaultRacedaySetupComponent implements OnInit, AfterViewInit {
 
   getLanguageDisplayName(code: string): string {
     if (code === '') {
-      return `${this.translationService.translate('RDS_LANG_DEFAULT')} (${this.browserLanguage})`;
+      const browserCode = this.translationService.getBrowserLanguage();
+      const langNameKey = `RDS_LANG_${browserCode.toUpperCase()}`;
+      const browserLangName = this.translationService.translate(langNameKey);
+      return `${this.translationService.translate('RDS_LANG_DEFAULT')} (${browserLangName})`;
     }
     const lang = this.supportedLanguages.find(l => l.code === code);
     return lang ? this.translationService.translate(lang.nameKey) : code;

@@ -74,6 +74,47 @@ describe('TranslationService', () => {
     });
   });
 
+  it('should resolve and load browser language when setLanguage("") is called', (done) => {
+    // Mock navigator.language to 'nl' (Dutch)
+    spyOnProperty(navigator, 'language', 'get').and.returnValue('nl-NL');
+    
+    // Initial load from settings (empty language)
+    settingsServiceSpy.getSettings.and.returnValue(Object.assign(new Settings(), { language: '' }));
+    service = TestBed.inject(TranslationService);
+    
+    // Initial load triggered by constructor
+    const initialReq = httpMock.expectOne(req => req.url.startsWith('assets/i18n/nl.json'));
+    initialReq.flush({ "GREETING": "Hallo" });
+
+    // Call setLanguage('') explicitly
+    service.setLanguage('');
+    
+    // Should resolve '' to 'nl' and try to reload it
+    const reloadReq = httpMock.expectOne(req => req.url.startsWith('assets/i18n/nl.json'));
+    expect(reloadReq.request.url).toContain('nl.json');
+    reloadReq.flush({ "GREETING": "Hallo Wereld" });
+    
+    service.getTranslationsLoaded().subscribe(loaded => {
+      if (loaded) {
+        expect(service.translate('GREETING')).toBe('Hallo Wereld');
+        done();
+      }
+    });
+  });
+
+  it('should fallback to English if browser language is not supported', () => {
+    // Mock navigator.language to an unsupported language
+    spyOnProperty(navigator, 'language', 'get').and.returnValue('ja-JP');
+    
+    settingsServiceSpy.getSettings.and.returnValue(Object.assign(new Settings(), { language: '' }));
+    service = TestBed.inject(TranslationService);
+    
+    // Should resolve unsupported 'ja' to 'en'
+    const req = httpMock.expectOne(req => req.url.startsWith('assets/i18n/en.json'));
+    expect(req.request.url).toContain('en.json');
+    req.flush({});
+  });
+
   afterEach(() => {
     httpMock.verify();
   });

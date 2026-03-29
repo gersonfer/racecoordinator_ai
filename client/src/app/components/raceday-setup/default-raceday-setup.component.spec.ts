@@ -340,13 +340,14 @@ describe('DefaultRacedaySetupComponent', () => {
   });
 
   it('should get language display name', () => {
+    mockTranslationService.getBrowserLanguage.and.returnValue('en');
     mockTranslationService.translate.and.callFake((key) => {
       if (key === 'RDS_LANG_DEFAULT') return 'Default';
       if (key === 'RDS_LANG_EN') return 'English (en)';
       return key;
     });
 
-    expect(component.getLanguageDisplayName('')).toBe('Default (EN)');
+    expect(component.getLanguageDisplayName('')).toBe('Default (English (en))');
     expect(component.getLanguageDisplayName('en')).toBe('English (en)');
   });
 
